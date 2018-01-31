@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 var index = require('./routes/index');
 var users = require('./routes/users');
 var game = require('./routes/game');
+const chat = require('./routes/chat');
 var app = express();
 
 app.set('views', path.join(__dirname, 'views'));
@@ -15,12 +16,14 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.raw({type: 'application/octet-stream'}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/users', users);
 app.use('/game',game);
+app.use('/chat',chat);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
