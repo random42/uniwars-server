@@ -6,7 +6,7 @@ const users = db.get("users");
 const unis = db.get("unis");
 const sharp = require('sharp');
 const monk = require('monk');
-const pictureSize = {
+const picSize = {
   small: 50,
   medium: 256,
   large: 500
@@ -14,63 +14,93 @@ const pictureSize = {
 const httpStatus = require('../constants');
 const majors = require('../data/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
-
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
-router.get('/login', async function(req, res, next) {
-  // TODO maybe set online offline user in db
-  let form = req.body;
-  console.log('form',form);
-  let key = form.email ? 'email' : 'username';
-  let query = {};
-  query[key] = form[key];
-  let doc = await users.findOne(query);
-  if (doc) {
-    // check password
-    let done = await bcrypt.compare(form.password,doc.private.password)
-    if (done) {
-      // password correct
-      // generate client token
-      let token = monk.id();
-      users.findOneAndUpdate(query,{...doc,private: {token},online: true}).then((doc) => {
-        console.log('updated',doc);
-        res.json(doc);
-      });
+async function checkToken(query,token) {
+  //return true;
+  try {
+    let doc = await users.findOne(query,'private');
+    let right = await bcrypt.compare(token,doc.private.token);
+    return right;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+}
+
+router.put('/login', async function(req, res, next) {
+  try {
+    // TODO maybe set online offline user in db
+    let body = req.body;
+    let query = req.query;
+    let doc = await users.findOne(query);
+    if (doc) {
+      if (doc.online) {
+        res.status(400).send('Already logged in');
+        return;
+      }
+      // check password
+      let done = await bcrypt.compare(body.password,doc.private.password)
+      if (done) {
+        // password correct
+        // generate client token
+        let token = monk.id().toString();
+        // hash token
+        let hash = await bcrypt.hash(token,saltRounds);
+        let updatedDoc = await users.findOneAndUpdate(query,{
+          $set: {
+            'private.token': hash,
+            online: true,
+          },
+        });
+        res.json([doc,token]);
+      }
+      else {
+        res.status(400).send('wrong password'); // wrong password
+      }
     }
     else {
-      res.status(httpStatus.LOGIN_PASSWORD); // wrong password
+      res.status(400).send('wrong email or username'); // wrong username or email
     }
-  }
-  else {
-    res.status(httpStatus.LOGIN_USERNAME); // wrong username or email
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
   }
 });
 
-router.get('/login-username', function(req, res, next) {
-  // TODO maybe set online offline user in db
-  let user = req.body;
-  users.findOne({username:user.username}).then(doc => {
-    if (doc) {
-      bcrypt.compare(user.password,doc.password,function(err,done) {
-        if (done) {
-          res.send(doc);
-        }
-        else {
-          res.send('wrong pass');
-        }
-      })
+router.put('/logout', async function(req,res,next) {
+  try {
+    let query = req.query;
+    let token = req.body.token;
+    let doc = await users.findOne(query,['private','online']);
+    if (doc.online) {
+      let rightToken = await bcrypt.compare(token,doc.private.token);
+      if (rightToken) {
+        let doc = await users.findOneAndUpdate(query,{
+          $inc: { online_time: (Date.now() - monk.id(token).getTimestamp())},
+          $set: {
+            online: false,
+            'private.token': null,
+          }
+          });
+        console.log(doc);
+        res.sendStatus(200);
+      } else {
+        res.status(400).send('wrong token');
+      }
+    } else {
+      res.status(400).send('not online');
     }
-    else {
-      res.send('wrong email');
-    }
-  })
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
 });
 
 router.get('/uni-by-email',function (req,res,next) {
   let email = req.query.email;
   getUniByEmail(email).then(doc => {
-    console.log(doc);
     res.send(doc);
   }).catch(err => {
     res.sendStatus(500);
@@ -88,20 +118,12 @@ router.get('/profile',function (req,res,next) {
 });
 
 router.get('/picture',function (req,res,next) {
-  let id = req.query.id;
-  let size = pictureSize[req.query.size];
-  console.log(size);
+  let id = req.query._id;
+  let size = picSize[req.query.size];
   if (!id) {
-    res.statusSend(406);
+    res.sendStatus(406);
   }
-  sharp('./public/images/profile_pictures/'+size+'x'+size+'/'+id+'.png')
-  .toBuffer().then((data) => {
-    console.log(data);
-    res.send(data);
-  }).catch(err => {
-    console.log(err);
-    res.sendStatus(404);
-  })
+  res.redirect('/images/profile_pictures/'+size+'x'+size+'/'+id+'.png');
 });
 
 router.put('/facebook-login',function (req, res, next) {
@@ -128,80 +150,108 @@ router.put('/facebook-login',function (req, res, next) {
   })
 });
 
-router.put('/add-email', function (req,res,next) {
-  let user = req.body;
-  users.findOneAndUpdate({facebook_id:user.id},{email:user.email})
-  .then(doc => {
-    console.log(doc);
-  })
-});
-
-
 router.post('/register', async function(req, res, next) {
-  let user = req.body;
-  let email = user.email;
-  console.log(user);
-  if (!checkRegisterForm(user)) {
-    res.sendStatus(httpStatus.REGISTER_INVALID_FORM);
-    return;
-  }
-  let uni = await getUniByEmail(user.email);
-  if (!uni) {
-    res.status(httpStatus.REGISTER_INVALID_EMAIL).send('Invalid email domain');
-  }
-  let doc = await users.findOne({email});
-  if (doc) {
-    res.status(httpStatus.REGISTER_EXIST).send('Account already exists');
-  }
-  let existUsername = await users.findOne({username: user.username});
-  if (existUsername) {
-    res.status(httpStatus.REGISTER_INVALID_USERNAME).send('Username is already used.');
-  }
-  else {
-    user.country = uni.country;
-    user.uni = {_id: uni._id,name: uni.name};
-    if (user.first_name && user.last_name) user.name = user.first_name+' '+user.last_name;
-    user.created_at = Date.now();
-    user.private = {};
-    if (user.phone_number) {
-      user.private.phone_number = user.phone_number;
-      delete user.phone_number;
-      //TODO phone verification
-    } else if (user.password) {
-      let hash = await bcrypt.hash(user.password,saltRounds);
-      user.private.password = hash;
-      delete user.password;
+  try {
+    let user = req.body;
+    let email = user.email;
+    if (!checkRegisterForm(user)) {
+      res.sendStatus(400);
+      return;
     }
-    users.insert(user).then(doc => {
-      console.log(doc);
-      console.log('New account registered!');
-      res.sendStatus(200);
-    }).catch(err => console.log(err))
+    let uni = await getUniByEmail(user.email);
+    if (!uni) {
+      res.status(400).send('Invalid email domain');
+      return;
+    }
+    let existEmail = await users.findOne({email});
+    if (existEmail) {
+      res.status(400).send('Account already exists');
+      return;
+    }
+    let existUsername = await users.findOne({username: user.username});
+    if (existUsername) {
+      res.status(400).send('Username is already used.');
+      return;
+    }
+    else {
+      user.uni = {...uni};
+      if (user.first_name && user.last_name) user.name = user.first_name+' '+user.last_name;
+      user.created_at = Date.now();
+      user.private = {};
+      if (user.phone_number) {
+        user.private.phone_number = user.phone_number;
+        delete user.phone_number;
+        //TODO phone verification
+      } else if (user.password) {
+        let hash = await bcrypt.hash(user.password,saltRounds);
+        user.private.password = hash;
+        delete user.password;
+      }
+      users.insert(user).then(doc => {
+        res.sendStatus(200);
+      }).catch(err => console.log(err))
+    }
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
   }
 });
 
-router.post('/set-picture', function(req,res,next) {
-  // set headers Content-Type to application/octet-stream
-  let picture = req.body;
-  let id = req.query.id;
-  if (!id || !picture) {
-    res.sendStatus(403);
+router.delete('/account',async function(req,res,next) {
+  try {
+    let query = req.query;
+    let body = req.body;
+    let doc = await users.findOne(query,'private');
+    if (!doc) {
+      res.status(400).send('wrong query');
+    }
+    let checks = [await (bcrypt.compare(body.password,doc.private.password)),
+      await (bcrypt.compare(body.token,doc.private.token))];
+    if (checks[0] && checks[1]) {
+      let deleted = await users.findOneAndDelete(query);
+      console.log(deleted);
+      res.sendStatus(200);
+    } else {
+      res.status(400).send('wrong token or password');
+    }
+  } catch (err) {
+    console.log(err);
+    res.statusSend(500);
   }
-  sharp(picture).resize(pictureSize.large,pictureSize.large).toFile('./public/images/profile_pictures/500x500/'+id+'.png');
-  sharp(picture).resize(pictureSize.medium,pictureSize.medium).toFile('./public/images/profile_pictures/256x256/'+id+'.png');
-  sharp(picture).resize(pictureSize.small,pictureSize.small).toFile('./public/images/profile_pictures/50x50/'+id+'.png').then((info) => {
-    console.log('Set picture of user_id',id);
+})
+
+router.post('/picture', async function(req,res,next) {
+  // set headers Content-Type to application/octet-stream
+  try {
+    let query = req.query;
+    let token = req.get('token');
+    let rightToken = await checkToken(query,token);
+    if (!rightToken) {
+      res.status(400).send('wrong token');
+      return;
+    }
+    let picture = req.body;
+    let _id = req.query._id;
+    let infos = [
+    await (sharp(picture)
+    .resize(picSize.large,picSize.large)
+    .toFile('./public/images/profile_pictures/500x500/'+_id+'.png')),
+    await (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/256x256/'+_id+'.png')),
+    await (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/50x50/'+_id+'.png'))];
+    console.log(infos);
     res.sendStatus(200);
-  }).catch(err => {
+  }
+  catch (err) {
+    console.log(err);
     res.sendStatus(500);
-  })
+  }
 })
 
 
 function getUniByEmail(email) {
   let regex = /[a-z]+\.[a-z]+$/i;
   let domain = email.match(regex)[0];
-  return unis.findOne({domains:domain},'-messages');
+  return unis.findOne({domains:domain},['name','alpha_two_code']);
 }
 
 function checkRegisterForm(user) {
