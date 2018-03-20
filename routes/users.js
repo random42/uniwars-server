@@ -11,17 +11,17 @@ const picSize = {
   medium: 256,
   large: 500
 }
-const httpStatus = require('../constants');
 const majors = require('../data/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
+const extern_login = ['facebook.com','google.com'];
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
-async function checkToken(query,token) {
+async function checkLoginToken(query,loginToken) {
   //return true;
   try {
     let doc = await users.findOne(query,'private');
-    let right = await bcrypt.compare(token,doc.private.token);
+    let right = await bcrypt.compare(loginToken,doc.private.loginToken);
     return right;
   } catch (err) {
     console.log(err);
@@ -44,17 +44,17 @@ router.put('/login', async function(req, res, next) {
       let done = await bcrypt.compare(body.password,doc.private.password)
       if (done) {
         // password correct
-        // generate client token
-        let token = monk.id().toString();
-        // hash token
-        let hash = await bcrypt.hash(token,saltRounds);
+        // generate client loginToken
+        let loginToken = monk.id().toString();
+        // hash loginToken
+        let hash = await bcrypt.hash(loginToken,saltRounds);
         let updatedDoc = await users.findOneAndUpdate(query,{
           $set: {
-            'private.token': hash,
+            'private.loginToken': hash,
             online: true,
           },
         });
-        res.json([doc,token]);
+        res.json([doc,loginToken]);
       }
       else {
         res.status(400).send('wrong password'); // wrong password
@@ -72,22 +72,21 @@ router.put('/login', async function(req, res, next) {
 router.put('/logout', async function(req,res,next) {
   try {
     let query = req.query;
-    let token = req.body.token;
+    let loginToken = req.body.loginToken;
     let doc = await users.findOne(query,['private','online']);
     if (doc.online) {
-      let rightToken = await bcrypt.compare(token,doc.private.token);
+      let rightToken = await bcrypt.compare(loginToken,doc.private.loginToken);
       if (rightToken) {
         let doc = await users.findOneAndUpdate(query,{
-          $inc: { online_time: (Date.now() - monk.id(token).getTimestamp())},
+          $inc: { online_time: (Date.now() - monk.id(loginToken).getTimestamp())},
           $set: {
             online: false,
-            'private.token': null,
+            'private.loginToken': null,
           }
           });
-        console.log(doc);
         res.sendStatus(200);
       } else {
-        res.status(400).send('wrong token');
+        res.status(400).send('wrong loginToken');
       }
     } else {
       res.status(400).send('not online');
@@ -126,7 +125,7 @@ router.get('/picture',function (req,res,next) {
   res.redirect('/images/profile_pictures/'+size+'x'+size+'/'+id+'.png');
 });
 
-router.put('/facebook-login',function (req, res, next) {
+router.post('/google-login',function (req, res, next) {
   let user = req.body;
   let id = user.id;
   users.findOne({facebook_id: id}).then((doc) => {
@@ -206,13 +205,13 @@ router.delete('/account',async function(req,res,next) {
       res.status(400).send('wrong query');
     }
     let checks = [await (bcrypt.compare(body.password,doc.private.password)),
-      await (bcrypt.compare(body.token,doc.private.token))];
+      await (bcrypt.compare(body.loginToken,doc.private.loginToken))];
     if (checks[0] && checks[1]) {
       let deleted = await users.findOneAndDelete(query);
       console.log(deleted);
       res.sendStatus(200);
     } else {
-      res.status(400).send('wrong token or password');
+      res.status(400).send('wrong loginToken or password');
     }
   } catch (err) {
     console.log(err);
@@ -224,10 +223,10 @@ router.post('/picture', async function(req,res,next) {
   // set headers Content-Type to application/octet-stream
   try {
     let query = req.query;
-    let token = req.get('token');
-    let rightToken = await checkToken(query,token);
+    let loginToken = req.get('loginToken');
+    let rightToken = await checkLoginToken(query,loginToken);
     if (!rightToken) {
-      res.status(400).send('wrong token');
+      res.status(400).send('wrong loginToken');
       return;
     }
     let picture = req.body;
