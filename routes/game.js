@@ -7,14 +7,8 @@ const questions = db.get('qriusity_questions');
 const users = db.get('users');
 const search = db.get('search');
 const monk = require('monk');
-const Semaphore = require('await-semaphore').Semaphore;
+const Matchmaking = require('../algorithms/matchmaking');
 
-let search_sem = new Semaphore(2);
-
-let queue = {
-  _1v1: [],
-  _5v5: [],
-}
 
 async function checkLoginToken(query,loginToken) {
   try {
@@ -38,24 +32,6 @@ async function checkGameToken(query,token) {
   }
 }
 
-async function createGame(type,players) {
-  try {
-    let token = monk.id().toString();
-    let hash = await bcrypt.hash(token,12);
-    await games.insert({
-      type,
-      players,
-      questions: [],
-      on_play: true,
-      created_at: Date.now(),
-      token: hash,
-    });
-    return token;
-  } catch(err) {
-    console.log(err);
-  }
-}
-
 router.get('/question', async (req, res, next) => {
 
 });
@@ -63,15 +39,19 @@ router.get('/question', async (req, res, next) => {
 router.post('/search', async (req, res, next) => {
   try {
     let body = req.body; // loginToken,gameType
+    let gameType = body.gameType
     let query = req.query; // id/username,
-    let player = await users.findOne(query,['private','rating']);
-    let queueLength;
-    player && await bcrypt.compare(body.loginToken,player.private.loginToken) && // check token
-    search_sem[0].use(() => {
-      queue['_'+body.gameType].push(player);
-    })
-
-    res.sendStatus(200);
+    let player = await users.findOne(query,['rating','private','uni','major']);
+    console.log(player);
+    player._id = player._id.toString();
+    player.uni._id = player.uni._id.toString();
+    player.response = res;
+    //player && await bcrypt.compare(body.loginToken,player.private.loginToken) && // check token
+    await Matchmaking[gameType].push(player);
+    if (Matchmaking[gameType].queue.length === 2) {
+      Matchmaking[gameType].match();
+    }
+    //res.sendStatus(200);
 
   } catch (err) {
     console.log(err);
