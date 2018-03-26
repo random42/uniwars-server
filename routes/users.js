@@ -2,16 +2,15 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcrypt');
-const users = db.get("users");
-const unis = db.get("unis");
 const sharp = require('sharp');
 const monk = require('monk');
+const baseURL = 'http://localhost:3000';
 const picSize = {
   small: 50,
   medium: 256,
   large: 500
 }
-const majors = require('../data/majors.json');
+const majors = require('../../data/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
 const extern_login = ['facebook.com','google.com'];
 // see https://github.com/kelektiv/node.bcrypt.js
@@ -20,7 +19,7 @@ const saltRounds = 12;
 async function checkLoginToken(query,loginToken) {
   //return true;
   try {
-    let doc = await users.findOne(query,'private');
+    let doc = await db.users.findOne(query,'private');
     let right = await bcrypt.compare(loginToken,doc.private.loginToken);
     return right;
   } catch (err) {
@@ -29,17 +28,28 @@ async function checkLoginToken(query,loginToken) {
   }
 }
 
+router.get('/',function (req,res,next) {
+  let query = req.query;
+  if (!query) {
+    res.sendStatus(400);
+    return;
+  }
+  db.users.findOne(query,['-private','-news']).then(doc => {
+    res.json(doc);
+  })
+});
+
 router.put('/login', async function(req, res, next) {
   try {
     // TODO maybe set online offline user in db
     let body = req.body;
     let query = req.query;
-    let doc = await users.findOne(query);
+    let doc = await db.users.findOne(query);
     if (doc) {
-      if (doc.online) {
-        res.status(400).send('Already logged in');
-        return;
-      }
+      // if (doc.online) {
+      //   res.status(400).send('Already logged in');
+      //   return;
+      // }
       // check password
       let done = await bcrypt.compare(body.password,doc.private.password)
       if (done) {
@@ -48,7 +58,7 @@ router.put('/login', async function(req, res, next) {
         let loginToken = monk.id().toString();
         // hash loginToken
         let hash = await bcrypt.hash(loginToken,saltRounds);
-        let updatedDoc = await users.findOneAndUpdate(query,{
+        let updatedDoc = await db.users.findOneAndUpdate(query,{
           $set: {
             'private.loginToken': hash,
             online: true,
@@ -73,11 +83,11 @@ router.put('/logout', async function(req,res,next) {
   try {
     let query = req.query;
     let loginToken = req.body.loginToken;
-    let doc = await users.findOne(query,['private','online']);
+    let doc = await db.users.findOne(query,['private','online']);
     if (doc.online) {
       let rightToken = await bcrypt.compare(loginToken,doc.private.loginToken);
       if (rightToken) {
-        let doc = await users.findOneAndUpdate(query,{
+        let doc = await db.users.findOneAndUpdate(query,{
           $inc: { online_time: (Date.now() - monk.id(loginToken).getTimestamp())},
           $set: {
             online: false,
@@ -100,53 +110,21 @@ router.put('/logout', async function(req,res,next) {
 router.get('/uni-by-email',function (req,res,next) {
   let email = req.query.email;
   getUniByEmail(email).then(doc => {
-    res.send(doc);
+    res.json(doc);
   }).catch(err => {
     res.sendStatus(500);
   })
 })
 
-router.get('/profile',function (req,res,next) {
-  let id = req.query.id;
-  if (!id) {
-    res.sendStatus(404);
+router.get('/picture',async function (req,res,next) {
+  let _id = req.query._id;
+  let size = req.query.size;
+  if (!_id) {
+    res.sendStatus(400);
   }
-  users.findOne({_id: id},['-password']).then(doc => {
-    res.send(doc);
-  })
-});
-
-router.get('/picture',function (req,res,next) {
-  let id = req.query._id;
-  let size = picSize[req.query.size];
-  if (!id) {
-    res.sendStatus(406);
-  }
-  res.redirect('/images/profile_pictures/'+size+'x'+size+'/'+id+'.png');
-});
-
-router.post('/google-login',function (req, res, next) {
-  let user = req.body;
-  let id = user.id;
-  users.findOne({facebook_id: id}).then((doc) => {
-    if (doc) {
-      // user exists
-      res.send(doc);
-    }
-    else {
-      // new user
-      users.insert({
-        facebook_id: user.id,
-        name: user.name,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        gender: user.gender,
-        age: user.age_range,
-        picture: user.picture,
-        timezone: user.timezone
-      });
-    }
-  })
+  let user = await db.users.findOne({_id},'picture');
+  let picture = user.picture[size];
+  res.redirect(picture);
 });
 
 router.post('/register', async function(req, res, next) {
@@ -162,12 +140,12 @@ router.post('/register', async function(req, res, next) {
       res.status(400).send('Invalid email domain');
       return;
     }
-    let existEmail = await users.findOne({email});
+    let existEmail = await db.users.findOne({email});
     if (existEmail) {
       res.status(400).send('Account already exists');
       return;
     }
-    let existUsername = await users.findOne({username: user.username});
+    let existUsername = await db.users.findOne({username: user.username});
     if (existUsername) {
       res.status(400).send('Username is already used.');
       return;
@@ -186,7 +164,7 @@ router.post('/register', async function(req, res, next) {
         user.private.password = hash;
         delete user.password;
       }
-      users.insert(user).then(doc => {
+      db.users.insert(user).then(doc => {
         res.sendStatus(200);
       }).catch(err => console.log(err))
     }
@@ -200,14 +178,14 @@ router.delete('/account',async function(req,res,next) {
   try {
     let query = req.query;
     let body = req.body;
-    let doc = await users.findOne(query,'private');
+    let doc = await db.users.findOne(query,'private');
     if (!doc) {
       res.status(400).send('wrong query');
     }
     let checks = [await (bcrypt.compare(body.password,doc.private.password)),
       await (bcrypt.compare(body.loginToken,doc.private.loginToken))];
     if (checks[0] && checks[1]) {
-      let deleted = await users.findOneAndDelete(query);
+      let deleted = await db.users.findOneAndDelete(query);
       console.log(deleted);
       res.sendStatus(200);
     } else {
@@ -219,26 +197,35 @@ router.delete('/account',async function(req,res,next) {
   }
 })
 
-router.post('/picture', async function(req,res,next) {
+router.put('/picture', async function(req,res,next) {
   // set headers Content-Type to application/octet-stream
   try {
-    let query = req.query;
-    let loginToken = req.get('loginToken');
-    let rightToken = await checkLoginToken(query,loginToken);
+    let _id = req.query._id;
+    let loginToken = req.query.token;
+    let rightToken = await checkLoginToken({_id},loginToken);
     if (!rightToken) {
       res.status(400).send('wrong loginToken');
       return;
     }
     let picture = req.body;
-    let _id = req.query._id;
     let infos = [
     await (sharp(picture)
     .resize(picSize.large,picSize.large)
-    .toFile('./public/images/profile_pictures/500x500/'+_id+'.png')),
-    await (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/256x256/'+_id+'.png')),
-    await (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/50x50/'+_id+'.png'))];
+    .toFile('./public/images/profile_pictures/large/'+_id+'.png')),
+    await (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/medium/'+_id+'.png')),
+    await (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/small/'+_id+'.png')),
+    await db.users.findOneAndUpdate({_id},{
+      $set: {
+        picture: {
+          small: baseURL+'/images/profile_pictures/small/'+_id+'.png',
+          medium: baseURL+'/images/profile_pictures/medium/'+_id+'.png',
+          large: baseURL+'/images/profile_pictures/large/'+_id+'.png',
+        }
+      }
+    })
+    ];
     console.log(infos);
-    res.sendStatus(200);
+    res.json(infos[3]);
   }
   catch (err) {
     console.log(err);
@@ -246,11 +233,33 @@ router.post('/picture', async function(req,res,next) {
   }
 })
 
+router.post('/challenge', async (req,res,next) => {
+  try {
+    let from = req.body.from;
+    let to = req.body.to;
+    // TODO checktoken
+    let update = await db.users.findOneAndUpdate({...to,online: true},{
+      $push: {
+        'news.challenges': from
+      }
+    })
+    if (!update) {
+      res.status(400).send('not online');
+    } else {
+      res.sendStatus(200);
+    }
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+
 
 function getUniByEmail(email) {
   let regex = /[a-z]+\.[a-z]+$/i;
   let domain = email.match(regex)[0];
-  return unis.findOne({domains:domain},['name','alpha_two_code']);
+  return db.unis.findOne({domains:domain},['name','alpha_two_code']);
 }
 
 function checkRegisterForm(user) {
