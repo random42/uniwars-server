@@ -8,28 +8,6 @@ const majors = require('../../data/majors.json');
 const MIN_PLAYERS = 5;
 const saltRounds = 12;
 
-async function checkLoginToken(query,loginToken) {
-  //return true;
-  try {
-    let doc = await db.users.findOne(query,'private');
-    let right = await bcrypt.compare(loginToken,doc.private.loginToken);
-    return right;
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-}
-
-async function checkTeamToken(query,token) {
-  try {
-    let team = await db.teams.findOne(query);
-    let right = await bcrypt.compare(token,team.token);
-    return right;
-  } catch(err) {
-    console.log(err)
-  }
-}
-
 router.get('/', async function(req,res,next) {
   let query = req.query;
   let team = await db.teams.findOne(query);
@@ -52,36 +30,31 @@ router.post('/create',async function(req,res,next) {
       res.status(400).send('name used');
       return;
     }
-    // creates id, token
+    // creates id,=
     let _id = monk.id();
-    let teamToken = monk.id().toString();
-    // hashes token and inserts team
-    let createTeam = async (_id,name,token) => {
-      let hash = await bcrypt.hash(token,saltRounds);
+    // inserts team
+    let createTeam = async (_id,name) => {
       let team = await db.teams.insert({
         _id,
         name,
         players: [user],
-        admins: [user],
-        token: hash
+        admins: [user]
       })
       return team;
     }
     // update user
     let end = await Promise.all([
-      createTeam(_id,name,teamToken),
+      createTeam(_id,name),
       db.users.findOneAndUpdate(user,{
         $push: {
           teams: {
-            _id
-          },
-          'private.team_tokens': {
-            [_id] : teamToken
+            _id,
+            admin: true
           }
         },
       })
     ])
-    res.json([end[0],teamToken]);
+    res.json(end[0]);
   } catch (err) {
     console.log(err);
   }

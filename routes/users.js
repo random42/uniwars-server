@@ -16,30 +16,17 @@ const extern_login = ['facebook.com','google.com'];
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
-async function checkLoginToken(query,loginToken) {
-  //return true;
-  try {
-    let doc = await db.users.findOne(query,'private');
-    let right = await bcrypt.compare(loginToken,doc.private.loginToken);
-    return right;
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-}
-
-router.get('/',function (req,res,next) {
+router.get('/',async function (req,res,next) {
   let query = req.query;
   if (!query) {
     res.sendStatus(400);
     return;
   }
-  db.users.findOne(query,['-private','-news']).then(doc => {
-    res.json(doc);
-  })
+  let doc = await db.users.findOne(query,['-private','-news'])
+  res.json(doc);
 });
 
-router.put('/login', async function(req, res, next) {
+router.get('/login', async function(req, res, next) {
   try {
     // TODO maybe set online offline user in db
     let body = req.body;
@@ -54,17 +41,17 @@ router.put('/login', async function(req, res, next) {
       let done = await bcrypt.compare(body.password,doc.private.password)
       if (done) {
         // password correct
-        // generate client loginToken
-        let loginToken = monk.id().toString();
-        // hash loginToken
-        let hash = await bcrypt.hash(loginToken,saltRounds);
+        // generate client login_token
+        let login_token = monk.id().toString();
+        // hash login_token
+        let hash = await bcrypt.hash(login_token,saltRounds);
         let updatedDoc = await db.users.findOneAndUpdate(query,{
           $set: {
-            'private.loginToken': hash,
+            'private.login_token': hash,
             online: true,
           },
         });
-        res.json([doc,loginToken]);
+        res.json([doc,login_token]);
       }
       else {
         res.status(400).send('wrong password'); // wrong password
@@ -81,26 +68,16 @@ router.put('/login', async function(req, res, next) {
 
 router.put('/logout', async function(req,res,next) {
   try {
-    let query = req.query;
-    let loginToken = req.body.loginToken;
-    let doc = await db.users.findOne(query,['private','online']);
-    if (doc.online) {
-      let rightToken = await bcrypt.compare(loginToken,doc.private.loginToken);
-      if (rightToken) {
-        let doc = await db.users.findOneAndUpdate(query,{
-          $inc: { online_time: (Date.now() - monk.id(loginToken).getTimestamp())},
-          $set: {
-            online: false,
-            'private.loginToken': null,
-          }
-          });
-        res.sendStatus(200);
-      } else {
-        res.status(400).send('wrong loginToken');
+    let query = {_id: req.get('user')};
+    let token = req.get('login_token');
+    let doc = await db.users.findOneAndUpdate(query,{
+      $inc: { online_time: (Date.now() - monk.id(token).getTimestamp())},
+      $set: {
+        online: false,
+        'private.login_token': null,
       }
-    } else {
-      res.status(400).send('not online');
-    }
+    });
+    res.sendStatus(200);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
@@ -183,13 +160,13 @@ router.delete('/account',async function(req,res,next) {
       res.status(400).send('wrong query');
     }
     let checks = [await (bcrypt.compare(body.password,doc.private.password)),
-      await (bcrypt.compare(body.loginToken,doc.private.loginToken))];
+      await (bcrypt.compare(body.login_token,doc.private.login_token))];
     if (checks[0] && checks[1]) {
       let deleted = await db.users.findOneAndDelete(query);
       console.log(deleted);
       res.sendStatus(200);
     } else {
-      res.status(400).send('wrong loginToken or password');
+      res.status(400).send('wrong login_token or password');
     }
   } catch (err) {
     console.log(err);
@@ -200,11 +177,9 @@ router.delete('/account',async function(req,res,next) {
 router.put('/picture', async function(req,res,next) {
   // set headers Content-Type to application/octet-stream
   try {
-    let _id = req.query._id;
-    let loginToken = req.query.token;
-    let rightToken = await checkLoginToken({_id},loginToken);
+    let _id = req.query.user;
     if (!rightToken) {
-      res.status(400).send('wrong loginToken');
+      res.status(400).send('wrong login_token');
       return;
     }
     let picture = req.body;
@@ -235,9 +210,8 @@ router.put('/picture', async function(req,res,next) {
 
 router.post('/challenge', async (req,res,next) => {
   try {
-    let from = req.body.from;
-    let to = req.body.to;
-    // TODO checktoken
+    let from = {_id: req.query.user};
+    let to = {_id: req.query.to};
     let update = await db.users.findOneAndUpdate({...to,online: true},{
       $push: {
         'news.challenges': from

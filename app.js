@@ -10,7 +10,32 @@ const game = require('./routes/game');
 const unis = require('./routes/unis');
 const teams = require('./routes/teams');
 const chat = require('./routes/chat');
+const db = require('./db');
+const bcrypt = require('bcrypt')
 let app = express();
+
+async function checkLoginToken(req,res,next) {
+  //next();
+  if (req.method !== 'GET') {
+    try {
+      console.log('check token');
+      let query = {_id: req.get('user')};
+      let token = req.get('login_token');
+      let doc = await db.users.findOne(query,'private');
+      let right = await bcrypt.compare(token,doc.private.login_token);
+      if (right) next()
+      else {
+        res.status(400).send('Wrong token');
+        return;
+      }
+    } catch (err) {
+      console.log(err);
+      res.statusSend(500);
+    }
+  } else {
+    next();
+  }
+}
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -21,6 +46,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.raw({type: 'application/octet-stream'}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(checkLoginToken);
 
 app.use('/',index);
 app.use('/users',users);
