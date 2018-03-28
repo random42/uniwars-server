@@ -4,28 +4,12 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const monk = require('monk');
 
-
-async function checkLoginToken(query,loginToken) {
-  try {
-    let doc = await db.users.findOne(query,'private');
-    let right = await bcrypt.compare(loginToken,doc.private.loginToken);
-    return right;
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-}
-
-async function checkGameToken(query,token) {
-  try {
-    let doc = await db.games.findOne(query,'token');
-    let right = await bcrypt.compare(token,doc.token);
-    return right;
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
-}
+const game_types = [
+  'solo',
+  'squad',
+  'team',
+  'uni'
+]
 
 router.get('/question', async (req, res, next) => {
 
@@ -52,9 +36,7 @@ router.post('/search', async (req, res, next) => {
 
 })
 
-
 router.post('/challenge-team', async (req,res,next) => {
-  let
 })
 
 module.exports = router;
