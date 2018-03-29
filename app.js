@@ -12,7 +12,7 @@ const teams = require('./routes/teams');
 const chat = require('./routes/chat');
 const db = require('./db');
 const bcrypt = require('bcrypt')
-const security = require('./security');
+const security = require('./utils/security');
 
 let app = express();
 

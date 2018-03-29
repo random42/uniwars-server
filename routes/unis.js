@@ -4,11 +4,13 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const sharp = require('sharp');
 const monk = require('monk');
-const majors = require('../../data/majors.json');
+const Rank = require('../utils/rank');
+const MAJORS = require('../../data/majors.json');
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
-
-const MAX_RESULTS = 20;
+const rankSort = {
+  users: -1
+}
 
 
 router.get('/', async function(req,res,next) {
@@ -32,21 +34,14 @@ router.get('/top', async function(req,res,next) {
     let sortField = 'rating.' + req.query.field;
     let sort = {};
     sort[sortField] = -1;
-    sort.users = -1;
-    if (to-from > MAX_RESULTS) {
-      res.status(400).send('Max results:',MAX_RESULTS);
-      return;
+    sort = {...sort,...rankSort};
+    let projection = {
+      name: 1,
+      rating: 1,
+      alpha_two_code: 1,
+      users: 1,
     }
-    let docs = await db.unis.aggregate([
-      {$sort: sort},
-      {$skip: from},
-      {$limit: to-from},
-      {$project: {
-        name: 1,
-        rating: 1,
-        users: 1
-      }}
-    ])
+    let docs = await Rank.top(db.unis,from,to,sort,projection);
     res.json(docs);
   } catch(err) {
     console.log(err);
@@ -56,32 +51,19 @@ router.get('/top', async function(req,res,next) {
 
 router.get('/rank', async function(req,res,next) {
   try {
-    let query = req.query;
-    let name = query.name;
-    let uni = await db.unis.findOne({name});
-    let field = query.field;
+    let name = req.query.name;
+    let field = req.query.field;
     let queryField = 'rating.'+field;
-    let db_query = {};
-    db_query[queryField] = {
-      $gt: uni.rating[field]
+    let sort = {};
+    sort[queryField] = -1;
+    sort = {...sort,...rankSort};
+    let query = {name};
+    let ranking = await Rank.rank(db.unis,query,sort);
+    if (!ranking) {
+      res.sendStatus(400);
+      return
     }
-    let greater = await db.unis.aggregate([
-      {$match: db_query},
-      {$count: "count"}
-    ])
-    let sameRating = await db.unis.aggregate([
-      {$match: {[queryField]: uni.rating[field]}},
-      {$sort: {[queryField]: -1,users: -1}}
-    ])
-    let index;
-    for (let i in sameRating) {
-      if (sameRating[i].name === uni.name) {
-        index = parseInt(i);
-        break;
-      }
-    }
-    console.log(sameRating)
-    res.json(index + greater[0].count);
+    res.json(ranking);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);

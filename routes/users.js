@@ -16,6 +16,10 @@ const picSize = {
 const majors = require('../../data/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
 const extern_login = ['facebook.com','google.com'];
+const Rank = require('../utils/rank');
+const rankSort = {
+  'games.solo': -1
+}
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
@@ -28,6 +32,85 @@ router.get('/', async function (req,res,next) {
   let doc = await db.users.findOne(query,['-private','-news'])
   res.json(doc);
 });
+
+router.delete('/',async function(req,res,next) {
+  try {
+    let query = {_id: req.get('user')};
+    let body = req.body;
+    let doc = await db.users.findOne(query,'private','picture');
+    // check password
+    let check_password = await bcrypt.compare(body.password,doc.private.password);
+    if (check_password) {
+      // delete profile picture
+      if (doc.picture.small.indexOf(baseURL) > 0) {
+        let pic_path = project_path + 'public/images/profile_pictures/';
+        let operations = []
+        for (let size in picSize) {
+          operations.push(
+            new Promise((res,rej) => {
+              fs.unlink(pic_path + size + '/' + query._id + '.png',(err) => {
+                if (err) {
+                  console.log(err);
+                  rej();
+                }
+                else res()
+              });
+            })
+          )
+        }
+        try {
+          await Promise.all(operations);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      let db_delete = await db.users.findOneAndDelete(query);
+      res.sendStatus(200);
+    } else {
+      res.status(400).send('wrong password');
+    }
+  } catch (err) {
+    console.log(err);
+    res.statusSend(500);
+  }
+})
+
+router.get('/top', async function(req,res,next) {
+  try {
+    let from = parseInt(req.query.from);
+    let to = parseInt(req.query.to);
+    let field = req.query.field;
+    field = '$rating.' + field;
+    let sort = {};
+    sort[field] = -1;
+    sort = {...sort,...rankSort}
+    let projection = {
+      username: 1,
+      rating: 1,
+      uni: 1,
+      picture: 1,
+      online: 1,
+    }
+    let docs = await Rank.top({from,to,coll: db.users,sort,projection})
+    if (!docs) {
+      res.sendStatus(400);
+      return;
+    }
+    res.json(docs);
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+router.get('/rank', async function(req,res,next) {
+  try {
+
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
 
 router.put('/login', async function(req, res, next) {
   try {
@@ -159,48 +242,6 @@ router.post('/register', async function(req, res, next) {
   }
 });
 
-router.delete('/account',async function(req,res,next) {
-  try {
-    let query = {_id: req.get('user')};
-    let body = req.body;
-    let doc = await db.users.findOne(query,'private','picture');
-    // check password
-    let check_password = await bcrypt.compare(body.password,doc.private.password);
-    if (check_password) {
-      // delete profile picture
-      if (doc.picture.small.indexOf(baseURL) > 0) {
-        let pic_path = project_path + 'public/images/profile_pictures/';
-        let operations = []
-        for (let size in picSize) {
-          operations.push(
-            new Promise((res,rej) => {
-              fs.unlink(pic_path + size + '/' + query._id + '.png',(err) => {
-                if (err) {
-                  console.log(err);
-                  rej();
-                }
-                else res()
-              });
-            })
-          )
-        }
-        try {
-          await Promise.all(operations);
-        } catch (err) {
-          console.log(err);
-        }
-      }
-      let db_delete = await db.users.findOneAndDelete(query);
-      res.sendStatus(200);
-    } else {
-      res.status(400).send('wrong password');
-    }
-  } catch (err) {
-    console.log(err);
-    res.statusSend(500);
-  }
-})
-
 router.put('/picture', async function(req,res,next) {
   // set headers Content-Type to application/octet-stream
   try {
@@ -233,9 +274,9 @@ router.put('/picture', async function(req,res,next) {
 
 router.post('/challenge', async function (req,res,next) {
   try {
-    let from = {_id: req.get('user')};
-    let to = {_id: req.query.to};
-    let update = await db.users.findOneAndUpdate({...to,online: true},{
+    let from = req.get('user');
+    let to = req.query.to;
+    let update = await db.users.findOneAndUpdate({_id: to,online: true},{
       $push: {
         'news.challenges': from
       }

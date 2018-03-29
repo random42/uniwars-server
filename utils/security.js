@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('../db');
 const bcrypt = require('bcrypt');
 
 
@@ -7,12 +7,15 @@ const NO_CHECK_LOGIN = [
   '/users/login',
 ]
 
-const NO_CHECK_TEAM = [
-  '/create',
+const CHECK_TEAM_ADMIN = [
+  '/invite',
+  '/challenge',
+  '/accept-challenge',
 ]
 
 async function checkLoginToken(req,res,next) {
-  //next();
+  next();
+  return;
   if (req.method !== 'GET' && NO_CHECK_LOGIN.indexOf(req.path) < 0) {
     try {
       let query = {_id: req.get('user')};
@@ -38,8 +41,7 @@ async function checkLoginToken(req,res,next) {
 }
 
 async function checkTeamAdmin(req,res,next) {
-  console.log(req.path)
-  if (req.method !== 'GET' && NO_CHECK_TEAM.indexOf(req.path) < 0) {
+  if (req.method !== 'GET' && CHECK_TEAM_ADMIN.indexOf(req.path) >= 0) {
     try {
       console.log('Check team admin')
       let user_id = req.get('user');
