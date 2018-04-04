@@ -74,60 +74,36 @@ router.get('/rank', async function(req,res,next) {
   }
 })
 
-// TODO
-router.get('/rank', async function(req,res,next) {
-  try {
-    let team = req.query.team;
-    let enemy = req.query.enemy;
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-});
-//TODO
-router.get('/top', async function(req,res,next) {
-  try {
-    let team = req.query.team;
-    let enemy = req.query.enemy;
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-})
-
 router.post('/create', async function(req,res,next) {
   try {
     let name = req.body.name;
     let user = req.get('user');
+    let user_id = monk.id(user);
     // check name
     let exists = await db.teams.findOne({name: name});
     if (exists) {
       res.status(400).send('name used');
       return;
     }
-    // creates id,=
+    // creates id,
     let _id = monk.id();
     // inserts team
     let createTeam = async (_id,name) => {
       let team = await db.teams.insert({
         _id,
         name,
-        founder: user,
-        players: [user],
-        admins: [user]
+        founder: user_id,
+        players: [user_id],
+        admins: [user_id]
       })
       return team;
     }
-    // update user
     let end = await Promise.all([
       createTeam(_id,name),
+      // update user
       db.users.findOneAndUpdate(user,{
         $push: {
-          teams: {
-            _id,
-            admin: true,
-            founder: true
-          }
+          teams: _id
         },
       })
     ])
@@ -143,13 +119,20 @@ router.put('/invite', async function(req,res,next) {
     let user = req.get('user');
     let team = req.query.team;
     let invited = req.query.invited;
-    let invitation = await db.users.findOneAndUpdate(invited,{
+    let invitation = await db.users.findOneAndUpdate({
+      _id: invited,
+      'news.teams.invitations': {$ne: {team}}
+    },{
       $push: {
         'news.teams.invitations': {
           user,team
         }
       }
     })
+    if (!invitation) {
+      res.status(400).send('already invited');
+      return;
+    }
     res.sendStatus(200);
   } catch(err) {
     console.log(err);
@@ -163,45 +146,44 @@ router.put('/respond-invite', async function(req,res,next) {
     let user = req.get('user');
     let response = req.query.response;
     if (response === 'y') {
-      let operations = await Promise.all([
-        // cancel invitation and add team
-        db.users.findOneAndUpdate(user,{
-          $pull: {
-            'news.teams.invitations': {
-              team
-            }
-          },
-          $push: {
-            teams: {
-              _id: team
-            }
-          }
-        }),
-        // join team
-        db.teams.findOneAndUpdate(team,{
-          $push: {
-            players: user
-          }
-        })
-      ])
-    }
-    else if (response === 'n') {
-      // cancel invitation and add team
-      await db.users.findOneAndUpdate(user,{
+      let updateUser = await db.users.findOneAndUpdate({_id: user,
+        'news.teams.invitations': team
+      },{
         $pull: {
           'news.teams.invitations': {
             team
           }
         },
         $push: {
-          teams: {
-            _id: team
+          teams: monk.id(team)
+        }
+      });
+      if (!updateUser) { // no invitation found
+        res.sendStatus(400);
+        return;
+      }
+      let updateTeam = await
+        // join team
+        db.teams.findOneAndUpdate(team,{
+          $push: {
+            players: monk.id(user)
+          }
+        })
+    }
+    else {
+      let updateUser = await db.users.findOneAndUpdate({_id: user,
+        'news.teams.invitations': team
+      },{
+        $pull: {
+          'news.teams.invitations': {
+            team
           }
         }
-      })
-    } else {
-      res.sendStatus(400);
-      return;
+      });
+      if (!updateUser) { // no invitation found
+        res.sendStatus(400);
+        return;
+      }
     }
     res.sendStatus(200);
   } catch(err) {
@@ -214,11 +196,19 @@ router.put('/challenge', async function(req,res,next) {
   try {
     let team = req.query.team;
     let enemy = req.query.enemy;
-    let update = await db.teams.findOneAndUpdate(enemy,{
+    let update = await db.teams.findOneAndUpdate({
+      _id: enemy,
+      challenges: {$ne: team}
+    },{
       $push : {
         challenges: team
       }
     })
+    if (!update) {
+      res.status(400).send('already challenged');
+      return;
+    }
+    res.sendStatus(200);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
@@ -237,17 +227,18 @@ router.put('/respond-challenge', async function(req,res,next) {
         }
       })
       // TODO create game
+      res.sendStatus(200);
     } else if (response === 'n') {
       let update = await db.teams.findOneAndUpdate(team,{
         $pull : {
           challenges: enemy
         }
       })
+      res.sendStatus(200);
     } else {
       res.sendStatus(400);
       return;
     }
-    res.sendStatus(200);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);

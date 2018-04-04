@@ -2,17 +2,21 @@
 const MAX_RESULTS = 50;
 
 module.exports = {
-  async top({coll,from,to,sort,projection}) {
+  async top({pipeline = [],coll,from,to,sort,projection}) {
     try {
       if (to - from > MAX_RESULTS) {
         return false;
       }
-      let docs = await coll.aggregate([
+      let ops = [
+        ...pipeline,
         {$sort: sort},
         {$skip: from},
-        {$limit: to-from},
-        {$project: projection}
-      ]);
+        {$limit: to-from}
+      ];
+      if (projection) {
+        ops.push({$project: projection});
+      }
+      let docs = await coll.aggregate(ops);
       return docs;
     } catch (err) {
       console.log(err);

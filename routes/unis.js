@@ -31,17 +31,47 @@ router.get('/top', async function(req,res,next) {
     let query = req.query;
     let from = parseInt(query.from);
     let to = parseInt(query.to);
-    let sortField = 'rating.' + req.query.field;
+    let sortField = req.query.field;
     let sort = {};
     sort[sortField] = -1;
     sort = {...sort,...rankSort};
-    let projection = {
-      name: 1,
-      rating: 1,
-      alpha_two_code: 1,
-      users: 1,
-    }
-    let docs = await Rank.top(db.unis,from,to,sort,projection);
+    let pipeline = [
+      {
+        $group: {
+          _id: '$uni',
+          users: {$sum: 1},
+          general: {
+              $avg: '$rating.general'
+          },
+          major_category: {
+            $avg: '$rating.major_category'
+          }
+        }
+      },
+      {
+        $lookup: {
+           from: 'unis',
+           localField: '_id',
+           foreignField: '_id',
+           as: 'uni'
+        }
+      },
+      {
+        $unwind: '$uni'
+      },
+      {
+        $project: {
+          rating: {
+            general: '$general',
+            major_category: '$major_category'
+          },
+          name: '$uni.name',
+          alpha_two_code: '$uni.alpha_two_code',
+          users: 1,
+        }
+      }
+    ]
+    let docs = await Rank.top({coll: db.users,pipeline,from,to,sort});
     res.json(docs);
   } catch(err) {
     console.log(err);
@@ -58,7 +88,7 @@ router.get('/rank', async function(req,res,next) {
     sort[queryField] = -1;
     sort = {...sort,...rankSort};
     let query = {name};
-    let ranking = await Rank.rank(db.unis,query,sort);
+    let ranking = await Rank.rank({coll: db.unis,query,sort});
     if (!ranking) {
       res.sendStatus(400);
       return

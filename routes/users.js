@@ -24,13 +24,52 @@ const rankSort = {
 const saltRounds = 12;
 
 router.get('/', async function (req,res,next) {
-  let query = req.query;
-  if (!query) {
-    res.sendStatus(400);
-    return;
+  try {
+    let query = req.query;
+    if (!query) {
+      res.sendStatus(400);
+      return;
+    }
+    let docs = await db.users.aggregate([
+      {
+        $match: query
+      },
+      {
+        $lookup: {
+          from: 'unis',
+          localField: 'uni',
+          foreignField: '_id',
+          as: 'uni'
+        }
+      },
+      {
+        $lookup: {
+         from: 'teams',
+         localField: 'teams',
+         foreignField: '_id',
+         as: 'teams'
+       }
+      },
+      {
+        $project: {
+          'uni.web_pages': 0,
+          'uni.domains': 0,
+          'uni.rating': 0,
+          'private': 0,
+          'news': 0,
+        }
+      }
+    ])
+    if (docs.length !== 1) {
+      res.sendStatus(500);
+      return;
+    }
+    res.json(docs[0]);
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
   }
-  let doc = await db.users.findOne(query,['-private','-news'])
-  res.json(doc);
+
 });
 
 router.delete('/',async function(req,res,next) {
@@ -170,15 +209,6 @@ router.put('/logout', async function(req,res,next) {
   }
 });
 
-router.get('/uni-by-email',function (req,res,next) {
-  let email = req.query.email;
-  getUniByEmail(email).then(doc => {
-    res.json(doc);
-  }).catch(err => {
-    res.sendStatus(500);
-  })
-})
-
 router.get('/picture',async function (req,res,next) {
   try {
     let _id = req.query._id;
@@ -219,9 +249,8 @@ router.post('/register', async function(req, res, next) {
       return;
     }
     else {
-      user.uni = {...uni};
-      if (user.first_name && user.last_name) user.name = user.first_name+' '+user.last_name;
-      user.created_at = Date.now();
+      user.uni = uni._id;
+      if (user.first_name && user.last_name) user.full_name = user.first_name+' '+user.last_name;
       user.private = {};
       if (user.phone_number) {
         user.private.phone_number = user.phone_number;
@@ -296,7 +325,7 @@ router.post('/challenge', async function (req,res,next) {
 function getUniByEmail(email) {
   let regex = /[a-z]+\.[a-z]+$/i;
   let domain = email.match(regex)[0];
-  return db.unis.findOne({domains:domain},['name','alpha_two_code']);
+  return db.unis.findOne({domains:domain},['_id']);
 }
 
 function checkRegisterForm(user) {
