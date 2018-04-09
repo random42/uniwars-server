@@ -31,7 +31,7 @@ app.use(security.checkLoginToken);
 app.use('/',index);
 app.use('/users',users);
 app.use('/game',game);
-app.use('/chat',chat);
+//app.use('/chat',chat);
 app.use('/unis',unis);
 app.use('/teams',security.checkTeamAdmin,teams);
 

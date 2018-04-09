@@ -277,13 +277,13 @@ router.put('/picture', async function(req,res,next) {
     let query = {_id: req.get('user')};
     let _id = req.get('user');
     let picture = req.body;
-    let infos = [
-    await (sharp(picture)
+    let infos = await Promise.all([
+    (sharp(picture)
     .resize(picSize.large,picSize.large)
     .toFile('./public/images/profile_pictures/large/'+_id+'.png')),
-    await (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/medium/'+_id+'.png')),
-    await (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/small/'+_id+'.png')),
-    await db.users.findOneAndUpdate(query,{
+    (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/medium/'+_id+'.png')),
+    (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/small/'+_id+'.png')),
+    db.users.findOneAndUpdate(query,{
       $set: {
         picture: {
           small: baseURL+'/images/profile_pictures/small/'+_id+'.png',
@@ -292,7 +292,7 @@ router.put('/picture', async function(req,res,next) {
         }
       }
     })
-    ];
+    ]);
     res.json(infos[3]);
   }
   catch (err) {
@@ -301,26 +301,161 @@ router.put('/picture', async function(req,res,next) {
   }
 })
 
-router.post('/challenge', async function (req,res,next) {
+router.put('/add-friend', async function (req,res,next) {
   try {
     let from = req.get('user');
     let to = req.query.to;
-    let update = await db.users.findOneAndUpdate({_id: to,online: true},{
+    let update = await db.users.findOneAndUpdate({
+      _id: to,
+      'news': {$ne: {
+        type: "friend_request",
+        user: from
+      }}
+    },{
       $push: {
-        'news.challenges': from
+        'news': {
+          type: "friend_request",
+          user: from,
+          created_at: Date.now(),
+        }
       }
-    })
+    });
     if (!update) {
-      res.status(400).send('not online');
-    } else {
-      res.sendStatus(200);
+      res.sendStatus(400);
+      return;
     }
+    res.sendStatus(200);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
   }
 })
 
+router.put('/get-news', async function(req,res,next) {
+  try {
+
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+router.put('/respond-friend-request', async function (req,res,next) {
+  try {
+    let response = req.query.response;
+    let user = req.get('user');
+    let friend = req.query.user;
+    let remove_news = await db.users.findOneAndUpdate({
+      _id: user,
+      news: { // verify the request
+        type: "friend_request",
+        user: friend
+      }
+    },{
+      $pull: {
+        news: {
+          type: "friend_request",
+          user: friend
+        }
+      }
+    });
+    if (!remove_news) { // there was no friend request
+      res.sendStatus(400);
+      return;
+    }
+    if (response !== 'y') {
+      res.sendStatus(200);
+      return;
+    }
+    // update friends array
+    let ops = await Promise.all([
+      db.users.findOneAndUpdate(user,{
+        $push: {
+          friends: friend
+        }
+      }),
+      db.users.findOneAndUpdate(friend,{
+        $push: {
+          friends: user
+        }
+      })
+    ])
+    res.sendStatus(200);
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+router.put('/challenge', async function (req,res,next) {
+  try {
+    let from = req.get('user');
+    let to = req.query.to;
+    let update = await db.users.findOneAndUpdate({
+      _id: to,
+      news: {$ne: {
+        type: "challenge",
+        user: from
+      }}
+    },{
+      $push: {
+        news: {
+          type: "challenge",
+          user: from,
+          created_at: Date.now()
+        }
+      }
+    })
+    if (!update) {
+      res.sendStatus(400);
+      return;
+    }
+    res.sendStatus(200);
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+router.put('/respond-challenge', async function (req,res,next) {
+  try {
+    let response = req.query.response;
+    let user = req.get('user');
+    let enemy_id = req.query.user;
+    let remove_news = await db.users.findOneAndUpdate({
+      _id: user,
+      news: {
+        type: "challenge",
+        user: enemy_id
+      }
+    },{
+      $pull: {
+        news: {
+          type: "challenge",
+          user: enemy_id
+        }
+      }
+    })
+    if (!remove_news) {
+      res.sendStatus(400);
+      return;
+    }
+    if (response !== 'y') {
+      res.sendStatus(200);
+      return;
+    }
+    let enemy = await db.users.findOne(enemy,['online','playing']);
+    if (enemy.online && !enemy.playing) {
+      //TODO start game
+      res.sendStatus(200);
+    } else {
+      res.status(201).json(enemy);
+    }
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
 
 function getUniByEmail(email) {
   let regex = /[a-z]+\.[a-z]+$/i;

@@ -194,8 +194,10 @@ router.put('/respond-invite', async function(req,res,next) {
 
 router.put('/challenge', async function(req,res,next) {
   try {
+    let user = req.get('user');
     let team = req.query.team;
     let enemy = req.query.enemy;
+    // add news in team doc
     let update = await db.teams.findOneAndUpdate({
       _id: enemy,
       challenges: {$ne: team}
@@ -208,6 +210,19 @@ router.put('/challenge', async function(req,res,next) {
       res.status(400).send('already challenged');
       return;
     }
+    // add news in founder doc
+    let news = await db.users.findOneAndUpdate({
+      _id: update.founder
+    },{
+      $push: {
+        news: {
+          type: "team_challenge",
+          user,
+          team,
+          created_at: Date.now()
+        }
+      }
+    })
     res.sendStatus(200);
   } catch(err) {
     console.log(err);
@@ -217,26 +232,25 @@ router.put('/challenge', async function(req,res,next) {
 
 router.put('/respond-challenge', async function(req,res,next) {
   try {
-    let team = req.query.team;
-    let enemy = req.query.enemy;
     let response = req.query.response;
-    if (response === 'y') {
-      let update = await db.teams.findOneAndUpdate(team,{
-        $pull : {
-          challenges: enemy
-        }
-      })
-      // TODO create game
-      res.sendStatus(200);
-    } else if (response === 'n') {
-      let update = await db.teams.findOneAndUpdate(team,{
-        $pull : {
-          challenges: enemy
-        }
-      })
-      res.sendStatus(200);
-    } else {
+    let user = req.get('user');
+    let team_id = req.query.team;
+    let enemy_id = req.query.enemy;
+    // remove challenge from user team doc
+    let enemy = await db.teams.findOneAndUpdate({
+      _id: team_id,
+      challenges: enemy_id
+    },{
+      $pull: {
+        challenges: enemy_id
+      }
+    })
+    if (!enemy) { // no challenge
       res.sendStatus(400);
+      return;
+    }
+    if (response !== 'y') {
+      res.sendStatus(200);
       return;
     }
   } catch(err) {

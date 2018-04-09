@@ -36,7 +36,8 @@ const user = {
   "private": {
       "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
       "login_token": null,
-      "phone_number": '+393461625500'
+      "phone_number": '+393461625500',
+      "chats": ["_id"],
   },
   "teams": ["_id"],
   "games": {
@@ -56,6 +57,12 @@ const user = {
     "games": 21,
     "chat_time": 124454,
   }],
+  "news": [{
+    "type": "team_invitation", // team_challenge, challenge, friend_request, team_invitation
+    "user": "_id",
+    "team": "_id",
+    "created_at": Date.now()
+  }]
   "news": {
     "teams": {
       "invitations": [{
@@ -64,11 +71,13 @@ const user = {
       }],
       "challenges": ["_id"]
     },
-    "friend_req": ["_id"],
+    "friend_requests": ["_id"],
     "challenges": ["_id"]
   },
   "online_time": 796,
-  "online": false,
+  "online": true,
+  "playing": true,
+  "friends": ["_ids"]
 }
 
 const team = {
@@ -91,28 +100,29 @@ const team = {
 }
 
 const uni = {
-    "_id": {
-        "$oid": "5a3dac7dfaaa577114d0cfaf"
-    },
-    "web_pages": [
-        "http://www.unito.it/"
-    ],
-    "name": "University of Turin",
-    "alpha_two_code": "IT",
-    "state-province": null,
-    "domains": [
-        "unito.it"
-    ],
-    "country": "Italy",
-    "users": 20,
+  "_id": {
+      "$oid": "5a3dac7dfaaa577114d0cfaf"
+  },
+  "web_pages": [
+      "http://www.unito.it/"
+  ],
+  "name": "University of Turin",
+  "alpha_two_code": "IT",
+  "state-province": null,
+  "domains": [
+      "unito.it"
+  ],
+  "country": "Italy",
+  "users": 20,
 }
 
 const chat = {
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
-  "collection": "unis" // teams, users
-  "type": "group"    // group, duo
+  "collection": "unis", // teams, users
+  "type": "group",    // group, duo
+  "name": "bellaaa", // only for groups
   "messages": [{
     "_id": "34u893489374893",
     "text": "Ciaoo",
@@ -120,5 +130,18 @@ const chat = {
     "created_at": 12309234892,
     "system": true,
   }],
-  "partecipants": ["_id"]
+  "partecipants": ["_id"],
+  "admins": ["_id"]
+}
+
+const game = {
+  "_id": {
+      "$oid": "5abbd98270534c2bf947416c"
+  },
+  "created_at": Date.now(),
+  "finished_at": Date.now(),
+  "type": "solo", // solo, squad, team
+  "players": ["_id1","_id2"], // matrix for team or squad
+  "teams": ["_id1","_id2"],
+  "score": false, // true = 1, false = 0, index for the players/teams field
 }
