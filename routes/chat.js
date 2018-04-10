@@ -7,7 +7,8 @@ const io_connections = require('../utils/io').connections;
 
 router.post('/create-group', async function(req,res,next) {
   try {
-    let user = monk.id(req.get('user'));
+    let user = req.get('user');
+    let user_oid = monk.id(user);
     let check_partecipants = await areFriends(user,req.query.partecipants)
     if (!check_partecipants) {
       res.sendStatus(400);
@@ -24,10 +25,47 @@ router.post('/create-group', async function(req,res,next) {
       return;
     }
     chat.partecipants = req.query.partecipants.map((id) => monk.id(id));
-    chat.partecipants.push(user);
-    chat.admins = [user];
+    chat.partecipants.push(user_oid);
+    chat.admins = [user_oid];
     // adding users to socket room
-    joinRoom(chat._id,chat.partecipants.map(a => a.toString()));
+    joinRoom(chat._id.toString(),chat.partecipants.map(a => a.toString()));
+    // updating database
+    let operations = [db.users.update({
+      _id: {$in: chat.partecipants}
+      },{
+      $push: {
+        'private.chats': chat._id
+      }
+    }),db.chats.insert(chat)];
+    await Promise.all(operations);
+    res.sendStatus(200);
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+router.post('/create-private', async function(req,res,next) {
+  try {
+    let user = req.get('user');
+    let partner = req.query.partner;
+    // checking if chat exists
+    let exists = await db.chats.findOne({
+      partecipants: {$all: [user,partner]}
+    },'_id');
+    if (exists) {
+      console.log('exists',exists);
+      res.sendStatus(400);
+      return;
+    }
+    // creating chat object
+    let chat = {};
+    chat._id = monk.id();
+    chat.collection = "users";
+    chat.type = "duo";
+    chat.partecipants = [monk.id(user),monk.id(partner)];
+    // adding users to socket room
+    joinRoom(chat._id.toString(),chat.partecipants.map(a => a.toString()));
     // updating database
     let operations = [db.users.update({
       _id: {$in: chat.partecipants}
@@ -75,6 +113,15 @@ router.put('/messages', async function(req,res,next) {
     ]);
     console.log(messages);
     res.json(messages);
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+})
+
+router.put('/leave-group', async function(req,res,next) {
+  try {
+    
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
@@ -142,9 +189,6 @@ router.put('/remove-users', async function(req,res,next) {
   }
 })
 
-async function checkAdmin(user,chat) {
-
-}
 
 async function areFriends(user,arr) {
   let doc = db.users.findOne(user,'friends');

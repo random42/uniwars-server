@@ -1,53 +1,62 @@
+const start_time = Date.now();
 const db = require('../db');
 const bcrypt = require('bcrypt');
+
+// creating server
 const io = require('socket.io')({
   serveClient: false,
 });
-let connections = {};
 
-io.on('connection', async function(socket) {
+// creating namespaces
+const chat = io.of('/chat');
+const game = io.of('/game');
+let connections = {}; // sockets indexed by user_id
+
+const chatPostAuth = require('./chat');
+
+// authenticate sockets
+require('socketio-auth')(io, {
+  authenticate,
+  postAuthenticate,
+  disconnect,
+  timeout: 1000
+})
+
+async function postAuthenticate(socket, data) {
   try {
-    console.log('connected socket',socket.id);
-    // checking token
-    let _id = socket.handshake.query._id;
-    let token = socket.handshake.query.login_token;
-    let auth = checkToken();
-    socket.auth = auth;
-    let logged = await auth;
-    if (!logged) {
-      socket.disconnect(true);
-      return;
-    }
+    let _id = data._id;
     // adding socket to connected users
     socket.user_id = _id;
     connections[_id] = socket;
-    console.log(Object.keys(connections).length);
+    if (socket.id in chat.connected) {
+      await chatPostAuth(socket);
+    }
   } catch (err) {
     console.log(err);
-    socket.disconnect(true);
   }
-})
+}
 
-io.on('disconnect', async function(socket) {
-  delete connections[socket.user_id];
-})
-
-
-module.exports = {io,connections};
-
-
-
-async function checkToken(_id,token) {
-  return new Promise((res) => {
-    setTimeout(res,1000,true);
-  });
+async function authenticate(socket, data, callback) {
+  return setTimeout(callback,100,null,true);
   try {
-    let user = await db.users.findOne(_id,'private');
-    console.log(user);
+    let _id = data._id;
+    let token = data.login_token;
+    let user = await db.users.findOne(_id,['username','private']);
+    if (!user) return callback(new Error("User not found"));
     let right = await bcrypt.compare(token,user.private.login_token);
-    return right;
+    if (right) {
+      socket.user_id = _id;
+      socket.username = user.username;
+      return callback(null,true);
+    }
+    return callback(new Error("Wrong token"));
   } catch(err) {
     console.log(err);
     return false;
   }
 }
+
+function disconnect(socket) {
+  delete connections[socket.user_id];
+}
+module.exports = {io,connections};
