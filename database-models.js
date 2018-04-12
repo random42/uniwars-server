@@ -60,7 +60,7 @@ const user = {
   "news": [{
     "type": "team_invitation", // team_challenge, challenge, friend_request, team_invitation
     "user": "_id",
-    "team": "_id",
+    "team": "_id", // if necessary
     "created_at": Date.now()
   }]
   "news": {
@@ -126,11 +126,11 @@ const chat = {
   "messages": [{
     "_id": "34u893489374893",
     "text": "Ciaoo",
-    "user": "_id", // taken from partecipants array
+    "user": "_id", // taken from participants array
     "created_at": 12309234892,
     "system": true,
   }],
-  "partecipants": ["_id"],
+  "participants": ["_id"],
   "admins": ["_id"]
 }
 

@@ -36,7 +36,13 @@ router.post('/search', async (req, res, next) => {
 
 })
 
-router.post('/challenge-team', async (req,res,next) => {
+router.put('/stuff', async (req,res,next) => {
+  try {
+
+  } catch(err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
 })
 
 module.exports = router;

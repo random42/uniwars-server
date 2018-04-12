@@ -1,11 +1,11 @@
+const MAX_MSG_LENGTH = 1024;
 const db = require('../db');
 const monk = require('monk');
 const bcrypt = require('bcrypt');
-const io = require('./io').io;
-const connections = require('./io').connections;
-const chat = io.of('/chat');
-const MAX_MSG_LENGTH = 1024;
-
+const io = require('./io');
+let chat = io.of('/chat');
+chat.connections = {}; // sockets indexed by user_id
+chat.postAuthenticate = postAuthenticate;
 /*
   msg : {
     chat: '_id',
@@ -14,6 +14,9 @@ const MAX_MSG_LENGTH = 1024;
   }
 */
 
+chat.on('connection', postAuthenticate);
+
+// chat namespace post authenticate fn
 async function postAuthenticate(socket) {
   // joining rooms
   let user = await db.users.findOne(socket.user_id,'private');
@@ -21,28 +24,16 @@ async function postAuthenticate(socket) {
   for (let i in chats) {
     socket.join(chats[i]);
   }
-  // middleware
-  socket.use((packet,next) => {
-    console.log(packet);
-    return next();
-  })
   // EVENT HANDLERS
-  socket.on('message', (msg, cb) => {
-    if (!checkMessage(msg) || !(msg.chat in socket.rooms)) return console.log('bad message'); // TODO HACK
-    // tells client message got to the server
-    cb(true);
-    cb(false);
-    let chat = msg.chat;
+  socket.on('message', (msg, chat, cb) => {
+    if (!checkMessage(msg) || !(chat in socket.rooms)) return cb(false) // TODO HACK
     // inserts ids
     msg._id = monk.id().toString();
     msg.user = socket.user_id;
+    cb(msg);
     // emits message
-    socket.in(chat).emit('message',msg, (ack) => {
-      console.log(ack);
-      // tells client message was received by TODO
-    });
+    socket.in(chat).emit('message',msg, chat);
     // update database
-    delete msg.chat;
     insertMsg(msg);
   });
 }
@@ -63,7 +54,7 @@ async function insertMsg(msg,chat) {
       $push: {
         messages: msg
       }
-    },'_id');
+    },{projection: ['_id']});
     console.log('saving message',update);
   } catch (err) {
     console.log(err);
@@ -71,4 +62,4 @@ async function insertMsg(msg,chat) {
 
 }
 
-module.exports = postAuthenticate;
+module.exports = chat;

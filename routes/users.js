@@ -57,6 +57,7 @@ router.get('/', async function (req,res,next) {
           'uni.rating': 0,
           'private': 0,
           'news': 0,
+          'friends': 0,
         }
       }
     ])
@@ -307,7 +308,7 @@ router.put('/add-friend', async function (req,res,next) {
     let to = req.query.to;
     let update = await db.users.findOneAndUpdate({
       _id: to,
-      'news': {$ne: {
+      'news': {$ne: { // not pushing news if there is one friend_request pending
         type: "friend_request",
         user: from
       }}
@@ -333,7 +334,9 @@ router.put('/add-friend', async function (req,res,next) {
 
 router.put('/get-news', async function(req,res,next) {
   try {
-
+    let user = req.get('user');
+    let doc = await db.findOne(user,'news');
+    res.json(doc.news || []);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
