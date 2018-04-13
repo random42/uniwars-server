@@ -177,7 +177,7 @@ router.put('/login', async function(req, res, next) {
             online: true,
           },
         });
-        res.json([doc,login_token]);
+        res.json({user: doc,token: login_token});
       }
       else {
         res.status(400).send('wrong password'); // wrong password

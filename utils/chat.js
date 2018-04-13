@@ -14,10 +14,12 @@ chat.postAuthenticate = postAuthenticate;
   }
 */
 
-chat.on('connection', postAuthenticate);
-
 // chat namespace post authenticate fn
 async function postAuthenticate(socket) {
+  chat.connections[socket.user_id] = socket;
+  socket.on('disconnect',(socket) => {
+    delete chat.connections(socket.user_id);
+  })
   // joining rooms
   let user = await db.users.findOne(socket.user_id,'private');
   let chats = user.private.chats;
@@ -30,12 +32,15 @@ async function postAuthenticate(socket) {
     // inserts ids
     msg._id = monk.id().toString();
     msg.user = socket.user_id;
+    console.log(msg);
     cb(msg);
     // emits message
-    socket.in(chat).emit('message',msg, chat);
+    socket.in(chat).emit('message',msg,chat);
     // update database
     insertMsg(msg);
   });
+
+
 }
 
 function checkMessage(msg) {

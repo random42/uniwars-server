@@ -13,11 +13,20 @@ const chat = require('./routes/chat');
 const db = require('./db');
 const bcrypt = require('bcrypt')
 const security = require('./utils/security');
+const cors = require('cors');
+
 
 let app = express();
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+app.use(cors({ origin: '*' }));
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin");
+  res.header("Access-Control-Allow-Methods","PUT, POST, GET, DELETE, OPTIONS")
+  next();
+});
 
 app.use(logger('dev'));
 app.use(bodyParser.json());

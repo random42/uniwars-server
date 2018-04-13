@@ -8,16 +8,10 @@ const game_types = [
   'solo',
   'squad',
   'team',
-  'uni'
 ]
-
-router.get('/question', async (req, res, next) => {
-
-});
 
 router.post('/search', async (req, res, next) => {
   try {
-    let prefix = '_';
     let body = req.body; // loginToken,gameType
     let gameType = body.gameType
     let query = req.query; // id/username,

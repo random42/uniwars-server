@@ -8,6 +8,7 @@ module.exports = {
   teams: database.get("teams"),
   game: database.get("game"),
   chats: database.get("chats"),
+  questions: database.get("questions"),
   qriusity_questions: database.get("qriusity_questions"),
-  open_trivia: database.get("open_trivia"),
+  open_trivia: database.get("open_trivia")
 }
