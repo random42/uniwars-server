@@ -1,5 +1,5 @@
 const MAX_MSG_LENGTH = 1024;
-const db = require('../db');
+const db = require('../../db');
 const monk = require('monk');
 const bcrypt = require('bcrypt');
 const io = require('./io');
@@ -14,12 +14,16 @@ chat.postAuthenticate = postAuthenticate;
   }
 */
 
+chat.on('connect',postAuthenticate);
+
+chat.on('disconnect',function(socket) {
+  delete chat.connections(socket.user_id);
+})
+
 // chat namespace post authenticate fn
 async function postAuthenticate(socket) {
+  if (!socket.auth) return;
   chat.connections[socket.user_id] = socket;
-  socket.on('disconnect',(socket) => {
-    delete chat.connections(socket.user_id);
-  })
   // joining rooms
   let user = await db.users.findOne(socket.user_id,'private');
   let chats = user.private.chats;
@@ -30,14 +34,15 @@ async function postAuthenticate(socket) {
   socket.on('message', (msg, chat, cb) => {
     if (!checkMessage(msg) || !(chat in socket.rooms)) return cb(false) // TODO HACK
     // inserts ids
-    msg._id = monk.id().toString();
+    let _id = monk.id();
+    msg._id = _id.toString();
     msg.user = socket.user_id;
     console.log(msg);
     cb(msg);
     // emits message
     socket.in(chat).emit('message',msg,chat);
     // update database
-    insertMsg(msg);
+    insertMsg(msg,chat,_id);
   });
 
 
@@ -51,9 +56,9 @@ function checkMessage(msg) {
   msg.text.length < MAX_MSG_LENGTH; // text length
 }
 
-async function insertMsg(msg,chat) {
+async function insertMsg(msg,chat,_id) {
   try {
-    msg._id = monk.id(msg._id);
+    msg._id = _id;
     msg.user = monk.id(msg.user);
     let update = await db.chats.findOneAndUpdate(chat,{
       $push: {

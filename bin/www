@@ -27,7 +27,7 @@ var server = http.createServer(app);
  * Create server socket
 */
 
-const io = require('../utils/io');
+const io = require('../utils/socket.io/io');
 
 
 /**
@@ -45,7 +45,6 @@ const io = require('../utils/io');
      pingTimeout: 5000,
      cookie: false
    });
-   console.log(Object.keys(io));
    console.log('Socket server running')
  }).catch((err) => {
    console.log(err);

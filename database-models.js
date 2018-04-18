@@ -38,6 +38,7 @@ const user = {
       "login_token": null,
       "phone_number": '+393461625500',
       "chats": ["_id"],
+      "last_questions": ["_id"] // last tot questions
   },
   "teams": ["_id"],
   "games": {
@@ -144,4 +145,25 @@ const game = {
   "players": ["_id1","_id2"], // matrix for team or squad
   "teams": ["_id1","_id2"],
   "score": false, // true = 1, false = 0, index for the players/teams field
+}
+
+const question = {
+    "_id": {
+        "$oid": "5ad10d842d97600cc0f3639c"
+    },
+    "source": "https://opentdb.com/",
+    "source_category": "Science: Computers",
+    "category": "Computers & Mathematics",
+    "majors": [],
+    "question": "stringa",
+    "correct_answer": "Instruction",
+    "incorrect_answers": [
+        "Address",
+        "Data",
+        "Control"
+    ],
+    "difficulty": "hard",
+    "language": "en",
+    "hit": 123,
+    "miss": 333
 }

@@ -1,5 +1,5 @@
 const start_time = Date.now();
-const db = require('../db');
+const db = require('../../db');
 const bcrypt = require('bcrypt');
 
 // creating server
@@ -9,11 +9,6 @@ let io = require('socket.io')({
 });
 
 io.connections = {}; // sockets indexed by user_id
-
-
-// creating namespaces
-let chat = require('./chat');
-let game = require('./game');
 
 // authenticate sockets
 let auth = require('socketio-auth')(io, {
@@ -29,7 +24,6 @@ async function postAuthenticate(socket, data) {
     // adding socket to connected users
     io.connections[socket.user_id] = socket;
     console.log(socket.username,'auth');
-
   } catch (err) {
     console.log(err);
   }
@@ -54,7 +48,7 @@ async function authenticate(socket, data, callback) {
     return callback(new Error("Wrong token"));
   } catch(err) {
     console.log(err);
-    return false;
+    return callback(new Error("Server error"));
   }
 }
 
