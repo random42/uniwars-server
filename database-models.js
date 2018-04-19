@@ -63,18 +63,7 @@ const user = {
     "user": "_id",
     "team": "_id", // if necessary
     "created_at": Date.now()
-  }]
-  "news": {
-    "teams": {
-      "invitations": [{
-        "team": "team_id",
-        "user": "user_id"
-      }],
-      "challenges": ["_id"]
-    },
-    "friend_requests": ["_id"],
-    "challenges": ["_id"]
-  },
+  }],
   "online_time": 796,
   "online": true,
   "playing": true,
@@ -142,9 +131,20 @@ const game = {
   "created_at": Date.now(),
   "finished_at": Date.now(),
   "type": "solo", // solo, squad, team
-  "players": ["_id1","_id2"], // matrix for team or squad
+  "side0": ["players_ids"],
+  "side1": ["players_ids"],
+  "players": {
+    "_id": {
+      "index": 0 // index of next question
+      "correct_answers": ["question_id"],
+      "incorrect_answers": ["question_id"],
+    }
+  }
   "teams": ["_id1","_id2"],
+  "questions": ["_ids"],
   "score": false, // true = 1, false = 0, index for the players/teams field
+  "status": "playing", // finished
+  "q_index": 0, // next question to fetch
 }
 
 const question = {

@@ -4,9 +4,7 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const index = require('./routes/index');
 const users = require('./routes/users');
-const game = require('./routes/game');
 const unis = require('./routes/unis');
 const teams = require('./routes/teams');
 const chat = require('./routes/chat');
@@ -35,11 +33,12 @@ app.use(bodyParser.raw({type: 'application/octet-stream'}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// checks user token given at login time for every request
 app.use(security.checkLoginToken);
 
-app.use('/',index);
+//app.use('/',index);
 app.use('/users',users);
-app.use('/game',game);
+//app.use('/game',game);
 app.use('/chat',chat);
 app.use('/unis',unis);
 app.use('/teams',security.checkTeamAdmin,teams);
