@@ -6,9 +6,12 @@ const mm = require('./matchmaking');
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 10;
 const JOIN_TIMEOUT = 100; // ms
-const START_TIMEOUT = 1000;
+const START_TIMEOUT = 1000; //
 const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client received question
+// self-explainatory
 let startingGames = {};
+// started games indexed by _id
+let GAMES = {}
 
 function onSearch(socket,{type}) {
   mm[type].push(socket.user_id);
@@ -18,6 +21,8 @@ function onStopSearch(socket,{type}) {
   mm[type].pull(socket.user_id);
 }
 
+// sends question, sets a callback timeout
+// and and an answer timeout
 async function sendNextQuestion(_id,user) {
   let game = await db.games.findOneAndUpdate(_id,{
     $inc: {
@@ -53,7 +58,7 @@ async function onJoin(socket,_id) {
     if (!(_id in socket.rooms) || _id === socket.id) return // game was cancelled
     console.log('User',socket.user,'joined');
     // adding player to joined array
-    let game = startingGames[_id]
+    let game = GAMES[_id];
     game.joined.push(user)
     if (game.joined.length === game.players.length) {
       clearTimeout(game.joinTimeout);

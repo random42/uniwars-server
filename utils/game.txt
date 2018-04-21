@@ -1,0 +1,15 @@
+all players join
+emit start_game
+client load game preview
+after x secs send first question
+client calls callback // possible hack if client responds too late, set a timeout
+sets answer timeout
+on answer clearTimeout and add question to players.(in)correct_answer array
+on timeout add question to incorrect_answers
+increment player's questions' index
+send next question
+on answer last question:
+if game.isOver() {
+} else {
+
+}

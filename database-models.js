@@ -135,7 +135,7 @@ const game = {
   "side1": ["players_ids"],
   "players": {
     "_id": {
-      "index": 0 // index of next question
+      "index": 0 // index of current question
       "correct_answers": ["question_id"],
       "incorrect_answers": ["question_id"],
     }
@@ -144,7 +144,6 @@ const game = {
   "questions": ["_ids"],
   "score": false, // true = 1, false = 0, index for the players/teams field
   "status": "playing", // finished
-  "q_index": 0, // next question to fetch
 }
 
 const question = {
