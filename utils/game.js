@@ -57,5 +57,4 @@ async function checkToken(_id,token) {
 }
 
 module.exports = {
-  setAnswer, checkToken
 }

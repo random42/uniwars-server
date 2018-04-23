@@ -19,15 +19,17 @@ const user = {
     "name": "GENERAL AGRICULTURE",
     "category": "Agriculture & Natural Resources"
   },
-  "rating": {
-    "general": 1234,
-    "$category": 9434
+  "perf": {
+    "rating": 1234,
+    "rd": 100, // rating deviation
+    "vol": 0.06, // volatility
   },
-  "stats": [{
-    "category": "Engineering",
-    "questions": 3425,
-    "correct": 123
-  }],
+  "stats": {
+    "Engineering": {
+      "hit": 3425,
+      "miss": 123
+    }
+  },
   "picture": {
     "small": "",
     "medium": "",
@@ -79,7 +81,11 @@ const team = {
   "players": ["5abbd98270534c2bf947416c"],
   "admins": [],
   "founder": "5abbd98270534c2bf947416c",
-  "rating": 3214,
+  "perf": {
+    "rating": 1234,
+    "rd": 100, // rating deviation
+    "vol": 0.06, // volatility
+  },
   "challenges": ["team_id"],
   "games": {
     "wins": 12,
@@ -103,7 +109,11 @@ const uni = {
       "unito.it"
   ],
   "country": "Italy",
-  "users": 20,
+  "perf": {
+    "rating": 1234,
+    "rd": 100, // rating deviation
+    "vol": 0.06, // volatility
+  }
 }
 
 const chat = {

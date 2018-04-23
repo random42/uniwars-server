@@ -54,7 +54,7 @@ router.get('/', async function (req,res,next) {
         $project: {
           'uni.web_pages': 0,
           'uni.domains': 0,
-          'uni.rating': 0,
+          'uni.perf': 0,
           'private': 0,
           'news': 0,
           'friends': 0,
@@ -119,14 +119,13 @@ router.get('/top', async function(req,res,next) {
   try {
     let from = parseInt(req.query.from);
     let to = parseInt(req.query.to);
-    let field = req.query.field;
-    field = '$rating.' + field;
+    let field = 'perf.rating'
     let sort = {};
     sort[field] = -1;
     sort = {...sort,...rankSort}
     let projection = {
       username: 1,
-      rating: 1,
+      perf: 1,
       uni: 1,
       picture: 1,
       online: 1,

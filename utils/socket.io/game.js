@@ -6,11 +6,17 @@ const io = require('./io');
 const mm = require('../matchmaking');
 const Game = require('../game-model');
 const utils = require('../game');
+const ratings = require('./ratings')
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 10;
-const JOIN_TIMEOUT = 100; // ms
-const START_TIMEOUT = 1000; //
+const JOIN_TIMEOUT = 100;
+const START_TIMEOUT = 1000;
 const QUESTION_TIMEOUT = 10000; // 10 seconds after client received question
+const RATING_DEFAULT = {
+  rating : 1500,
+  rd : 100,
+  vol : 0.06
+}
 // question timeouts indexed by user _id
 let q_timeouts = {}
 
@@ -97,13 +103,67 @@ function isGameOver(game) {
 
 
 async function endGame(game) {
+  // converting oid to string
+  game = JSON.parse(JSON.stringify(game));
   let players = game.players;
-  let side0 = await db.users.find({
-    _id: {$in: game.side0}
-  },['rating']);
-
+  let questions = game.questions;
+  let side0_points = 0, side1_points = 0
+  for (let q of questions) {
+    q.hit = 0;
+    q.miss = 0;
+  }
+  // adding hit and miss
+  for (let p of players) {
+    p.stats = {};
+    for (let q of questions) {
+      // initialize stats category
+      if (!p.stats[q.category]) p.stats[q.category] = {hit: 0, miss: 0}
+      // add hit or miss to question and player
+      if (q._id in p.correct_answers.map(x => x.question)) {
+        // add point to side
+        p._id in game.side0 ? side0_points++ : side1_points++
+        q.hit++
+        p.stats[q.category].hit++
+      } else {
+        q.miss++
+        p.stats[q.category].miss++
+      }
+    }
+  }
+  // saving result
+  let result;
+  if (side0_points > side1_points) {
+    result = 1
+  } else if (side0_points < side1_points) {
+    result = 0
+  } else {
+    result = 0.5
+  }
+  // new ratings
+  let users = await db.users.find({
+    _id: {$in: Object.keys(players)}
+  },['perf']);
+  users = JSON.parse(JSON.stringify(users));
+  let side0 = users.filter((u) => {
+    return u._id in game.side0
+  })
+  let side1 = users.filter((u) => {
+    return u._id in game.side1
+  })
+  switch (game.type) {
+    case 'solo' : {
+      let a = {...RATING_DEFAULT, ...side0[0].perf}
+      let b = {...RATING_DEFAULT, ...side0[1].perf}
+      console.log('side0 perf:'a)
+      console.log('side1 perf:'b)
+      ratings.soloMatch(a,b,result);
+      
+    }
+    case 'squad' : {
+      // TODO
+    }
+  }
 }
-
 
 async function loseQuestion({game,user,question}) {
   let field = 'players.'+user;

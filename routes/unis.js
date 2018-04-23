@@ -31,7 +31,7 @@ router.get('/top', async function(req,res,next) {
     let query = req.query;
     let from = parseInt(query.from);
     let to = parseInt(query.to);
-    let sortField = req.query.field;
+    let sortField = 'perf.rating'
     let sort = {};
     sort[sortField] = -1;
     sort = {...sort,...rankSort};
@@ -40,12 +40,9 @@ router.get('/top', async function(req,res,next) {
         $group: {
           _id: '$uni',
           users: {$sum: 1},
-          general: {
-              $avg: '$rating.general'
+          rating: {
+              $avg: '$perf.rating'
           },
-          major_category: {
-            $avg: '$rating.major_category'
-          }
         }
       },
       {
@@ -60,11 +57,7 @@ router.get('/top', async function(req,res,next) {
         $unwind: '$uni'
       },
       {
-        $project: {
-          rating: {
-            general: '$general',
-            major_category: '$major_category'
-          },
+        $project: {,
           name: '$uni.name',
           alpha_two_code: '$uni.alpha_two_code',
           users: 1,
@@ -82,8 +75,7 @@ router.get('/top', async function(req,res,next) {
 router.get('/rank', async function(req,res,next) {
   try {
     let name = req.query.name;
-    let field = req.query.field;
-    let queryField = 'rating.'+field;
+    let queryField = 'perf.rating';
     let sort = {};
     sort[queryField] = -1;
     sort = {...sort,...rankSort};
