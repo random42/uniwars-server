@@ -13,3 +13,12 @@ if game.isOver() {
 } else {
 
 }
+
+
+endGame() {
+  get array of questions with hit and miss
+  get users' ratings
+  update questions hit and miss
+  side avg rating
+
+}

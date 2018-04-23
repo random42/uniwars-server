@@ -1,7 +1,6 @@
 const start_time = Date.now();
 const db = require('../../db');
 const bcrypt = require('bcrypt');
-
 // creating server
 let io = require('socket.io')({
   //transports: ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling', 'polling'],
@@ -56,4 +55,8 @@ function disconnect(socket) {
   console.log('disconnecting socket',socket.id);
   delete io.connections[socket.user_id];
 }
+
 module.exports = io;
+
+let game = require('./game');
+let chat = require('./chat');

@@ -21,7 +21,7 @@ const user = {
   },
   "rating": {
     "general": 1234,
-    "major_category": 9434
+    "$category": 9434
   },
   "stats": [{
     "category": "Engineering",
@@ -136,14 +136,17 @@ const game = {
   "players": {
     "_id": {
       "index": 0 // index of current question
-      "correct_answers": ["question_id"],
-      "incorrect_answers": ["question_id"],
+      "correct_answers": [{
+        "question": "_id",
+        "answer": "stringa"
+      }],
+      "incorrect_answers": [{}],
     }
   }
   "teams": ["_id1","_id2"],
   "questions": ["_ids"],
   "score": false, // true = 1, false = 0, index for the players/teams field
-  "status": "playing", // finished
+  "status": "playing", // ended
 }
 
 const question = {
