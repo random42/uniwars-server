@@ -57,7 +57,7 @@ router.get('/top', async function(req,res,next) {
         $unwind: '$uni'
       },
       {
-        $project: {,
+        $project: {
           name: '$uni.name',
           alpha_two_code: '$uni.alpha_two_code',
           users: 1,

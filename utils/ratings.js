@@ -18,15 +18,17 @@ function soloMatch(side0, side1, result) {
   let b = ranking.makePlayer(side1.rating,side1.rd,side1.vol);
   let match = [[a,b,result]];
   ranking.updateRatings(match);
-  return [{
+  return {
+  [side0._id]: {
     rating: a.getRating(),
     rd: a.getRd(),
     vol: a.getVol()
-  },{
+  },
+  [side1._id]: {
     rating: b.getRating(),
     rd: b.getRd(),
     vol: b.getVol()
-  }]
+  }}
 }
 
 function teamMatch(side0, side1, result) {

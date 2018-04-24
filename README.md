@@ -1,4 +1,10 @@
-const user = {
+# Uniwars server
+
+## Database
+
+### User
+```javascript
+{
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
@@ -74,16 +80,19 @@ const user = {
   "playing": true,
   "friends": ["_ids"]
 }
+```
 
-const team = {
+### Team
+``` javascript
+{
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
   "name": "MyTeam",
   "picture": "http://asdasdasd",
-  "players": ["5abbd98270534c2bf947416c"],
+  "players": ["id"],
   "admins": [],
-  "founder": "5abbd98270534c2bf947416c",
+  "founder": "id",
   "perf": {
     "rating": 1234,
     "rd": 100, // rating deviation
@@ -97,8 +106,11 @@ const team = {
   },
   "chat": "_id",
 }
+```
 
-const uni = {
+### University
+``` javascript
+{
   "_id": {
       "$oid": "5a3dac7dfaaa577114d0cfaf"
   },
@@ -113,8 +125,10 @@ const uni = {
   ],
   "country": "Italy"
 }
-
-const chat = {
+```
+### Chat
+``` javascript
+{
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
@@ -122,7 +136,7 @@ const chat = {
   "type": "group",    // group, duo
   "name": "bellaaa", // only for groups
   "messages": [{
-    "_id": "34u893489374893",
+    "_id": "oid",
     "text": "Ciaoo",
     "user": "_id", // taken from participants array
     "created_at": 12309234892,
@@ -131,8 +145,10 @@ const chat = {
   "participants": ["_id"],
   "admins": ["_id"]
 }
-
-const game = {
+```
+### Game
+``` javascript
+{
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
@@ -156,8 +172,10 @@ const game = {
   "result": 1, // 1, 0, 0.5
   "status": "playing", // ended
 }
-
-const question = {
+```
+### Question
+``` javascript
+{
     "_id": {
         "$oid": "5ad10d842d97600cc0f3639c"
     },
@@ -177,3 +195,4 @@ const question = {
     "hit": 123,
     "miss": 333
 }
+```

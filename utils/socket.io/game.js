@@ -6,7 +6,7 @@ const io = require('./io');
 const mm = require('../matchmaking');
 const Game = require('../game-model');
 const utils = require('../game');
-const ratings = require('./ratings')
+const ratings = require('../ratings')
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 10;
 const JOIN_TIMEOUT = 100;
@@ -101,68 +101,146 @@ function isGameOver(game) {
   return sum === max
 }
 
-
 async function endGame(game) {
+  let time = Date.now();
   // converting oid to string
   game = JSON.parse(JSON.stringify(game));
+  let players = Object.keys(game.players);
+  let questions = game.questions.map(q => q._id)
+  let stats = getStats(game);
+  console.log("Stats\n",stats);
+  // fetch users
+  let users = await db.users.find({
+    _id: {$in: players}
+  },['perf','private']);
+  users = JSON.parse(JSON.stringify(users));
+  let side0 = users.filter(u => u._id in game.side0)
+  let side1 = users.filter(u => u._id in game.side1)
+  // calc new ratings
+  let newRatings
+  if (game.type === 'solo') {
+    let a = {_id: side0[0]._id,...RATING_DEFAULT, ...side0[0].perf}
+    let b = {_id: side1[0]._id,...RATING_DEFAULT, ...side1[0].perf}
+    console.log('side0 perf:',a)
+    console.log('side1 perf:',b)
+    newRatings = ratings.soloMatch(a,b,result);
+  } else {
+    // TODO SQUAD
+  }
+  // new stats
+  let newStats = getNewStats(stats.players,users);
+  console.log('New stats:\n',newStats)
+  let q_oids = questions.map(q => monk.id(q));
+  // update database
+  let usersUpdate = users.map(u => {
+    let p = u._id;
+    let resultField
+    if (stats.result === 0.5) resultField = 'draws'
+    else if ((stats.result === 1 && p in game.side0) || (stats.result === 0 && p in game.side1))
+      resultField = 'wins'
+    else resultField = 'losses'
+    return db.users.findOneAndUpdate(p,{
+      $push: {
+        // pushing questions to last_questions
+        'private.last_questions': {
+          $each: q_oids,
+          // maintains a limited number of questions' records
+          $slice: -MAX_QUESTIONS_RECORD
+        },
+        // pushing old rating
+        'activity.$[last_activity].ratings': u.perf.rating
+      },
+      $set: {
+        // add hit miss stats
+        stats: newStats[p],
+        perf: newRatings[p]
+      },
+      // add win/loss/draw to games[type]
+      $inc: {
+        ['games.'+game.type+resultField]: 1
+        ['activity.$[last_activity].games.'+game.type]: 1
+      },
+    },{arrayFilters: [{"last_activity": {'interval.end': {$exists: false}}}]})
+  })
+  let gameUpdate = db.games.findOneAndUpdate(game._id,{
+    $set: {
+      result: stats.result,
+      stats: 'ended',
+      ended_at: Date.now()
+    }
+  })
+  await Promise.all(usersUpdate.concat([gameUpdate]))
+  namespace.in(game._id).emit('end_game',{_id: game._id,...stats});
+}
+
+function getNewStats(stats, users) {
+  let old = {}
+  for (let i in users) {
+    old[users[i]._id] = users[i].stats;
+  }
+  for (let player in stats) {
+    for (let category in stats[player]) {
+      let newStat = stats[player][category]
+      let found = false;
+      for (let i in old[player]) {
+        let stat = old[player][i]
+        if (stat.category === category) {
+          stat.hit += newStat.hit
+          stat.miss += newStat.miss
+          found = true;
+          break;
+        }
+      }
+      !found && old[player].push({category,hit: newStat.hit, miss: newStat.miss})
+    }
+  }
+  return old;
+}
+
+// called in endGame
+function getStats(game) {
+  let stats = {};
+  stats.questions = {};
+  stats.players = {};
   let players = game.players;
   let questions = game.questions;
-  let side0_points = 0, side1_points = 0
-  for (let q of questions) {
-    q.hit = 0;
-    q.miss = 0;
+  for (let i in players) {
+    stats.players[i] = {}
   }
+  for (let i in questions) {
+    stats.questions[questions[i]._id] = {hit: 0, miss:0}
+  }
+  // questions' points that decide result
+  let side0_points = 0, side1_points = 0
   // adding hit and miss
-  for (let p of players) {
-    p.stats = {};
-    for (let q of questions) {
-      // initialize stats category
-      if (!p.stats[q.category]) p.stats[q.category] = {hit: 0, miss: 0}
+  for (let p in players) {
+    stats.players[p] = {}
+    let playerStats = stats.players[p]
+    let player = players[p];
+    for (let q in questions) {
+      let question = questions[q];
+      if (!playerStats[question.category]) playerStats[question.category] = {hit: 0,miss: 0}
       // add hit or miss to question and player
-      if (q._id in p.correct_answers.map(x => x.question)) {
+      if (question._id in p.correct_answers.map(x => x.question)) {
         // add point to side
-        p._id in game.side0 ? side0_points++ : side1_points++
-        q.hit++
-        p.stats[q.category].hit++
+        p in game.side0 ? side0_points++ : side1_points++
+        stats.questions[question._id].hit++
+        playerStats[question.category].hit++
       } else {
-        q.miss++
-        p.stats[q.category].miss++
+        stats.questions[question._id].miss++
+        playerStats[question.category].miss++
       }
     }
   }
   // saving result
-  let result;
   if (side0_points > side1_points) {
-    result = 1
+    stats.result = 1
   } else if (side0_points < side1_points) {
-    result = 0
+    stats.result = 0
   } else {
-    result = 0.5
+    stats.result = 0.5
   }
-  // new ratings
-  let users = await db.users.find({
-    _id: {$in: Object.keys(players)}
-  },['perf']);
-  users = JSON.parse(JSON.stringify(users));
-  let side0 = users.filter((u) => {
-    return u._id in game.side0
-  })
-  let side1 = users.filter((u) => {
-    return u._id in game.side1
-  })
-  switch (game.type) {
-    case 'solo' : {
-      let a = {...RATING_DEFAULT, ...side0[0].perf}
-      let b = {...RATING_DEFAULT, ...side0[1].perf}
-      console.log('side0 perf:'a)
-      console.log('side1 perf:'b)
-      ratings.soloMatch(a,b,result);
-      
-    }
-    case 'squad' : {
-      // TODO
-    }
-  }
+  return stats
 }
 
 async function loseQuestion({game,user,question}) {
