@@ -3,6 +3,7 @@ const monk = require('monk');
 const bcrypt = require('bcrypt');
 const namespace = require('./socket.io/game');
 const mm = require('./matchmaking');
+const Rating = require('./ratings');
 const Utils = require('./utils');
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 5;
@@ -162,7 +163,12 @@ class Game {
     }
   }
 
-  async answer({user,answer}) {
+  emitToPlayer(id, ev, ...message) {
+    namespace.connections.has(id) &&
+    namespace.connections.get(id).emit(ev, ...message)
+  }
+
+  async answer({user, answer}) {
     let player = this.getPlayer(user);
     if (!player) return
     let questions = this.questions;
@@ -191,15 +197,24 @@ class Game {
         }
       }
     })
+    // SQUAD
+    if (this.type !== 'solo') {
+      this.emitToSide(player.side,'mate_answer',{question: oldQuestion._id, answer})
+    }
     if (player.index < questions.length) {
-      this.sendQuestion(player,player.index);
+      this.sendQuestion(player, player.index);
     } else {
       this.isOver() && this.end()
     }
   }
 
-  sendQuestion(player,index) {
-
+  sendQuestion(player, index) {
+    let id = player._id
+    this.emitToPlayer(id, this.questions[index], function(succ) {
+      // callback when question is displayed in client
+      // setting question timeout
+      Game.Q_TIMEOUTS.set(id, setTimeout(this.answer, {user: id, answer: null}))
+    })
   }
 
   connected() {
@@ -229,10 +244,85 @@ class Game {
     return sum === max
   }
 
+
+  /*
+  {
+    players: [{
+      _id: '',
+      points: 1,
+      perf: {
+        rating: 1234,
+        rd: 123,
+        vol: 0.05
+      },
+      stats: [{
+        category: "Engineering",
+        hit: 1,
+        miss: 1
+      }]
+    }],
+    questions: [{
+      _id: '',
+      hit: 1,
+      miss: 10
+    }],
+    result: 1
+  }
+  */
+  getStats(users) {
+    let stats = {}
+    let side0_points = 0, side1_points = 1
+    stats.players = this.players.map((p) => {
+      return {
+        _id: p._id,
+        points: p.correct.length,
+        perf: {},
+        stats: []
+      }
+    });
+    stats.questions = this.questions.map((q) => {
+      return {
+        _id: q._id,
+        hit: 0,
+        miss: 0
+      }
+    })
+    for (let q in this.questions) {
+      let question = this.questions[q]
+      for (let p in this.players) {
+        let player = this.players[p]
+        let category = findObjectByKey(stats.players[p].stats, 'category', question.category)
+        if (!category) {
+          category = {category: question.category, hit: 0, miss: 0}
+          stats.players[p].stats.push(category)
+        }
+        if (findObjectByKey(player.correct, 'question', question._id)) {
+          if (player.side) {
+            side1_points++
+          } else {
+            side0_points++
+          }
+          category.hit++
+          stats.questions[q].hit++
+        } else {
+          category.miss++
+          stats.questions[q].miss++
+        }
+      }
+    }
+    if (side0_points === side1_points) {
+      stats.result = 0.5
+    } else if (side0_points > side1_points) {
+      stats.result = 1
+    } else {
+      stats.result = 0
+    }
+  }
+
   async end() {
     let time = Date.now();
     let players = this.players;
-    let questions = this.questions.map(q => q._id)
+    let questions = this.questions;
     let stats = this.getStats();
     console.log("Stats\n",stats);
     // fetch users
@@ -240,22 +330,9 @@ class Game {
       _id: {$in: players.map(p => p._id)}
     },['perf','private']);
     users = JSON.parse(JSON.stringify(users));
+    for (let )
     let side0 = users.filter(u => u._id in game.side0)
     let side1 = users.filter(u => u._id in game.side1)
-    // calc new ratings
-    let newRatings
-    if (game.type === 'solo') {
-      let a = {_id: side0[0]._id,...RATING_DEFAULT, ...side0[0].perf}
-      let b = {_id: side1[0]._id,...RATING_DEFAULT, ...side1[0].perf}
-      console.log('side0 perf:',a)
-      console.log('side1 perf:',b)
-      newRatings = Ratings.soloMatch(a,b,result);
-    } else {
-      // TODO SQUAD
-    }
-    // new stats
-    let newStats = getNewStats(stats.players,users);
-    console.log('New stats:\n',newStats)
     // questions object ids
     let q_oids = questions.map(q => monk.id(q));
     // update database
