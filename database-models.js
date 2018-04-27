@@ -139,41 +139,39 @@ const game = {
   "created_at": Date.now(),
   "ended_at": Date.now(),
   "type": "solo", // solo, squad, team
-  "side0": ["players_ids"],
-  "side1": ["players_ids"],
-  "players": {
-    "_id": {
-      "index": 0 // index of current question
-      "correct_answers": [{
-        "question": "_id",
-        "answer": "stringa"
-      }],
-      "incorrect_answers": [{}],
-    }
-  }
+  "players": [{
+    "_id" : "",
+    "side": 0,
+    "index": 0 // index of current question
+    "correct": [{
+      "question": "_id",
+      "answer": "stringa"
+    }],
+    "incorrect_answers": [{}],
+  }],
   "teams": ["_id1","_id2"],
   "questions": ["_ids"],
   "result": 1, // 1, 0, 0.5
-  "status": "playing", // ended
+  "status": "play", // end
 }
 
 const question = {
-    "_id": {
-        "$oid": "5ad10d842d97600cc0f3639c"
-    },
-    "source": "https://opentdb.com/",
-    "source_category": "Science: Computers",
-    "category": "Computers & Mathematics",
-    "majors": [],
-    "question": "stringa",
-    "correct_answer": "Instruction",
-    "incorrect_answers": [
-        "Address",
-        "Data",
-        "Control"
-    ],
-    "difficulty": "hard",
-    "language": "en",
-    "hit": 123,
-    "miss": 333
+  "_id": {
+      "$oid": "5ad10d842d97600cc0f3639c"
+  },
+  "source": "https://opentdb.com/",
+  "source_category": "Science: Computers",
+  "category": "Computers & Mathematics",
+  "majors": [],
+  "question": "stringa",
+  "correct_answer": "Instruction",
+  "incorrect_answers": [
+    "Address",
+    "Data",
+    "Control"
+  ],
+  "difficulty": "hard",
+  "language": "en",
+  "hit": 123,
+  "miss": 333
 }

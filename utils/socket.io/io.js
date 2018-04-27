@@ -7,7 +7,7 @@ let io = require('socket.io')({
   serveClient: false,
 });
 
-io.connections = {}; // sockets indexed by user_id
+io.connections = new Map(); // sockets indexed by user_id
 
 // authenticate sockets
 let auth = require('socketio-auth')(io, {
@@ -21,7 +21,7 @@ async function postAuthenticate(socket, data) {
   try {
     let _id = data._id;
     // adding socket to connected users
-    io.connections[socket.user_id] = socket;
+    io.connections.set(socket.user_id, socket)
     console.log(socket.username,'auth');
   } catch (err) {
     console.log(err);
@@ -53,7 +53,7 @@ async function authenticate(socket, data, callback) {
 
 function disconnect(socket) {
   console.log('disconnecting socket',socket.id);
-  delete io.connections[socket.user_id];
+  io.connections.delete(socket.user_id)
 }
 
 module.exports = io;

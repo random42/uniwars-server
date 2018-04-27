@@ -1,6 +1,6 @@
-const socket = require('./game');
 const db = require('../db');
 const monk = require('monk');
+const Game = require('./game-model')
 
 // 1v1
 class Solo {
@@ -29,10 +29,10 @@ class Solo {
 
   match() {
     let players = this.queue.splice(0,2)
-    const side0 = players[0]
-    const side1 = players[1]
+    const side0 = [players[0]]
+    const side1 = [players[1]]
     console.log('Matching',players);
-    //utils.createGame({type: "solo",side0,side1,players: side0.concat(side1)})
+    new Game({side0,side1,type: 'solo'}).create()
   }
 }
 
@@ -65,7 +65,7 @@ class Squad {
     const side0 = players.slice(0,5);
     const side1 = players.slice(5,10);
     console.log('Matching',side0,side1);
-    //utils.createGame({type: "squad",side0,side1,players: side0.concat(side1)})
+    new Game({side0,side1,type: 'squad'}).create()
   }
 }
 

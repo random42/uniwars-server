@@ -4,7 +4,7 @@ const monk = require('monk');
 const bcrypt = require('bcrypt');
 const io = require('./io');
 let chat = io.of('/chat');
-chat.connections = {}; // sockets indexed by user_id
+chat.connections = new Map(); // sockets indexed by user_id
 chat.postAuthenticate = postAuthenticate;
 /*
   msg : {
@@ -17,13 +17,13 @@ chat.postAuthenticate = postAuthenticate;
 chat.on('connect',postAuthenticate);
 
 chat.on('disconnect',function(socket) {
-  delete chat.connections(socket.user_id);
+  chat.connections.delete(socket.user_id);
 })
 
 // chat namespace post authenticate fn
 async function postAuthenticate(socket) {
   if (!socket.auth) return;
-  chat.connections[socket.user_id] = socket;
+  chat.connections.set(socket.user_id, socket);
   // joining rooms
   let user = await db.users.findOne(socket.user_id,'private');
   let chats = user.private.chats;
