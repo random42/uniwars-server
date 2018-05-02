@@ -1,11 +1,13 @@
 const MAX_MSG_LENGTH = 1024;
 const db = require('../../db');
 const monk = require('monk');
+const Utils = require('../utils')
 const bcrypt = require('bcrypt');
 const io = require('./io');
-let chat = io.of('/chat');
-chat.connections = new Map(); // sockets indexed by user_id
-chat.postAuthenticate = postAuthenticate;
+let nsp = io.of('/chat');
+
+nsp.connections = new Map()
+
 /*
   msg : {
     chat: '_id',
@@ -14,19 +16,14 @@ chat.postAuthenticate = postAuthenticate;
   }
 */
 
-chat.on('connect',postAuthenticate);
+nsp.postAuthenticate = postAuthenticate;
 
-chat.on('disconnect',function(socket) {
-  chat.connections.delete(socket.user_id);
-})
-
-// chat namespace post authenticate fn
+// chat nsp post authenticate fn
 async function postAuthenticate(socket) {
-  if (!socket.auth) return;
-  chat.connections.set(socket.user_id, socket);
   // joining rooms
-  let user = await db.users.findOne(socket.user_id,'private');
-  let chats = user.private.chats;
+  let doc = await db.users.findOne(socket.user_id,'private.chats');
+  doc = Utils.stringifyIds(doc);
+  let chats = doc.private.chats;
   for (let i in chats) {
     socket.join(chats[i]);
   }
@@ -72,4 +69,4 @@ async function insertMsg(msg,chat,_id) {
 
 }
 
-module.exports = chat;
+module.exports = nsp;

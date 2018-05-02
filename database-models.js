@@ -132,6 +132,7 @@ const chat = {
   "admins": ["_id"]
 }
 
+// fields with * will be deleted after game ending
 const game = {
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
@@ -142,15 +143,18 @@ const game = {
   "players": [{
     "_id" : "",
     "side": 0,
-    "index": 0 // index of current question
+    "index": 0 * // index of current question
     "correct": [{
       "question": "_id",
       "answer": "stringa"
     }],
     "incorrect_answers": [{}],
+    "picture": '', *
+    "username": '', *
+    "rating": 1234 *
   }],
   "teams": ["_id1","_id2"],
-  "questions": ["_ids"],
+  "questions": ["_ids"], // full object during game
   "result": 1, // 1, 0, 0.5
   "status": "play", // end
 }
@@ -163,7 +167,7 @@ const question = {
   "source_category": "Science: Computers",
   "category": "Computers & Mathematics",
   "majors": [],
-  "question": "stringa",
+  "question": "The Harvard architecture for micro-controllers added which additional bus?",
   "correct_answer": "Instruction",
   "incorrect_answers": [
     "Address",

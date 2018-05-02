@@ -20,7 +20,7 @@ module.exports = {
         return i
       }
     }
-    return false
+    return undefined
   },
 
   findObjectByKey(array,key,value) {
@@ -29,7 +29,7 @@ module.exports = {
         return i
       }
     }
-    return false
+    return undefined
   },
 
   stringifyIds(obj) {

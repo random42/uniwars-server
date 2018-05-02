@@ -13,26 +13,28 @@ let settings = {
 };
 let ranking = new glicko2.Glicko2(settings);
 
-function soloMatch(side0, side1, result) {
+function soloMatch([side0], [side1], result) {
+  side0 = side0.perf, side1 = side1.perf
   let a = ranking.makePlayer(side0.rating,side0.rd,side0.vol);
   let b = ranking.makePlayer(side1.rating,side1.rd,side1.vol);
   let match = [[a,b,result]];
   ranking.updateRatings(match);
   return {
-  [side0._id]: {
-    rating: a.getRating(),
-    rd: a.getRd(),
-    vol: a.getVol()
-  },
-  [side1._id]: {
-    rating: b.getRating(),
-    rd: b.getRd(),
-    vol: b.getVol()
-  }}
+    side0: {
+      rating: a.getRating(),
+      rd: a.getRd(),
+      vol: a.getVol()
+    },
+    side1: {
+      rating: b.getRating(),
+      rd: b.getRd(),
+      vol: b.getVol()
+    }
+  }
 }
 
-function teamMatch(side0, side1, result) {
+function squadMatch(side0, side1, result) {
 
 }
 
-module.exports = {soloMatch, teamMatch}
+module.exports = {soloMatch, squadMatch}

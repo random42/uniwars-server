@@ -1,4 +1,4 @@
 module.exports = function() {
-  //console.log('Test')
+  //.log('Test')
   //let game = require('./game');
 }

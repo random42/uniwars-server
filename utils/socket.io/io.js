@@ -7,42 +7,54 @@ let io = require('socket.io')({
   serveClient: false,
 });
 
-io.connections = new Map(); // sockets indexed by user_id
+// authenticated sockets indexed by user_id
+io.connections = new Map();
 
 // authenticate sockets
-let auth = require('socketio-auth')(io, {
+let auth = require('./auth')(io, {
   authenticate,
   postAuthenticate,
   disconnect,
   timeout: 1000
 })
 
-async function postAuthenticate(socket, data) {
-  try {
-    let _id = data._id;
-    // adding socket to connected users
-    io.connections.set(socket.user_id, socket)
-    console.log(socket.username,'auth');
-  } catch (err) {
-    console.log(err);
+function postAuthenticate(socket, data) {
+  console.log(socket.id);
+  let _id = data._id;
+  // adding socket to connected users
+  io.connections.set(socket.user_id, socket)
+  // adding namespace socket to connections
+  for (let i in io.nsps) {
+    let nsp = io.nsps[i];
+    let id = i + '#' + socket.id;
+    let s = nsp.connected[id];
+    if (s) {
+      console.log(id);
+      s.user_id = _id;
+      nsp.connections.set(_id, s)
+      nsp.postAuthenticate(s);
+    }
   }
+  console.log(socket.username,'auth');
 }
 
 async function authenticate(socket, data, callback) {
+  //return callback(true)
   try {
+    console.log('Auth in progress', data)
     let _id = data._id;
-    let token = data.login_token;
+    let token = data.token;
     let user = await db.users.findOne(_id,['username','private']);
     if (!user) return callback(new Error("User not found"));
-    // UNCOMMENT NOT TO CHECK TOKEN
-    // socket.user_id = _id;
-    // socket.username = user.username;
-    // return callback(null,true);
+    //UNCOMMENT NOT TO CHECK TOKEN
+    socket.user_id = _id;
+    socket.username = user.username;
+    return callback();
     let right = await bcrypt.compare(token,user.private.login_token);
     if (right) {
       socket.user_id = _id;
       socket.username = user.username;
-      return callback(null,true);
+      return callback();
     }
     return callback(new Error("Wrong token"));
   } catch(err) {
@@ -52,7 +64,7 @@ async function authenticate(socket, data, callback) {
 }
 
 function disconnect(socket) {
-  console.log('disconnecting socket',socket.id);
+  console.log('disconnecting socket',socket.user_id);
   io.connections.delete(socket.user_id)
 }
 

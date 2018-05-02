@@ -213,10 +213,19 @@ router.get('/picture',async function (req,res,next) {
   try {
     let _id = req.query._id;
     let size = req.query.size;
-    if (!_id) {
+    if (!_id || (size && !(size in picSize))) {
       res.sendStatus(400);
+      return
     }
-    let user = await db.users.findOne({_id},'picture');
+    let user = await db.users.findOne(_id,'picture');
+    if (!user) {
+      res.sendStatus(404)
+      return
+    }
+    if (typeof user.picture === 'string') {
+      res.redirect(user.picture);
+      return
+    }
     let picture = user.picture[size];
     res.redirect(picture);
   } catch (err) {

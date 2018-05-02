@@ -14,7 +14,7 @@ const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client recei
 /*
 {
   _id: '',
-  players: [{_id, side: 0, index: -1, correct, incorrect}],
+  players: [{_id, side: 0, index: -1, correct, incorrect, picture, username, rating, }],
   type: 'solo',
   status: null,
   teams: []
@@ -25,16 +25,8 @@ class Game {
   constructor({_id, side0, side1, type, teams}) {
     // if _id is present the game gets fetched from database
     if (_id) {
-      return new Promise((res,rej) => {
-        db.games.findOne(_id).then((game) => {
-          if (!game) throw new Error("Game does not exist")
-          game = Utils.stringifyIds(game);
-          for (let i in game) {
-            this[i] = game[i]
-          }
-          res(this)
-        }).catch(err => rej(err))
-      })
+      this._id = _id;
+      return this.init()
     }
     // else the game is created
     this._id = monk.id().toString();
@@ -51,6 +43,35 @@ class Game {
       })
     }
     if (teams) this.teams = teams;
+  }
+
+  async init() {
+    // called at game.start()
+    if (this.players) {
+      let getUsers = db.users.find({
+        _id: {$in: this.players.map(p => p._id)}
+      },['username','perf','picture']).then((users) => {
+        for (let u of users) {
+          let player = this.getPlayer(u._id.toString());
+          player.rating = u.perf.rating;
+          player.picture = u.picture;
+          player.username = u.username;
+        }
+      });
+      if (this.teams) {
+        // TODO
+      }
+      await Promise.all([getUsers, this.createQuestions()])
+    }
+    // called in constructor
+    else {
+      let game = await db.games.findOne(_id);
+      if (!game) throw new Error("Game does not exist")
+      game = Utils.stringifyIds(game);
+      for (let i in game) {
+        this[i] = game[i]
+      }
+    }
   }
 
   // return false if at least one player is not connected
@@ -72,7 +93,7 @@ class Game {
       namespace.connections.get(p._id).join(this._id);
     }
     // emitting new_game message
-    this.emit('new_game',this._id);
+    this.emit('new_game', this._id, this.type);
     // setting timeout of 'join' event
     this.joinTimeout = setTimeout(this.cancel,JOIN_TIMEOUT);
     return this;
@@ -86,6 +107,8 @@ class Game {
       if (length === this.players.length) {
         // start game
         clearTimeout(this.joinTimeout);
+        delete this.joined;
+        delete this.joinTimeout;
         // delete game from RAM,
         // from now on all read and write is done in db
         Game.GAMES.delete(this._id)
@@ -119,7 +142,7 @@ class Game {
     try {
       this.status = 'play';
       console.log('Starting game')
-      let ops = await this.createQuestions()
+      await this.init()
       this.created_at = Date.now();
       // pushing into the db
       await db.games.insert(this);
@@ -131,11 +154,14 @@ class Game {
       });
       // set timeout for emitting first question
       setTimeout(() => {
-        this.emit('question',)
+        for (let p of this.players) {
+          sendQuestion(p,0)
+        }
       },START_TIMEOUT)
     } catch(err) {
       console.log(err)
     }
+  }
 
   cancel() {
     if (this.status in ['play','end']) return
@@ -213,6 +239,7 @@ class Game {
     this.emitToPlayer(id, this.questions[index], function(succ) {
       // callback when question is displayed in client
       // setting question timeout
+      console.log('Setting question timeout');
       Game.Q_TIMEOUTS.set(id, setTimeout(this.answer, {user: id, answer: null}))
     })
   }
@@ -220,7 +247,9 @@ class Game {
   connected() {
     let arr = [];
     for (let p of this.players) {
-      if (namespace.connections.get(p._id) arr.push(p._id)
+      if (namespace.connections.has(p._id)) {
+        arr.push(p._id)
+      }
     }
     return arr;
   }
@@ -243,7 +272,6 @@ class Game {
     }
     return sum === max
   }
-
 
   /*
   {
@@ -270,14 +298,24 @@ class Game {
   }
   */
   getStats(users) {
-    let stats = {}
-    let side0_points = 0, side1_points = 1
+    let stats = {},
+    side0_points = 0,
+    side1_points = 0
     stats.players = this.players.map((p) => {
+      let user = Utils.findObjectById(users, p._id)
+      let points = p.correct.length
+      let side = p.side
+      if (side === 0) {
+        side0_points += points
+      } else {
+        side1_points += points
+      }
       return {
         _id: p._id,
-        points: p.correct.length,
-        perf: {},
-        stats: []
+        side,
+        points,
+        perf: user.perf,
+        stats: user.stats || []
       }
     });
     stats.questions = this.questions.map((q) => {
@@ -287,35 +325,48 @@ class Game {
         miss: 0
       }
     })
+    // calculating stats
     for (let q in this.questions) {
       let question = this.questions[q]
+      let q_stats = stats.questions[q]
       for (let p in this.players) {
         let player = this.players[p]
-        let category = findObjectByKey(stats.players[p].stats, 'category', question.category)
+        let p_stats = stats.players[p]
+        let category = Utils.findObjectByKey(p_stats.stats, 'category', question.category)
         if (!category) {
           category = {category: question.category, hit: 0, miss: 0}
-          stats.players[p].stats.push(category)
+          p_stats.stats.push(category)
         }
-        if (findObjectByKey(player.correct, 'question', question._id)) {
-          if (player.side) {
-            side1_points++
-          } else {
-            side0_points++
-          }
+        if (Utils.findObjectByKey(player.correct, 'question', question._id)) {
           category.hit++
-          stats.questions[q].hit++
+          q_stats.hit++
         } else {
           category.miss++
-          stats.questions[q].miss++
+          q_stats.miss++
         }
       }
     }
+    // result
     if (side0_points === side1_points) {
       stats.result = 0.5
     } else if (side0_points > side1_points) {
       stats.result = 1
     } else {
       stats.result = 0
+    }
+    // ratings
+    let side0 = stats.players.filter((p) => p.side === 0)
+    let side1 = stats.players.filter((p) => p.side === 1)
+    switch (this.type) {
+      case 'solo': {
+        let ratings = Rating.soloMatch(side0, side1, stats.result);
+        side0.perf = ratings.side0;
+        side1.perf = ratings.side1;
+        break
+      }
+      case 'team': {
+
+      }
     }
   }
 
@@ -329,23 +380,21 @@ class Game {
     let users = await db.users.find({
       _id: {$in: players.map(p => p._id)}
     },['perf','private']);
-    users = JSON.parse(JSON.stringify(users));
-    for (let )
-    let side0 = users.filter(u => u._id in game.side0)
-    let side1 = users.filter(u => u._id in game.side1)
+    users = Utils.stringifyIds(users);
     // questions object ids
-    let q_oids = questions.map(q => monk.id(q));
+    let q_oids = questions.map(q => monk.id(q._id));
     // update database
-    let usersUpdate = users.map(u => {
-      let p = u._id;
-      let resultField
+    let usersUpdate = stats.players.map(p => {
+      let u = Utils.findObjectById(users, p._id);
+      let resultField;
       if (stats.result === 0.5) resultField = 'draws'
-      else if ((stats.result === 1 && p in game.side0) || (stats.result === 0 && p in game.side1))
+      else if ((stats.result === 1 && !p.side) || (stats.result === 0 && p.side))
         resultField = 'wins'
       else resultField = 'losses'
       return db.users.findOneAndUpdate(p,{
         $push: {
           // pushing questions to last_questions
+          // no need of $addToSet as questions cannot match
           'private.last_questions': {
             $each: q_oids,
             // maintains a limited number of questions' records
@@ -356,28 +405,34 @@ class Game {
         },
         $set: {
           // add hit miss stats
-          stats: newStats[p],
+          stats: p.stats,
           // change rating
-          perf: newRatings[p]
+          perf: p.perf
         },
         // add win/loss/draw to games[type]
         $inc: {
-          ['games.'+game.type+resultField]: 1,
-          ['activity.$[last_activity].games.'+game.type]: 1
+          ['games.'+this.type+'.'+resultField]: 1,
+          ['activity.$[last_activity].games.'+this.type]: 1
         },
       },
       // filters array to get the current activity
       {arrayFilters: [{"last_activity": {'interval.end': {$exists: false}}}]})
     })
-    let gameUpdate = db.games.findOneAndUpdate(game._id,{
+    let gameUpdate = db.games.findOneAndUpdate(this._id,{
       $set: {
         result: stats.result,
         status: 'ended',
         ended_at: Date.now()
       }
     })
-    await Promise.all(usersUpdate.concat([gameUpdate]))
-    namespace.in(game._id).emit('end_game',{_id: game._id,...stats});
+    let questionsUpdate = stats.questions.map(q => {
+      let _id = q._id;
+      return db.questions.findOneAndUpdate(_id,
+        // increment hit and miss
+        {$inc: {hit,miss}})
+    })
+    await Promise.all(usersUpdate.concat([gameUpdate].concat(questionsUpdate)))
+    this.emit('end_game',{_id: this._id, ...stats});
   }
 }
 
