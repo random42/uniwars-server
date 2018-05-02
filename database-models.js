@@ -151,7 +151,7 @@ const game = {
     "incorrect_answers": [{}],
     "picture": '', *
     "username": '', *
-    "rating": 1234 *
+    "perf": {} *
   }],
   "teams": ["_id1","_id2"],
   "questions": ["_ids"], // full object during game

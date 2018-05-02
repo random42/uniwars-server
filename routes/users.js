@@ -17,6 +17,11 @@ const majors = require('../../data/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
 const extern_login = ['facebook.com','google.com'];
 const Rank = require('../utils/rank');
+const DEFAULT_PERF = {
+  rating: 1500,
+  rd: 100,
+  vol: 0.06
+}
 const rankSort = {
   'games.solo': -1
 }
@@ -261,6 +266,9 @@ router.post('/register', async function(req, res, next) {
       user.uni = uni._id;
       if (user.first_name && user.last_name) user.full_name = user.first_name+' '+user.last_name;
       user.private = {};
+      user.perf = DEFAULT_PERF;
+      user.activity = [];
+      user.friends = [];
       if (user.phone_number) {
         user.private.phone_number = user.phone_number;
         delete user.phone_number;

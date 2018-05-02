@@ -1,9 +1,3 @@
-const db = require('../db');
-const monk = require('monk');
-const bcrypt = require('bcrypt');
-const namespace = require('./socket.io/game');
-const mm = require('./matchmaking');
-
 module.exports = {
   findIndexById(array,id) {
     for (let i in array) {
@@ -14,7 +8,7 @@ module.exports = {
     return -1
   },
 
-  findObjectById(array,id) {
+  findObjectById: (array,id) => {
     for (let i of array) {
       if (i._id === id) {
         return i

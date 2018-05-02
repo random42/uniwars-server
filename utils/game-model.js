@@ -8,13 +8,13 @@ const Utils = require('./utils');
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 5;
 const JOIN_TIMEOUT = 100; // ms
-const START_TIMEOUT = 5000; //
+const START_TIMEOUT = 1000; //
 const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client received question
 
 /*
 {
   _id: '',
-  players: [{_id, side: 0, index: -1, correct, incorrect, picture, username, rating, }],
+  players: [{_id, side: 0 | 1, index: 0, correct, incorrect, picture, username, perf}],
   type: 'solo',
   status: null,
   teams: []
@@ -28,7 +28,7 @@ class Game {
       this._id = _id;
       return this.init()
     }
-    // else the game is created
+    // else the game is created from the other params
     this._id = monk.id().toString();
     this.type = type;
     this.status = null;
@@ -36,8 +36,8 @@ class Game {
     for (let id of side0.concat(side1)) {
       this.players.push({
         _id: id,
-        side: id in side0 ? 0 : 1,
-        index: -1, // current question index
+        side: side0.indexOf(id) >= 0 ? 0 : 1,
+        index: 0, // current question index
         correct: [],
         incorrect: []
       })
@@ -53,7 +53,7 @@ class Game {
       },['username','perf','picture']).then((users) => {
         for (let u of users) {
           let player = this.getPlayer(u._id.toString());
-          player.rating = u.perf.rating;
+          player.perf = u.perf;
           player.picture = u.picture;
           player.username = u.username;
         }
@@ -65,13 +65,14 @@ class Game {
     }
     // called in constructor
     else {
-      let game = await db.games.findOne(_id);
+      let game = await db.games.findOne(this._id);
       if (!game) throw new Error("Game does not exist")
       game = Utils.stringifyIds(game);
       for (let i in game) {
         this[i] = game[i]
       }
     }
+    return this;
   }
 
   // return false if at least one player is not connected
@@ -95,7 +96,7 @@ class Game {
     // emitting new_game message
     this.emit('new_game', this._id, this.type);
     // setting timeout of 'join' event
-    this.joinTimeout = setTimeout(this.cancel,JOIN_TIMEOUT);
+    this.joinTimeout = setTimeout(this.cancel.bind(this),JOIN_TIMEOUT);
     return this;
   }
 
@@ -152,10 +153,11 @@ class Game {
         ...this,
         questions: undefined,
       });
+      this.stringify();
       // set timeout for emitting first question
       setTimeout(() => {
         for (let p of this.players) {
-          sendQuestion(p,0)
+          this.sendQuestion(p,0)
         }
       },START_TIMEOUT)
     } catch(err) {
@@ -194,22 +196,25 @@ class Game {
     namespace.connections.get(id).emit(ev, ...message)
   }
 
-  async answer({user, answer}) {
+  async answer({user, question, answer}) {
     let player = this.getPlayer(user);
     if (!player) return
     let questions = this.questions;
-    // checks the user has a question to answer
-    if (index < 0 || index === questions.length) return
-    // clears question timeout
-    clearTimeout(q_timeouts.get(user));
+    // checks if the user has a question to answer
+    if (player.index >= questions.length) return
     let oldQuestion = questions[player.index];
+    // wrong question
+    if (question !== oldQuestion._id) return
+    console.log('Answer',user)
+    // clears question timeout
+    clearTimeout(Game.Q_TIMEOUTS.get(user));
     // checks answer
     let correct = answer === oldQuestion.correct_answer ? 'correct' : 'incorrect';
     player.index++
     // update database
     await db.games.findOneAndUpdate({
       _id: this._id,
-      players: {_id: user}
+      'players._id': monk.id(user)
     },{
       // increment questions' index
       $inc: {
@@ -218,7 +223,7 @@ class Game {
       // push answer
       $push: {
         ['players.$.'+correct]: {
-          question: monk.id(question._id),
+          question: monk.id(question),
           answer
         }
       }
@@ -236,11 +241,11 @@ class Game {
 
   sendQuestion(player, index) {
     let id = player._id
-    this.emitToPlayer(id, this.questions[index], function(succ) {
+    this.emitToPlayer(id, 'question', this.questions[index], (succ) => {
       // callback when question is displayed in client
       // setting question timeout
-      console.log('Setting question timeout');
-      Game.Q_TIMEOUTS.set(id, setTimeout(this.answer, {user: id, answer: null}))
+      Game.Q_TIMEOUTS.set(id,
+        setTimeout(this.answer.bind(this), QUESTION_TIMEOUT, {user: id, answer: null}))
     })
   }
 
@@ -255,7 +260,8 @@ class Game {
   }
 
   getPlayer(_id) {
-    return Utils.findObjectById(this.players,_id)
+    let p = Utils.findObjectById(this.players,_id)
+    return p
   }
 
   isPlayer(_id) {
@@ -302,7 +308,7 @@ class Game {
     side0_points = 0,
     side1_points = 0
     stats.players = this.players.map((p) => {
-      let user = Utils.findObjectById(users, p._id)
+      let u = Utils.findObjectById(users, p._id)
       let points = p.correct.length
       let side = p.side
       if (side === 0) {
@@ -314,8 +320,8 @@ class Game {
         _id: p._id,
         side,
         points,
-        perf: user.perf,
-        stats: user.stats || []
+        perf: p.perf,
+        stats: u.stats || []
       }
     });
     stats.questions = this.questions.map((q) => {
@@ -368,19 +374,21 @@ class Game {
 
       }
     }
+    return stats;
   }
 
   async end() {
-    let time = Date.now();
+    console.log('Ending game')
+    console.time('end')
     let players = this.players;
     let questions = this.questions;
-    let stats = this.getStats();
-    console.log("Stats\n",stats);
     // fetch users
     let users = await db.users.find({
       _id: {$in: players.map(p => p._id)}
-    },['perf','private']);
+    },['perf','private','stats']);
     users = Utils.stringifyIds(users);
+    let stats = this.getStats(users);
+    console.log("Stats\n",stats);
     // questions object ids
     let q_oids = questions.map(q => monk.id(q._id));
     // update database
@@ -391,7 +399,14 @@ class Game {
       else if ((stats.result === 1 && !p.side) || (stats.result === 0 && p.side))
         resultField = 'wins'
       else resultField = 'losses'
-      return db.users.findOneAndUpdate(p,{
+      return db.users.findOneAndUpdate({
+        _id: p._id,
+        activity: {
+          $elemMatch: {
+            'interval.end': {$exists: false}
+          }
+        }
+      },{
         $push: {
           // pushing questions to last_questions
           // no need of $addToSet as questions cannot match
@@ -401,7 +416,7 @@ class Game {
             $slice: -MAX_QUESTIONS_RECORD
           },
           // pushing old rating
-          'activity.$[last_activity].ratings': u.perf.rating
+          'activity.$.ratings': u.perf.rating
         },
         $set: {
           // add hit miss stats
@@ -412,27 +427,39 @@ class Game {
         // add win/loss/draw to games[type]
         $inc: {
           ['games.'+this.type+'.'+resultField]: 1,
-          ['activity.$[last_activity].games.'+this.type]: 1
+          ['activity.$.games.'+this.type]: 1
         },
-      },
-      // filters array to get the current activity
-      {arrayFilters: [{"last_activity": {'interval.end': {$exists: false}}}]})
+      },)
     })
     let gameUpdate = db.games.findOneAndUpdate(this._id,{
       $set: {
         result: stats.result,
         status: 'ended',
-        ended_at: Date.now()
+        ended_at: Date.now(),
+        // keeping only the minimum
+        questions: q_oids,
+      },
+      $unset: {
+        'players.$[].index': "",
+        'players.$[].picture': "",
+        'players.$[].username': "",
       }
     })
     let questionsUpdate = stats.questions.map(q => {
-      let _id = q._id;
-      return db.questions.findOneAndUpdate(_id,
+      return db.questions.findOneAndUpdate(q._id,
         // increment hit and miss
-        {$inc: {hit,miss}})
+        {$inc: {hit: q.hit,miss: q.miss}})
     })
     await Promise.all(usersUpdate.concat([gameUpdate].concat(questionsUpdate)))
     this.emit('end_game',{_id: this._id, ...stats});
+    console.timeEnd('end');
+  }
+
+  stringify() {
+    let g = Utils.stringifyIds(this);
+    for (let i in g) {
+      this[i] = g[i];
+    }
   }
 }
 
