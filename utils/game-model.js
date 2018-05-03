@@ -205,12 +205,14 @@ class Game {
     let oldQuestion = questions[player.index];
     // wrong question
     if (question !== oldQuestion._id) return
-    console.log('Answer',user)
+    console.log('Answer',user, answer)
     // clears question timeout
     clearTimeout(Game.Q_TIMEOUTS.get(user));
     // checks answer
     let correct = answer === oldQuestion.correct_answer ? 'correct' : 'incorrect';
+    // modifies the object too in case game ends
     player.index++
+    player[correct].push({question, answer})
     // update database
     await db.games.findOneAndUpdate({
       _id: this._id,
@@ -233,19 +235,20 @@ class Game {
       this.emitToSide(player.side,'mate_answer',{question: oldQuestion._id, answer})
     }
     if (player.index < questions.length) {
-      this.sendQuestion(player, player.index);
+      this.sendQuestion(player);
     } else {
       this.isOver() && this.end()
     }
   }
 
-  sendQuestion(player, index) {
+  sendQuestion(player) {
     let id = player._id
-    this.emitToPlayer(id, 'question', this.questions[index], (succ) => {
+    let question = this.questions[player.index]
+    this.emitToPlayer(id, 'question', question, (succ) => {
       // callback when question is displayed in client
       // setting question timeout
       Game.Q_TIMEOUTS.set(id,
-        setTimeout(this.answer.bind(this), QUESTION_TIMEOUT, {user: id, answer: null}))
+        setTimeout(this.answer.bind(this), QUESTION_TIMEOUT, {user: id, question: question._id, answer: null}))
     })
   }
 
@@ -366,8 +369,8 @@ class Game {
     switch (this.type) {
       case 'solo': {
         let ratings = Rating.soloMatch(side0, side1, stats.result);
-        side0.perf = ratings.side0;
-        side1.perf = ratings.side1;
+        side0[0].perf = ratings.side0;
+        side1[0].perf = ratings.side1;
         break
       }
       case 'team': {
@@ -379,6 +382,7 @@ class Game {
 
   async end() {
     console.log('Ending game')
+    console.log(JSON.stringify(this, null, 3));
     console.time('end')
     let players = this.players;
     let questions = this.questions;
@@ -387,9 +391,10 @@ class Game {
       _id: {$in: players.map(p => p._id)}
     },['perf','private','stats']);
     users = Utils.stringifyIds(users);
+    // get stats
     let stats = this.getStats(users);
-    console.log("Stats\n",stats);
-    // questions object ids
+    console.log(JSON.stringify(stats, null, 3));
+    // questions object ids to put in db
     let q_oids = questions.map(q => monk.id(q._id));
     // update database
     let usersUpdate = stats.players.map(p => {
@@ -439,6 +444,7 @@ class Game {
         // keeping only the minimum
         questions: q_oids,
       },
+      // not possible in MongoDB 3.4
       $unset: {
         'players.$[].index': "",
         'players.$[].picture': "",

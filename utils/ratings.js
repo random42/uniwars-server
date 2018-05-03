@@ -11,6 +11,7 @@ let settings = {
   //vol : Default volatility (expected fluctation on the player rating)
   vol : 0.06
 };
+
 let ranking = new glicko2.Glicko2(settings);
 
 function soloMatch([side0], [side1], result) {
