@@ -5,6 +5,7 @@ const namespace = require('./socket.io/game');
 const mm = require('./matchmaking');
 const Rating = require('./ratings');
 const Utils = require('./utils');
+const debug = require('debug')('game')
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 5;
 const JOIN_TIMEOUT = 100; // ms
@@ -23,16 +24,17 @@ const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client recei
 
 class Game {
   constructor({_id, side0, side1, type, teams}) {
-    // if _id is present the game gets fetched from database
+    // if _id is present the game must be fetched from database
     if (_id) {
       this._id = _id;
-      return this.init()
+      return
     }
     // else the game is created from the other params
     this._id = monk.id().toString();
     this.type = type;
     this.status = null;
     this.players = [];
+    // next line assures that side0 is [0,length/2] and side1...
     for (let id of side0.concat(side1)) {
       this.players.push({
         _id: id,
@@ -45,32 +47,44 @@ class Game {
     if (teams) this.teams = teams;
   }
 
+  // fetch users, teams, create questions
   async init() {
-    // called at game.start()
-    if (this.players) {
-      let getUsers = db.users.find({
-        _id: {$in: this.players.map(p => p._id)}
-      },['username','perf','picture']).then((users) => {
-        for (let u of users) {
-          let player = this.getPlayer(u._id.toString());
-          player.perf = u.perf;
-          player.picture = u.picture;
-          player.username = u.username;
-        }
-      });
-      if (this.teams) {
-        // TODO
+    let ops = []
+    let getUsers = db.users.find({
+      _id: {$in: this.players.map(p => p._id)}
+    },['username','perf','picture']).then((users) => {
+      for (let u of users) {
+        let player = this.getPlayer(u._id.toString());
+        player.perf = u.perf;
+        player.picture = u.picture;
+        player.username = u.username;
       }
-      await Promise.all([getUsers, this.createQuestions()])
+    });
+    ops.push(getUsers);
+    if (this.teams) {
+      let teams = db.teams.find({
+        _id: {$in: this.teams},
+      },
+      {
+        name: 1,
+        picture: 1,
+        perf: 1
+      }).then(() => {
+        this.teams = teams;
+      })
+      ops.push(teams)
     }
-    // called in constructor
-    else {
-      let game = await db.games.findOne(this._id);
-      if (!game) throw new Error("Game does not exist")
-      game = Utils.stringifyIds(game);
-      for (let i in game) {
-        this[i] = game[i]
-      }
+    ops.push(this.createQuestions());
+    await Promise.all(ops)
+  }
+
+  // fetch game from db
+  async fetch() {
+    let game = await db.games.findOne(this._id);
+    if (!game) throw new Error("Game does not exist")
+    game = Utils.stringifyIds(game);
+    for (let i in game) {
+      this[i] = game[i]
     }
     return this;
   }
@@ -137,29 +151,32 @@ class Game {
       }},
       {$sample: {size: QUESTIONS_NUM}},
     ]);
+    // couldn't quite do it with one aggregation pipeline
   }
 
   async start() {
     try {
       this.status = 'play';
       console.log('Starting game')
+      // fetch users and teams docs, creates questions
       await this.init()
       this.created_at = Date.now();
       // pushing into the db
       await db.games.insert(this);
       // let's not inform the client about the questions' _ids
       // sending start_game event
+      this.stringify();
       this.emit('start_game',{
         ...this,
         questions: undefined,
       });
-      this.stringify();
+      debug(this)
       // set timeout for emitting first question
       setTimeout(() => {
         for (let p of this.players) {
           this.sendQuestion(p,0)
         }
-      },START_TIMEOUT)
+      }, START_TIMEOUT)
     } catch(err) {
       console.log(err)
     }
@@ -197,23 +214,25 @@ class Game {
   }
 
   async answer({user, question, answer}) {
+    debug('Answer',user, answer)
+    console.time('answer');
     let player = this.getPlayer(user);
     if (!player) return
     let questions = this.questions;
     // checks if the user has a question to answer
     if (player.index >= questions.length) return
-    let oldQuestion = questions[player.index];
+    let realQuestion = questions[player.index];
     // wrong question
-    if (question !== oldQuestion._id) return
-    console.log('Answer',user, answer)
+    if (question !== realQuestion._id) return
+    debug(JSON.stringify(arguments[0]))
     // clears question timeout
     clearTimeout(Game.Q_TIMEOUTS.get(user));
     // checks answer
-    let correct = answer === oldQuestion.correct_answer ? 'correct' : 'incorrect';
+    let correct = answer === realQuestion.correct_answer ? 'correct' : 'incorrect';
     // modifies the object too in case game ends
     player.index++
     player[correct].push({question, answer})
-    // update database
+    // update game database
     await db.games.findOneAndUpdate({
       _id: this._id,
       'players._id': monk.id(user)
@@ -230,18 +249,43 @@ class Game {
         }
       }
     })
+    // checks if game is over
+    if (player.index === questions.length && this.isOver())
+      return this.end()
     // SQUAD
     if (this.type !== 'solo') {
-      this.emitToSide(player.side,'mate_answer',{question: oldQuestion._id, answer})
+      this.emitToSide(player.side,'mate_answer',{
+        user: player._id,
+        question: realQuestion._id,
+        answer
+      })
+
+      // if all side's players answered, send next question
+      let all = true;
+      let start = player.side ? half_length : 0
+      let length = this.players.length
+      for (let i = start; i < length && all; i++) {
+        if (this.players[i].index !== player.index) {
+          all = false;
+        }
+      }
+      if (all) {
+        this.players.forEach((p) => {
+          this.sendQuestion(p)
+        })
+      }
     }
-    if (player.index < questions.length) {
-      this.sendQuestion(player);
-    } else {
-      this.isOver() && this.end()
+    // SOLO
+    else {
+
     }
+    console.timeEnd('answer');
   }
 
   sendQuestion(player) {
+    // don't send if
+    if (player.index >= this.questions.length) return
+    // else
     let id = player._id
     let question = this.questions[player.index]
     this.emitToPlayer(id, 'question', question, (succ) => {
@@ -303,13 +347,20 @@ class Game {
       hit: 1,
       miss: 10
     }],
+    teams: [{
+    _id: '',
+    points: '',
+    perf: ''
+  }]
     result: 1
   }
   */
-  getStats(users) {
+  getStats(users, teams) { // arguments are fresh db data
+    let half_length = this.players.length / 2
     let stats = {},
     side0_points = 0,
     side1_points = 0
+    // getting sides' points, adding user
     stats.players = this.players.map((p) => {
       let u = Utils.findObjectById(users, p._id)
       let points = p.correct.length
@@ -334,7 +385,12 @@ class Game {
         miss: 0
       }
     })
-    // calculating stats
+    if (this.teams) {
+      stats.teams = this.teams.slice();
+      stats.teams[0].points = side0_points;
+      stats.teams[1].points = side1_points;
+    }
+    // calculating hit miss for each player's category and each question
     for (let q in this.questions) {
       let question = this.questions[q]
       let q_stats = stats.questions[q]
@@ -364,54 +420,83 @@ class Game {
       stats.result = 0
     }
     // ratings
-    let side0 = stats.players.filter((p) => p.side === 0)
-    let side1 = stats.players.filter((p) => p.side === 1)
-    switch (this.type) {
-      case 'solo': {
-        let ratings = Rating.soloMatch(side0, side1, stats.result);
-        side0[0].perf = ratings.side0;
-        side1[0].perf = ratings.side1;
-        break
+    let side0, side1, ratings
+    if (this.type in ['solo','team']) {
+      if (this.type === 'team') {
+        side0 = stats.teams[0];
+        side1 = stats.teams[1];
+      } else {
+        side0 = stats.players[0];
+        side1 = stats.players[1];
       }
-      case 'team': {
-
+      ratings = Rating.soloMatch(side0, side1, stats.result);
+      side0.perf = ratings.side0;
+      side1.perf = ratings.side1;
+    }
+    if (this.type === 'squad') {
+      side0 = stats.players.slice(0, half_length);
+      side1 = stats.players.slice(half_length, players.length);
+      ratings = Rating.squadMatch(side0, side1, stats.result);
+      for (let i in stats.players) {
+        // copy new perf in stats array
+        if (i < half_length) { // side0
+          stats.players[i].perf = ratings.side0[i]
+        }
+        else { // side1
+          stats.players[i].perf = ratings.side1[i - half_length];
+        }
       }
     }
     return stats;
   }
 
   async end() {
-    console.log('Ending game')
-    console.log(JSON.stringify(this, null, 3));
+    debug('Ending game')
+    debug(JSON.stringify(this, null, 3));
     console.time('end')
     let players = this.players;
     let questions = this.questions;
-    // fetch users
-    let users = await db.users.find({
+    let docs_fetch = [];
+    let users_doc, teams_doc = undefined
+    // fetch users_doc
+    docs_fetch.push(db.users.find({
       _id: {$in: players.map(p => p._id)}
-    },['perf','private','stats']);
-    users = Utils.stringifyIds(users);
-    // get stats
-    let stats = this.getStats(users);
-    console.log(JSON.stringify(stats, null, 3));
+    },['perf','private','stats']));
+    if (this.type === 'team') {
+      docs_fetch.push(db.teams.find({
+        _id: {
+          $in: this.teams.map(t => t._id)
+        }
+      }))
+    }
+    let docs = await Promise.all(docs_fetch)
+    docs = Utils.stringifyIds(docs);
+    users_doc = docs[0];
+    // get new ratings, category hit miss, questions' hit miss
+    let stats = this.getStats(users_doc, teams_doc);
+    debug('STATS')
+    debug(JSON.stringify(stats, null, 3));
     // questions object ids to put in db
     let q_oids = questions.map(q => monk.id(q._id));
     // update database
+    if (this.type === 'team') {
+    }
     let usersUpdate = stats.players.map(p => {
-      let u = Utils.findObjectById(users, p._id);
+      let u = Utils.findObjectById(users_doc, p._id);
       let resultField;
       if (stats.result === 0.5) resultField = 'draws'
       else if ((stats.result === 1 && !p.side) || (stats.result === 0 && p.side))
         resultField = 'wins'
       else resultField = 'losses'
-      return db.users.findOneAndUpdate({
+      let query = {
         _id: p._id,
         activity: {
           $elemMatch: {
             'interval.end': {$exists: false}
           }
         }
-      },{
+      }
+      let update = {
         $push: {
           // pushing questions to last_questions
           // no need of $addToSet as questions cannot match
@@ -420,21 +505,25 @@ class Game {
             // maintains a limited number of questions' records
             $slice: -MAX_QUESTIONS_RECORD
           },
-          // pushing old rating
-          'activity.$.ratings': u.perf.rating
+
         },
         $set: {
           // add hit miss stats
           stats: p.stats,
-          // change rating
-          perf: p.perf
         },
         // add win/loss/draw to games[type]
         $inc: {
           ['games.'+this.type+'.'+resultField]: 1,
           ['activity.$.games.'+this.type]: 1
         },
-      },)
+      };
+      if (this.type !== 'team') {
+        // pushing old rating
+        update.$push['activity.$.ratings'] = u.perf.rating
+        // change rating
+        update.$set.perf = p.perf
+      }
+      return db.users.findOneAndUpdate(query,update)
     })
     let gameUpdate = db.games.findOneAndUpdate(this._id,{
       $set: {
@@ -467,6 +556,10 @@ class Game {
       this[i] = g[i];
     }
   }
+}
+
+class TeamGame extends Game {
+
 }
 
 // games waiting for start

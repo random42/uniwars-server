@@ -14,7 +14,7 @@ let settings = {
 
 let ranking = new glicko2.Glicko2(settings);
 
-function soloMatch([side0], [side1], result) {
+function soloMatch(side0, side1, result) {
   side0 = side0.perf, side1 = side1.perf
   let a = ranking.makePlayer(side0.rating,side0.rd,side0.vol);
   let b = ranking.makePlayer(side1.rating,side1.rd,side1.vol);
@@ -38,4 +38,4 @@ function squadMatch(side0, side1, result) {
 
 }
 
-module.exports = {soloMatch, squadMatch}
+module.exports = {soloMatch, squadMatch }

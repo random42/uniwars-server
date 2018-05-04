@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "DEBUG=uniwars:* node ./bin/www",
-    "dev": "DEBUG=uniwars:* nodemon ./bin/www"
+    "dev": "DEBUG=uniwars:*,game nodemon ./bin/www"
   },
   "dependencies": {
     "awesome-phonenumber": "^2.2.5",
