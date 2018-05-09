@@ -7,7 +7,7 @@ module.exports = nsp;
 nsp.connections = new Map()
 nsp.postAuthenticate = postAuthenticate
 const mm = require('../matchmaking');
-const Game = require('../game-model');
+const GameClasses = require('../game');
 const Utils = require('../utils');
 
 // game namespace post authenticate fn
@@ -19,12 +19,11 @@ async function postAuthenticate(socket) {
     // packet is array [event,...message]
   })
   //EVENTS
-  socket.on('search',(type) => {
-    console.log(type)
+  socket.on('search',(type) => {]
     mm[type] && mm[type].push(user)
   });
   socket.on('stop_search',(type) => {
-    mm[type] && mm[type].pull(user);
+    mm[type] && mm[type].pull(user)
   })
 
   // after new_game event emitted
@@ -32,11 +31,17 @@ async function postAuthenticate(socket) {
     Game.GAMES.has(game_id) && Game.GAMES.get(game_id).join(user);
   })
 
-  socket.on('answer',async ({answer, question, game}) => {
+  socket.on('answer', async({answer, question, game}) => {
     // checks if user is in game
     if (!(game in socket.rooms) || game === socket.id) return
     // gets game
-    let g = await new Game({_id: game})
+    let g = await fetchGame(game);
+    
     g.answer({user, question, answer})
   })
+}
+
+
+async fetchGame(_id) {
+  return db.games.findOne(_id);
 }

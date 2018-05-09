@@ -1,5 +1,6 @@
 const start_time = Date.now();
 const db = require('../../db');
+const debug = require('debug')('socket');
 const bcrypt = require('bcrypt');
 // creating server
 let io = require('socket.io')({
@@ -65,7 +66,10 @@ function disconnect(socket) {
   io.connections.delete(socket.user_id);
   for (let i in io.nsps) {
     let nsp = io.nsps[i];
-    if (i !== '/') nsp.connections.delete(socket.user_id)
+    if (i !== '/') {
+      nsp.connections.delete(socket.user_id)
+      debug(nsp.connections);
+    }
   }
 }
 

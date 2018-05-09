@@ -1,11 +1,11 @@
-const db = require('../db');
+const db = require('../../db');
 const monk = require('monk');
-const bcrypt = require('bcrypt');
-const namespace = require('./socket.io/game');
-const mm = require('./matchmaking');
-const Rating = require('./ratings');
-const Utils = require('./utils');
+const namespace = require('../socket.io/game');
+const mm = require('../matchmaking');
+const Rating = require('../ratings');
+const Utils = require('../utils');
 const debug = require('debug')('game')
+
 const MAX_QUESTIONS_RECORD = 300;
 const QUESTIONS_NUM = 5;
 const JOIN_TIMEOUT = 100; // ms
@@ -23,15 +23,19 @@ const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client recei
 */
 
 class Game {
-  constructor({_id, side0, side1, type, teams}) {
-    // if _id is present the game must be fetched from database
+
+  constructor({_id, side0, side1 }) {
+    // if _id is present the game was fetched from database
     if (_id) {
-      this._id = _id;
-      return
+      let game = arguments[0];
+      for (let i in game) {
+        this[i] = game[i];
+      }
+      this.stringify();
+      return;
     }
-    // else the game is created from the other params
+    // else a new game is created from the other params
     this._id = monk.id().toString();
-    this.type = type;
     this.status = null;
     this.players = [];
     // next line assures that side0 is [0,length/2] and side1...
@@ -44,15 +48,15 @@ class Game {
         incorrect: []
       })
     }
-    if (teams) this.teams = teams;
   }
 
-  // fetch users, teams, create questions
+  // fetch users details and create questions
   async init() {
     let ops = []
     let getUsers = db.users.find({
       _id: {$in: this.players.map(p => p._id)}
-    },['username','perf','picture']).then((users) => {
+    },['username','perf','picture'])
+    .then((users) => {
       for (let u of users) {
         let player = this.getPlayer(u._id.toString());
         player.perf = u.perf;
@@ -61,19 +65,6 @@ class Game {
       }
     });
     ops.push(getUsers);
-    if (this.teams) {
-      let teams = db.teams.find({
-        _id: {$in: this.teams},
-      },
-      {
-        name: 1,
-        picture: 1,
-        perf: 1
-      }).then(() => {
-        this.teams = teams;
-      })
-      ops.push(teams)
-    }
     ops.push(this.createQuestions());
     await Promise.all(ops)
   }
@@ -96,6 +87,7 @@ class Game {
     let conns = this.connected();
     if (conns.length < this.players.length) {
       mm[this.type].push(conns);
+      debug('Not all players are connected')
       return false;
     }
     // keep the game in memory
@@ -110,7 +102,7 @@ class Game {
     // emitting new_game message
     this.emit('new_game', this._id, this.type);
     // setting timeout of 'join' event
-    this.joinTimeout = setTimeout(this.cancel.bind(this),JOIN_TIMEOUT);
+    this.joinTimeout = setTimeout(() => this.cancel(), JOIN_TIMEOUT);
     return this;
   }
 
@@ -157,8 +149,8 @@ class Game {
   async start() {
     try {
       this.status = 'play';
-      console.log('Starting game')
-      // fetch users and teams docs, creates questions
+      debug('start', this._id)
+      // fetch users details, creates questions
       await this.init()
       this.created_at = Date.now();
       // pushing into the db
@@ -174,7 +166,7 @@ class Game {
       // set timeout for emitting first question
       setTimeout(() => {
         for (let p of this.players) {
-          this.sendQuestion(p,0)
+          this.sendQuestion(p)
         }
       }, START_TIMEOUT)
     } catch(err) {
@@ -182,9 +174,10 @@ class Game {
     }
   }
 
+  // if not all players have joined
   cancel() {
     if (this.status in ['play','end']) return
-    console.log('Canceling game',this._id);
+    debug('Canceling game', this._id);
     // sending cancel_game event
     // this.emit('cancel_game',this._id);
     // deleting room
@@ -214,16 +207,15 @@ class Game {
   }
 
   async answer({user, question, answer}) {
-    debug('Answer',user, answer)
     console.time('answer');
     let player = this.getPlayer(user);
-    if (!player) return
+    if (!player) throw new Error("Wrong player")
     let questions = this.questions;
-    // checks if the user has a question to answer
-    if (player.index >= questions.length) return
+    // if the user has no more questions
+    if (player.index === questions.length) throw new Error("No more questions")
     let realQuestion = questions[player.index];
     // wrong question
-    if (question !== realQuestion._id) return
+    if (question !== realQuestion._id) throw new Error("Wrong question")
     debug(JSON.stringify(arguments[0]))
     // clears question timeout
     clearTimeout(Game.Q_TIMEOUTS.get(user));
@@ -249,6 +241,7 @@ class Game {
         }
       }
     })
+    console.timeEnd('answer');
     // checks if game is over
     if (player.index === questions.length && this.isOver())
       return this.end()
@@ -275,11 +268,6 @@ class Game {
         })
       }
     }
-    // SOLO
-    else {
-
-    }
-    console.timeEnd('answer');
   }
 
   sendQuestion(player) {
@@ -351,11 +339,11 @@ class Game {
     _id: '',
     points: '',
     perf: ''
-  }]
+    }],
     result: 1
   }
   */
-  getStats(users, teams) { // arguments are fresh db data
+  getStats(users) { // arguments are fresh db data
     let half_length = this.players.length / 2
     let stats = {},
     side0_points = 0,
@@ -386,9 +374,7 @@ class Game {
       }
     })
     if (this.teams) {
-      stats.teams = this.teams.slice();
-      stats.teams[0].points = side0_points;
-      stats.teams[1].points = side1_points;
+
     }
     // calculating hit miss for each player's category and each question
     for (let q in this.questions) {
@@ -550,17 +536,21 @@ class Game {
     console.timeEnd('end');
   }
 
+  // turns every ObjectID to String
   stringify() {
     let g = Utils.stringifyIds(this);
     for (let i in g) {
       this[i] = g[i];
     }
   }
-}
-
-class TeamGame extends Game {
 
 }
+
+
+
+
+
+
 
 // games waiting for start
 Game.GAMES = new Map()

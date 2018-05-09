@@ -1,6 +1,7 @@
 const db = require('../db');
 const monk = require('monk');
-const Game = require('./game-model')
+const Game = require('./game');
+const debug = require('debug')('mm');
 
 // 1v1
 class Solo {
@@ -9,7 +10,7 @@ class Solo {
   }
 
   push(users) {
-    console.log('Pushing',users)
+    debug('Pushing', users)
     let length;
     // one user
     if (typeof users === 'string') {
@@ -23,7 +24,7 @@ class Solo {
   }
 
   pull(user) {
-    console.log('Pull write')
+    debug('Pulling',user)
     this.queue.splice(this.queue.indexOf(user),1);
   }
 
@@ -31,7 +32,7 @@ class Solo {
     let players = this.queue.splice(0,2)
     const side0 = [players[0]]
     const side1 = [players[1]]
-    console.log('Matching',players);
+    debug('Matching',players);
     new Game({side0,side1,type: 'solo'}).create()
   }
 }
@@ -43,7 +44,7 @@ class Squad {
   }
 
   push(users) {
-    console.log('Pushing',users)
+    debug('Pushing',users)
     let length;
     // one user
     if (typeof users === 'string') {
@@ -64,7 +65,7 @@ class Squad {
     let players = this.queue.splice(0,10)
     const side0 = players.slice(0,5);
     const side1 = players.slice(5,10);
-    console.log('Matching',side0,side1);
+    debug('Matching',side0,side1);
     new Game({side0,side1,type: 'squad'}).create()
   }
 }
