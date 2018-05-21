@@ -13,6 +13,17 @@ const bcrypt = require('bcrypt')
 const security = require('./utils/security');
 const cors = require('cors');
 
+let as = async() => {
+  return Promise.reject("err");
+}
+
+let ass = async() => {
+  try {
+    await as()
+  } catch(err) {
+    console.log(err);
+  }
+}
 
 let app = express();
 

@@ -16,8 +16,7 @@ module.exports = {
       if (projection) {
         ops.push({$project: projection});
       }
-      let docs = await coll.aggregate(ops);
-      return docs;
+      return coll.aggregate(ops);
     } catch (err) {
       console.log(err);
       return false;
@@ -55,7 +54,7 @@ module.exports = {
         }
       ]);
       if (docs.length === 0) {
-        return false;
+        return;
       }
       return docs[0].ranking;
     } catch (err) {

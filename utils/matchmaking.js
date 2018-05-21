@@ -1,6 +1,6 @@
 const db = require('../db');
 const monk = require('monk');
-const Game = require('./game');
+const gameUtils = require('./game/utils');
 const debug = require('debug')('mm');
 
 // 1v1
@@ -33,7 +33,7 @@ class Solo {
     const side0 = [players[0]]
     const side1 = [players[1]]
     debug('Matching',players);
-    new Game({side0,side1,type: 'solo'}).create()
+    gameUtils.create({side0,side1,type: 'solo'});
   }
 }
 
@@ -66,7 +66,7 @@ class Squad {
     const side0 = players.slice(0,5);
     const side1 = players.slice(5,10);
     debug('Matching',side0,side1);
-    new Game({side0,side1,type: 'squad'}).create()
+    gameUtils.create({side0,side1,type: 'squad'})
   }
 }
 

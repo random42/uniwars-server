@@ -1,9 +1,21 @@
+const debug = require('debug')('game');
+const Game = require('./main');
 
 
 class Team extends Game {
   constructor(arg) {
     super(arg);
     this.teams = arg.teams;
+  }
+
+  async answer() {
+    try {
+      await super.answer(ans);
+
+      this.isOver() && this.end();
+    } catch(err) {
+      debug(err);
+    }
   }
 
   async init() {
@@ -20,14 +32,9 @@ class Team extends Game {
     await Promise.all([super.init(),op]);
   }
 
-  getStats(teams) {
-    let stats = super.getStats();
-    stats.teams = this.teams.slice();
-    stats.teams[0].points = side0_points;
-    stats.teams[1].points = side1_points;
+  async updateRatings() {
+
   }
-
-
 }
 
 
