@@ -2,6 +2,7 @@ const db = require('../../db');
 const monk = require('monk');
 const bcrypt = require('bcrypt');
 const io = require('./io');
+const Maps = require('../game/maps');
 let nsp = io.of('/game');
 module.exports = nsp;
 nsp.connections = new Map()
@@ -29,7 +30,7 @@ async function postAuthenticate(socket) {
 
   // after new_game event emitted
   socket.on('join',(game_id) => {
-    Game.GAMES.has(game_id) && Game.GAMES.get(game_id).join(user);
+    Maps.starting.has(game_id) && Maps.starting.get(game_id).join(user);
   })
 
   socket.on('answer', async({answer, question, game}) => {

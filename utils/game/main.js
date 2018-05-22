@@ -33,7 +33,7 @@ const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client recei
 class Game {
 
   // creates players array and _id or copies argument if _id is present
-  constructor({_id, side0, side1 }) {
+  constructor({_id, side0, side1, type }) {
     // if _id is present the game was fetched from database
     if (_id) {
       let game = arguments[0];
@@ -47,6 +47,7 @@ class Game {
     this._id = monk.id().toString();
     this.status = null;
     this.players = [];
+    this.type = type;
     // next line assures that side0 is [0,length/2] and side1...
     for (let id of side0.concat(side1)) {
       this.players.push({
@@ -185,7 +186,7 @@ class Game {
       // set timeout for emitting first question
       setTimeout(() => {
         for (let p of this.players) {
-          this.sendQuestion(p)
+          this.sendQuestion(p._id)
         }
       }, START_TIMEOUT)
     } catch(err) {
@@ -411,6 +412,7 @@ class Game {
     } else {
       stats.result = 0
     }
+    this.result = stats.result;
     return stats;
   }
 
@@ -443,11 +445,13 @@ class Game {
       else resultField = 'losses'
       let query = {
         _id: p._id,
+        /*
         activity: {
           $elemMatch: {
             'interval.end': {$exists: false}
           }
         }
+        */
       }
       let update = {
         $push: {
@@ -467,7 +471,7 @@ class Game {
         // add win/loss/draw to games[type]
         $inc: {
           ['games.'+this.type+'.' + resultField]: 1,
-          ['activity.$.games.' + this.type]: 1
+          //['activity.$.games.' + this.type]: 1
         },
       };
       return db.users.findOneAndUpdate(query,update)
@@ -492,7 +496,9 @@ class Game {
         // increment hit and miss
         {$inc: {hit: q.hit,miss: q.miss}})
     })
-    await Promise.all([...usersUpdate, gameUpdate, ...questionsUpdate, this.updateRatings()])
+    await Promise.all(
+      [...usersUpdate,...questionsUpdate, gameUpdate, this.updateRatings()]
+    )
     console.timeEnd('end');
   }
 
