@@ -1,5 +1,6 @@
 const start_time = Date.now();
 const db = require('../../db');
+const debug = require('debug')('socket');
 const bcrypt = require('bcrypt');
 // creating server
 let io = require('socket.io')({
@@ -33,7 +34,7 @@ function postAuthenticate(socket, data) {
       nsp.postAuthenticate(s);
     }
   }
-  console.log(socket.username,'auth');
+  debug(socket.username,'auth');
 }
 
 async function authenticate(socket, data, callback) {
@@ -55,17 +56,20 @@ async function authenticate(socket, data, callback) {
     }
     return callback(new Error("Wrong token"));
   } catch(err) {
-    console.log(err);
+    debug(err);
     return callback(new Error("Server error"));
   }
 }
 
 function disconnect(socket) {
-  console.log('disconnecting socket',socket.user_id);
+  debug('disconnecting socket',socket.user_id);
   io.connections.delete(socket.user_id);
   for (let i in io.nsps) {
     let nsp = io.nsps[i];
-    if (i !== '/') nsp.connections.delete(socket.user_id)
+    if (i !== '/') {
+      nsp.connections.delete(socket.user_id)
+      //debug(nsp.connections);
+    }
   }
 }
 
