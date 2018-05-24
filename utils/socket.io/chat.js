@@ -3,6 +3,7 @@ const db = require('../../db');
 const monk = require('monk');
 const Utils = require('../utils')
 const bcrypt = require('bcrypt');
+const debug = require('debug')('socket:chat');
 const io = require('./io');
 let nsp = io.of('/chat');
 
@@ -29,12 +30,13 @@ async function postAuthenticate(socket) {
   }
   // EVENT HANDLERS
   socket.on('message', (msg, chat, cb) => {
-    if (!checkMessage(msg) || !(chat in socket.rooms)) return cb(false) // TODO HACK
+    if (!checkMessage(msg) || !(chat in socket.rooms))
+      return // TODO HACK
     // inserts ids
     let _id = monk.id();
     msg._id = _id.toString();
     msg.user = socket.user_id;
-    console.log(msg);
+    debug(msg);
     cb(msg);
     // emits message
     socket.in(chat).emit('message',msg,chat);
@@ -62,9 +64,9 @@ async function insertMsg(msg,chat,_id) {
         messages: msg
       }
     },{projection: ['_id']});
-    console.log('saving message',update);
+    debug('saving message',update);
   } catch (err) {
-    console.log(err);
+    debug(err.message);
   }
 
 }

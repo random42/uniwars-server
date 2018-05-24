@@ -1,3 +1,5 @@
+const debug = require('debug')('socket:auth');
+
 module.exports = function(io, {
   authenticate,
   postAuthenticate,
@@ -14,11 +16,13 @@ module.exports = function(io, {
     socket.on('auth', function(data) {
       authenticate(socket, data, function(err) {
         if (err) {
+          debug(err.message);
           socket.disconnect(true);
         } else {
           socket.auth = true;
           postAuthenticate(socket, data);
           socket.emit('auth', true);
+          debug(socket.user_id, 'connected');
         }
       })
     })

@@ -2,6 +2,7 @@ const db = require('../../db');
 const monk = require('monk');
 const bcrypt = require('bcrypt');
 const io = require('./io');
+const debug = require('debug')('socket:game');
 const Maps = require('../game/maps');
 let nsp = io.of('/game');
 module.exports = nsp;

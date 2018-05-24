@@ -14,8 +14,7 @@ const CHECK_TEAM_ADMIN = [
 ]
 
 async function checkLoginToken(req,res,next) {
-  next();
-  return;
+  return next();
   if (req.method !== 'GET' && NO_CHECK_LOGIN.indexOf(req.path) < 0) {
     try {
       let query = {_id: req.get('user')};
@@ -40,7 +39,7 @@ async function checkLoginToken(req,res,next) {
   }
 }
 
-async function checkTeamAdmin(req,res,next) {
+async function checkTeamAdmin(req, res, next) {
   if (req.method !== 'GET' && CHECK_TEAM_ADMIN.indexOf(req.path) >= 0) {
     try {
       console.log('Check team admin')

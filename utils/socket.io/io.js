@@ -1,6 +1,6 @@
 const start_time = Date.now();
 const db = require('../../db');
-const debug = require('debug')('socket');
+const debug = require('debug')('socket:main');
 const bcrypt = require('bcrypt');
 // creating server
 let io = require('socket.io')({
@@ -34,29 +34,26 @@ function postAuthenticate(socket, data) {
       nsp.postAuthenticate(s);
     }
   }
-  debug(socket.username,'auth');
 }
 
 async function authenticate(socket, data, callback) {
-  //return callback(true)
+  return callback(true)
   try {
     let _id = data._id;
     let token = data.token;
-    let user = await db.users.findOne(_id,['username','private']);
+    if (io.connections.has(_id))
+      return callback(new Error("User has connected yet"));
+    let user = await db.users.findOne(_id, ['username','private']);
     if (!user) return callback(new Error("User not found"));
-    // UNCOMMENT NOT TO CHECK TOKEN
-    // socket.user_id = _id;
-    // socket.username = user.username;
-    // return callback();
-    let right = await bcrypt.compare(token,user.private.login_token);
+    let right = await bcrypt.compare(token, user.private.login_token);
     if (right) {
       socket.user_id = _id;
       socket.username = user.username;
-      return callback();
+      return callback(null);
     }
     return callback(new Error("Wrong token"));
   } catch(err) {
-    debug(err);
+    debug(err.message);
     return callback(new Error("Server error"));
   }
 }
@@ -75,5 +72,6 @@ function disconnect(socket) {
 
 module.exports = io;
 
-let game = require('./game');
-let chat = require('./chat');
+// EXECUTING OTHER NSPS
+require('./game');
+require('./chat');
