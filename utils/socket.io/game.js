@@ -4,18 +4,34 @@ const bcrypt = require('bcrypt');
 const io = require('./io');
 const debug = require('debug')('socket:game');
 const Maps = require('../game/maps');
+const _ = require('lodash/core');
 let nsp = io.of('/game');
 module.exports = nsp;
 nsp.connections = new Map()
 nsp.postAuthenticate = postAuthenticate
 const mm = require('../matchmaking');
 const Utils = require('../utils');
+const socketUtils = require('./utils');
 const gameUtils = require('../game/utils');
+
+
+nsp.on('connect', (socket) => {
+  // auth
+  if (!(socketUtils.nspAuth({socket, nsp, io}))) {
+    socket.disconnect();
+    return
+  }
+  // adding socket to connections
+  nsp.connections.set(socket.user_id, socket);
+  // post
+  postAuthenticate(socket);
+})
 
 // game namespace post authenticate fn
 async function postAuthenticate(socket) {
   //socket.setMaxListeners(20);
   let user = socket.user_id;
+  // middleware
   socket.use((packet,next) => {
     //console.log(packet);
     next();

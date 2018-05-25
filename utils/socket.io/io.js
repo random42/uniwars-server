@@ -21,23 +21,14 @@ let auth = require('./auth')(io, {
 
 function postAuthenticate(socket, data) {
   let _id = data._id;
+  socket.user_id = _id;
+  socket.auth = true;
   // adding socket to connected users
   io.connections.set(socket.user_id, socket)
-  // adding namespace socket to connections
-  for (let i in io.nsps) {
-    let nsp = io.nsps[i];
-    let id = i + '#' + socket.id;
-    let s = nsp.connected[id];
-    if (s) {
-      s.user_id = _id;
-      nsp.connections.set(_id, s)
-      nsp.postAuthenticate(s);
-    }
-  }
 }
 
 async function authenticate(socket, data, callback) {
-  return callback(true)
+  return callback(null)
   try {
     let _id = data._id;
     let token = data.token;
@@ -47,8 +38,6 @@ async function authenticate(socket, data, callback) {
     if (!user) return callback(new Error("User not found"));
     let right = await bcrypt.compare(token, user.private.login_token);
     if (right) {
-      socket.user_id = _id;
-      socket.username = user.username;
       return callback(null);
     }
     return callback(new Error("Wrong token"));
@@ -59,15 +48,8 @@ async function authenticate(socket, data, callback) {
 }
 
 function disconnect(socket) {
-  debug('disconnecting socket',socket.user_id);
+  debug('disconnect',socket.user_id);
   io.connections.delete(socket.user_id);
-  for (let i in io.nsps) {
-    let nsp = io.nsps[i];
-    if (i !== '/') {
-      nsp.connections.delete(socket.user_id)
-      //debug(nsp.connections);
-    }
-  }
 }
 
 module.exports = io;

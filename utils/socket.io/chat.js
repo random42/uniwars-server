@@ -5,6 +5,8 @@ const Utils = require('../utils')
 const bcrypt = require('bcrypt');
 const debug = require('debug')('socket:chat');
 const io = require('./io');
+const socketUtils = require('./utils');
+
 let nsp = io.of('/chat');
 
 nsp.connections = new Map()
@@ -17,11 +19,22 @@ nsp.connections = new Map()
   }
 */
 
-nsp.postAuthenticate = postAuthenticate;
+
+nsp.on('connect', (socket) => {
+  // auth
+  if (!(socketUtils.nspAuth({socket, nsp, io}))) {
+    socket.disconnect();
+    return
+  }
+  // adding socket to connections
+  nsp.connections.set(socket.user_id, socket);
+  // post
+  postAuthenticate(socket);
+})
 
 // chat nsp post authenticate fn
 async function postAuthenticate(socket) {
-  // joining rooms
+  // joining chats
   let doc = await db.users.findOne(socket.user_id,'private.chats');
   doc = Utils.stringifyIds(doc);
   let chats = doc.private.chats;
@@ -64,7 +77,7 @@ async function insertMsg(msg,chat,_id) {
         messages: msg
       }
     },{projection: ['_id']});
-    debug('saving message',update);
+    //debug('saving message',update);
   } catch (err) {
     debug(err.message);
   }
