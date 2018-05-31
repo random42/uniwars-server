@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const monk = require('monk');
-const chat_io = require('../utils/socket.io/chat');
-const chat_io_connections = chat_io.connected;
+const nsp = require('../utils/socket/chat');
 
 router.post('/create-group', async function(req,res,next) {
   try {
@@ -273,7 +272,7 @@ async function areFriends(user,arr) {
 
 function leaveRoom(chat,users) {
   users.forEach((user) => {
-    let socket = chat_io_connections[user];
+    let socket = nsp.connections.get(user);
     if (socket) {
       socket.leave(chat);
     }
@@ -282,7 +281,7 @@ function leaveRoom(chat,users) {
 
 function joinRoom(chat,users) {
   users.forEach((user) => {
-    let socket = chat_io_connections[user];
+    let socket = nsp.connections.get(user);
     if (socket) {
       socket.join(chat);
     }

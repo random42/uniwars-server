@@ -1,6 +1,6 @@
 const db = require('../../db');
 const monk = require('monk');
-const namespace = require('../socket.io/game');
+const namespace = require('../socket/game');
 const mm = require('../matchmaking');
 const Rating = require('../ratings');
 const Utils = require('../utils');

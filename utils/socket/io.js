@@ -1,4 +1,4 @@
-const start_time = Date.now();
+const _ = require('lodash/core');
 const db = require('../../db');
 const debug = require('debug')('socket:main');
 const bcrypt = require('bcrypt');
@@ -11,18 +11,31 @@ let io = require('socket.io')({
 // authenticated sockets indexed by user_id
 io.connections = new Map();
 
+// initialize namespaces
+const nspInit = (name) => {
+  let nsp = io.of('/' + name);
+  // same as io.connections
+  nsp.connections = new Map();
+  return nsp;
+}
+const nsps = ['game','chat'];
+_.forEach(nsps, nspInit);
+
+module.exports = io;
+const chat = require('./chat');
+const game = require('./game');
+
+
 // authenticate sockets
 let auth = require('./auth')(io, {
   authenticate,
   postAuthenticate,
-  disconnect,
   timeout: 1000
 })
 
 function postAuthenticate(socket, data) {
   let _id = data._id;
   socket.user_id = _id;
-  socket.auth = true;
   // adding socket to connected users
   io.connections.set(socket.user_id, socket)
 }
@@ -30,8 +43,7 @@ function postAuthenticate(socket, data) {
 async function authenticate(socket, data, callback) {
   return callback(null)
   try {
-    let _id = data._id;
-    let token = data.token;
+    let {_id, token} = data;
     if (io.connections.has(_id))
       return callback(new Error("User has connected yet"));
     let user = await db.users.findOne(_id, ['username','private']);
@@ -46,14 +58,3 @@ async function authenticate(socket, data, callback) {
     return callback(new Error("Server error"));
   }
 }
-
-function disconnect(socket) {
-  debug('disconnect',socket.user_id);
-  io.connections.delete(socket.user_id);
-}
-
-module.exports = io;
-
-// EXECUTING OTHER NSPS
-require('./game');
-require('./chat');

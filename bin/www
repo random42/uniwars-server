@@ -27,7 +27,7 @@ var server = http.createServer(app);
  * Create server socket
  */
 
-const io = require('../utils/socket.io/io');
+const io = require('../utils/socket/io');
 
 const test = require('../__test__')
 /**

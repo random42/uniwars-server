@@ -9,7 +9,7 @@ const socketUtils = require('./utils');
 
 let nsp = io.of('/chat');
 
-nsp.connections = new Map()
+nsp.postAuthenticate = postAuthenticate
 
 /*
   msg : {
@@ -20,19 +20,6 @@ nsp.connections = new Map()
 */
 
 
-nsp.on('connect', (socket) => {
-  // auth
-  if (!(socketUtils.nspAuth({socket, nsp, io}))) {
-    socket.disconnect();
-    return
-  }
-  // adding socket to connections
-  nsp.connections.set(socket.user_id, socket);
-  // post
-  postAuthenticate(socket);
-})
-
-// chat nsp post authenticate fn
 async function postAuthenticate(socket) {
   // joining chats
   let doc = await db.users.findOne(socket.user_id,'private.chats');
