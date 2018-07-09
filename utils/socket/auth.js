@@ -45,7 +45,6 @@ module.exports = function(io, {
       let main = io.of('/').connected[id];
       if (!main || !main.auth) return
       else {
-        debug(socket.id);
         // auth successful
         socket.user_id = main.user_id;
         socket.auth = true;

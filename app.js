@@ -4,9 +4,9 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const users = require('./routes/users');
-const unis = require('./routes/unis');
-const teams = require('./routes/teams');
+const users = require('./routes/user');
+const unis = require('./routes/uni');
+const teams = require('./routes/team');
 const chat = require('./routes/chat');
 const db = require('./db');
 const bcrypt = require('bcrypt')
@@ -36,11 +36,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(security.checkLoginToken);
 
 //app.use('/',index);
-app.use('/users',users);
+app.use('/user',users);
 //app.use('/game',game);
 app.use('/chat',chat);
-app.use('/unis',unis);
-app.use('/teams',security.checkTeamAdmin,teams);
+app.use('/uni',unis);
+app.use('/team',security.checkTeamAdmin,teams);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

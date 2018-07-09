@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const debug = require('debug')('http:users');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const path = require('path');
@@ -78,6 +79,58 @@ router.get('/', async function (req,res,next) {
 
 });
 
+/*
+  query: {
+    page: 12,
+    text: "sdd"
+  }
+*/
+router.get('/search', async function(req,res,next) {
+  try {
+    debug('asdsasd')
+    const PAGE_RESULTS = 20;
+    let { text, page } = req.query;
+    page = parseInt(page);
+    let check = () => {
+      return
+      text.length < 1024 &&
+      (page ||
+      page === 0)
+    }
+    if (!check()) return;
+    let pipeline = {
+      // match text in username and full_name
+      $match: {
+        username: {
+          $regex: text,
+          // case insensitive
+          $options: 'i',
+        }
+      },
+      $skip: page * PAGE_RESULTS,
+      $limit: PAGE_RESULTS,
+      $project: {
+        username: 1,
+        picture: 1,
+      }
+    }
+    // if text has only letters then search on full_name too
+    if (!(/\W/.test(text))) {
+      debug('only letters');
+      pipeline.$match.full_name = {
+        $regex: text,
+        // case insensitive
+        $options: 'i',
+      }
+    }
+    // query
+    let results = await db.users.aggregate(pipeline);
+    res.json(results);
+  } catch(err) {
+    res.sendStatus(500);
+  }
+})
+
 router.delete('/',async function(req,res,next) {
   try {
     let query = {_id: req.get('user')};
@@ -124,7 +177,7 @@ router.get('/top', async function(req,res,next) {
   try {
     let from = parseInt(req.query.from);
     let to = parseInt(req.query.to);
-    let field = 'perf.rating'
+    let field = 'perf.rating';
     let sort = {};
     sort[field] = -1;
     sort = {...sort,...rankSort}

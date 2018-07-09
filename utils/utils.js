@@ -28,5 +28,9 @@ module.exports = {
 
   stringifyIds(obj) {
     return JSON.parse(JSON.stringify(obj))
+  },
+
+  isAsync(fn) {
+   return fn.constructor.name === 'AsyncFunction';
   }
 }

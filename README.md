@@ -66,8 +66,7 @@
       "solo": 23,
       "squad": 12,
       "team": 1
-    },
-    "ratings": [1234,1255,5435],
+    }
   }],
   "news": [{
     "type": "team_invitation", // team_challenge, challenge, friend_request, team_invitation
