@@ -4,7 +4,7 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const sharp = require('sharp');
 const monk = require('monk');
-const majors = require('../../data/majors.json');
+const majors = require('../assets/majors.json');
 const MIN_PLAYERS = 5;
 const saltRounds = 12;
 

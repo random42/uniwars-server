@@ -8,11 +8,7 @@ const user = {
   "last_name": "Sero",
   "full_name": "Roberto Sero",
   "uni": {
-      "_id": {
-          "$oid": "5a3dac7dfaaa577114d0cfaf"
-      },
-      "name": "University of Turin",
-      "alpha_two_code": "IT"
+      "$oid": "5a3dac7dfaaa577114d0cfaf"
   },
   "major": {
     "FOD1P": 1100,
@@ -36,12 +32,12 @@ const user = {
   },
   "private": {
       "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
-      "login_token": null,
+      "token": null,
       "phone_number": '+393461625500',
       "chats": ["_id"],
       "last_questions": ["_id"] // last tot questions
   },
-  "teams": ["_id"],
+  "teams": ["_ids"],
   "games": {
     "solo": {
       "wins": 123,
@@ -60,14 +56,7 @@ const user = {
       "solo": 23,
       "squad": 12,
       "team": 1
-    },
-    "ratings": [1234,1255,5435],
-  }],
-  "news": [{
-    "type": "team_invitation", // team_challenge, challenge, friend_request, team_invitation
-    "user": "_id",
-    "team": "_id", // if necessary
-    "created_at": Date.now()
+    }
   }],
   "online_time": 796,
   "online": true,

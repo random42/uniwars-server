@@ -5,7 +5,6 @@ const Utils = require('../utils')
 const bcrypt = require('bcrypt');
 const debug = require('debug')('socket:chat');
 const io = require('./io');
-const socketUtils = require('./utils');
 
 let nsp = io.of('/chat');
 
@@ -37,6 +36,7 @@ async function postAuthenticate(socket) {
     msg._id = _id.toString();
     msg.user = socket.user_id;
     debug(msg);
+    // returns the message with the generated _id
     cb(msg);
     // emits message
     socket.in(chat).emit('message',msg,chat);
@@ -48,11 +48,17 @@ async function postAuthenticate(socket) {
 }
 
 function checkMessage(msg) {
-  return msg && msg.created_at && msg.text &&
-  typeof(msg.text) === 'string' &&
-  typeof(msg.created_at) === 'number' &&
-  msg.created_at <= Date.now() && // timestamp validity
-  msg.text.length < MAX_MSG_LENGTH; // text length
+  const model = {
+    created_at: 'number',
+    text: 'string'
+  }
+  if (typeof(msg) !== 'object') return false
+  for (let i in msg) {
+    if (!(i in model)) return false
+    if (typeof(msg[i]) !== model[i]) return false
+  }
+  return msg.created_at <= Date.now() && // timestamp validity
+    msg.text.length < MAX_MSG_LENGTH; // text length
 }
 
 async function insertMsg(msg,chat,_id) {
@@ -68,7 +74,6 @@ async function insertMsg(msg,chat,_id) {
   } catch (err) {
     debug(err.message);
   }
-
 }
 
 module.exports = nsp;

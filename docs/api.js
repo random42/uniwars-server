@@ -1,4 +1,4 @@
-const API = {
+const HTTP = {
   USER :  {
     GET_USER: {
       method: 'get',
@@ -11,6 +11,7 @@ const API = {
         200: ["User"],
         404: ["Not Found"]
       },
+      title: "Get user",
       description: "The 'project' field can be either 'full' or 'small' (username, picture, uni, rating, online).",
     },
     TOP: {
@@ -23,6 +24,7 @@ const API = {
       response: {
         200: ["Array of users in small projection, with 'rank' field attacched"],
       },
+      title: "Rankings",
       description: "Maximum distance is 30. There will probably be more params to specialize the search."
     },
     RANK: {
@@ -35,7 +37,8 @@ const API = {
         200: ["Array of users in small projection, with 'rank' field attacched"],
         404: ["Not Found"]
       },
-      description: "Returns array of 30 users, with requested user in the middle of array"
+      title: "Rankings around a specific user",
+      description: "Returns array of 30 users sorted by rating, with requested user in the middle of array"
     },
     SEARCH: {
       method: 'get',
@@ -47,6 +50,7 @@ const API = {
       response: {
         200: ["Array of {_id, username, uni}"],
       },
+      title: "Search by username",
       description: "Results per page are 20."
     },
     REGISTER : {
@@ -65,6 +69,7 @@ const API = {
         200: ["User"],
         400: ["Email already registered","Username already taken"],
       },
+      title: "Register",
       description: "Password rule is Aa1 and between 8-255 chars."
     },
     LOGIN : {
@@ -78,21 +83,22 @@ const API = {
         password: ''
       },
       response: {
-        200: ["User"],
+        200: ["{user, token}"],
         400: ["Wrong Password"],
         404: ["Not Found"]
       },
+      title: "Login",
       description: "",
     },
     LOGOUT : {
       method: 'put',
       url: '/user/logout',
       params: {
-        username: 'random',
       },
       response: {
         200: ["OK"],
       },
+      title: "Logout",
       description: "",
     },
     DELETE_ACCOUNT : {
@@ -106,6 +112,7 @@ const API = {
         400: ["Wrong password"],
         404: ["Not Found"]
       },
+      title: "Delete account",
       description: "Deletes profile picture from file system too.",
     },
     SET_PICTURE :  {
@@ -115,28 +122,25 @@ const API = {
         'Content-Type': 'application/octet-stream'
       },
       data: 'Buffer',
-      params: {
-        url: "https://"
-      }
       response: {
         200: ["OK"],
-        400: ["Bad Request"]
       },
-      description: "If 'url' is applied, no need to set data and headers as the image will be downloaded",
+      title: "Set profile picture",
+      description: "",
     },
     GET_PICTURE : {
       method: 'get',
-      url : 'user/picture',
+      url : '/user/picture',
       params: {
         _id: '',
         size: ['small','medium','large'],
-        response: {
-          200: ["Image"],
-          400: ["Bad Request"],
-          404: ["Not Found"]
-        },
-        description: "",
-      }
+      },
+      response: {
+        200: ["Image"],
+        404: ["Not Found"],
+      },
+      title: "Get profile picture",
+      description: "",
     },
     CHALLENGE: {
       method: 'put',
@@ -146,8 +150,8 @@ const API = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request"]
       },
+      title: "Challenge",
       description: "Challenge another user to a solo game."
     },
     RESPOND_CHALLENGE: {
@@ -159,8 +163,8 @@ const API = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request"]
       },
+      title: "Respond challenge",
       description: ""
     },
     ADD_FRIEND: {
@@ -171,8 +175,8 @@ const API = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request"]
       },
+      title: "Add friend",
       description: "",
     },
     RESPOND_FRIEND_REQUEST: {
@@ -184,8 +188,8 @@ const API = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request"]
       },
+      title: "Respond friend request",
       description: "",
     },
   },
@@ -202,15 +206,19 @@ const API = {
         400: ["Bad Request"],
         404: ["Not Found"]
       },
+      title: "Get uni",
       description: ""
     },
     TOP: {
+
+      // TODO
       method: 'get',
       url: '/uni/top',
       params: {
         from: 0,
         to: 10,
-      }
+      },
+      title: "",
     },
     RANK: {
       method: 'get',
@@ -233,6 +241,7 @@ const API = {
         400: ["Bad Request"],
         404: ["Not Found"]
       },
+      title: "Get team",
       description: ""
     },
     INVITE: {
@@ -246,6 +255,7 @@ const API = {
         200: ["OK"],
         400: ["Bad Request"],
       },
+      title: "Invite user to team",
       description: "Invite 'invited' user in 'team'. The user who invites must be a team admin."
     },
     RESPOND_INVITE: {
@@ -259,6 +269,7 @@ const API = {
         200: ["OK"],
         400: ["Bad Request","Name already taken"],
       },
+      title: "Respond invite",
       description: ""
     },
     CHALLENGE: {
@@ -272,6 +283,7 @@ const API = {
         200: ["OK"],
         400: ["Bad Request"],
       },
+      title: "Challenge team",
       description: "In order to challenge the user must be a team admin."
     },
     RESPOND_CHALLENGE: {
@@ -286,6 +298,7 @@ const API = {
         200: ["OK"],
         400: ["Bad Request"],
       },
+      title: "Respond team challenge",
       description: "In order to respond the challenge the user must be team admin."
     },
     CREATE: {
@@ -298,6 +311,7 @@ const API = {
         200: ["OK"],
         400: ["Bad Request","Name already taken"],
       },
+      title: "Create team",
       description: "Team names follow the same rules of usernames."
     },
     DELETE: {
@@ -308,8 +322,8 @@ const API = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request"],
       },
+      title: "Delete team",
       description: "Rules TODO"
     }
   },
@@ -320,8 +334,13 @@ const API = {
       url: '/chat/messages',
       params: {
         time: Date.now(),
-        chat: 'sdjgkfbsb'
-      }
+        chat: '_id'
+      },
+      response: {
+        200: ["Array of messages with timestamp after 'time' parameter."],
+      },
+      title: "Get messages",
+      description: ""
     },
     CREATE_GROUP: {
       method: 'post',
@@ -329,21 +348,36 @@ const API = {
       params: {
         name: 'asd',
         participants: ['_ids']
-      }
+      },
+      response: {
+        200: ["Chat"],
+      },
+      title: "Create group chat",
+      description: ""
     },
     CREATE_PRIVATE: {
       method: 'post',
       url: '/chat/create-private',
       params: {
         partner: '_id'
-      }
+      },
+      response: {
+        200: ["Chat"],
+      },
+      title: "Create private chat",
+      description: "Starts a private chat with another user."
     },
     LEAVE_GROUP: {
       method: 'put',
       url: '/chat/leave-group',
       params: {
         chat: '_id'
-      }
+      },
+      response: {
+        200: ["OK"],
+      },
+      title: "Leave group",
+      description: ""
     },
     ADD_USER: {
       method: 'put',
@@ -351,7 +385,12 @@ const API = {
       params: {
         chat: '_id',
         invited: ['_ids']
-      }
+      },
+      response: {
+        200: ["OK"],
+      },
+      title: "Add user to group",
+      description: ""
     },
     REMOVE_USER: {
       method: 'put',
@@ -359,9 +398,143 @@ const API = {
       params: {
         chat: '_id',
         removed: ['_ids']
-      }
+      },
+      response: {
+        200: ["OK"],
+      },
+      title: "Remove user from group",
+      description: ""
     }
   }
 };
 
-module.exports = API;
+const SOCKET = {
+  MAIN: {
+    IN: [],
+    OUT: [
+      {
+        event: 'challenge',
+        params: {
+          type: 'solo/team',
+          from: 'user or team _id',
+          to: 'challenged team _id'
+        },
+        description: "Only team admins will receive a team challenge."
+      },
+      {
+        event: 'friend_request',
+        params: {
+          from: 'user _id'
+        },
+        description: ""
+      },
+    ]
+  },
+  CHAT: {
+    IN: [
+      {
+        event: 'message',
+        params: {
+          msg: 'message object',
+          chat: '_id',
+          cb: 'callback'
+        },
+        description: "Incoming message. The callback returns the message with a server generated _id."
+      }
+    ],
+    OUT: [
+      {
+        event: 'message',
+        params: {
+          msg: 'message object',
+          chat: '_id',
+        },
+        description: "Notifies a user of a message."
+      }
+    ]
+  },
+  GAME: {
+    IN: [
+      {
+        event: 'search',
+        params: {
+          type: 'solo',
+        },
+        description: "The user will be pushed to the matchmaker of the specified game type."
+      },
+      {
+        event: 'stop_search',
+        params: {
+          type: 'solo',
+        },
+        description: "The user will be pulled from the matchmaker of the specified game type."
+      },
+      {
+        event: 'join',
+        params: {
+          _id: 'game _id',
+        },
+        description: "The user wants to join the created game."
+      }
+    ],
+    OUT: [
+      {
+        event: 'new_game',
+        params: {
+          _id: 'game _id',
+          type: 'solo'
+        },
+        description: "A new game can start, user must respond with 'join' message."
+      },
+      {
+        event: 'start_game',
+        params: {
+          game: 'game object without questions',
+        },
+        description: "All players joined the game, so it's officially started."
+      },
+      {
+        event: 'question',
+        params: {
+          question: 'object'
+        },
+        description: "Each question will be sent alone. After this message the question timer will start."
+      },
+      {
+        event: 'mate_answer',
+        params: {
+          user: '_id',
+          question: '_id',
+          answer: ''
+        },
+        description: `Notifies a user of a teammate answer.
+          It also notifies a user of his own answers.`
+      },
+    ]
+  }
+}
+
+const PROJECTIONS = {
+  USER: {
+    FULL: {
+
+    },
+    SMALL: {
+
+    }
+  },
+  UNI: {
+
+  },
+  TEAM: {
+
+  },
+  CHAT: {
+
+  },
+  GAME: {
+
+  }
+}
+
+module.exports = {HTTP,SOCKET}

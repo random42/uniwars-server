@@ -34,13 +34,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // checks user token given at login time for every request
 app.use(security.checkLoginToken);
-
-//app.use('/',index);
+app.use('team', security.checkTeamAdmin);
+// async handler
+app.use((req, res, next) => {
+  if (next.constructor.name === 'AsyncFunction') {
+    next().catch((err) => {
+      console.log(err.message);
+      res.sendStatus(500);
+    })
+  } else {
+    next()
+  }
+})
+// routes
 app.use('/user',users);
-//app.use('/game',game);
 app.use('/chat',chat);
 app.use('/uni',unis);
-app.use('/team',security.checkTeamAdmin,teams);
+app.use('/team', teams);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

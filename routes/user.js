@@ -10,11 +10,11 @@ const sharp = require('sharp');
 const monk = require('monk');
 const baseURL = 'http://localhost:3000';
 const picSize = {
-  small: 50,
+  small: 100,
   medium: 256,
   large: 500
 }
-const majors = require('../../data/majors.json');
+const majors = require('../assets/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
 const extern_login = ['facebook.com','google.com'];
 const Rank = require('../utils/rank');
@@ -140,7 +140,7 @@ router.delete('/',async function(req,res,next) {
     let check_password = await bcrypt.compare(body.password,doc.private.password);
     if (check_password) {
       // delete profile picture
-      if (doc.picture.small.indexOf(baseURL) > 0) {
+      if (doc.picture && doc.picture.small.indexOf(baseURL) > 0) {
         let pic_path = project_path + 'public/images/profile_pictures/';
         let operations = []
         for (let size in picSize) {
@@ -169,7 +169,7 @@ router.delete('/',async function(req,res,next) {
     }
   } catch (err) {
     console.log(err);
-    res.statusSend(500);
+    res.sendStatus(500);
   }
 })
 
