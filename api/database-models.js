@@ -6,7 +6,6 @@ const user = {
   "email": "roberto.sero@edu.unito.it",
   "first_name": "Roberto",
   "last_name": "Sero",
-  "full_name": "Roberto Sero",
   "uni": {
       "$oid": "5a3dac7dfaaa577114d0cfaf"
   },
@@ -69,10 +68,19 @@ const team = {
       "$oid": "5abbd98270534c2bf947416c"
   },
   "name": "MyTeam",
-  "picture": "http://asdasdasd",
-  "players": ["5abbd98270534c2bf947416c"],
-  "admins": [],
-  "founder": "5abbd98270534c2bf947416c",
+  "picture": {
+    "small": "",
+    "medium": "",
+    "large": ""
+  },
+  // TODO
+  "players": [
+    {
+      "_id": "",
+      "admin": true
+    }
+  ],
+  "founder": "_id",
   "perf": {
     "rating": 1234,
     "rd": 100, // rating deviation
@@ -100,7 +108,8 @@ const uni = {
   "domains": [
       "unito.it"
   ],
-  "country": "Italy"
+  "country": "Italy",
+  "chat": "_id"
 }
 
 const chat = {
@@ -115,13 +124,16 @@ const chat = {
     "text": "Ciaoo",
     "user": "_id", // taken from participants array
     "created_at": 12309234892,
-    "system": true,
   }],
-  "participants": ["_id"],
-  "admins": ["_id"]
+  "participants": [
+    {
+      "_id": "",
+      "admin": true
+    }
+  ],
 }
 
-// fields with * will be deleted after game ending
+
 const game = {
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
@@ -131,19 +143,18 @@ const game = {
   "type": "solo", // solo, squad, team
   "players": [{
     "_id" : "",
-    "side": 0,
-    "index": 0 * // index of current question
-    "correct": [{
+    "side": 0, // 0, 1
+    "index": 0, // index of current question
+    // TODO
+    "answers": [{
       "question": "_id",
-      "answer": "stringa"
+      "answer": ""
     }],
-    "incorrect_answers": [{}],
-    "picture": '', *
-    "username": '', *
-    "perf": {} *
+    "rating": 2412
   }],
+  // if it is a team game
   "teams": ["_id1","_id2"],
-  "questions": ["_ids"], // full object during game
+  "questions": ["_ids"],
   "result": 1, // 1, 0, 0.5
   "status": "play", // end
 }

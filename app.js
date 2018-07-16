@@ -8,7 +8,6 @@ const users = require('./routes/user');
 const unis = require('./routes/uni');
 const teams = require('./routes/team');
 const chat = require('./routes/chat');
-const db = require('./db');
 const bcrypt = require('bcrypt')
 const security = require('./utils/security');
 const cors = require('cors');

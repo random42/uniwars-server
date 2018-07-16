@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../utils/db');
 const bcrypt = require('bcrypt');
 const sharp = require('sharp');
 const monk = require('monk');
-const Rank = require('../utils/rank');
 const MAJORS = require('../assets/majors.json');
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
@@ -64,8 +63,7 @@ router.get('/top', async function(req,res,next) {
         }
       }
     ]
-    let docs = await Rank.top({coll: db.users,pipeline,from,to,sort});
-    res.json(docs);
+    res.sendStatus(200);
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
@@ -80,12 +78,7 @@ router.get('/rank', async function(req,res,next) {
     sort[queryField] = -1;
     sort = {...sort,...rankSort};
     let query = {name};
-    let ranking = await Rank.rank({coll: db.unis,query,sort});
-    if (!ranking) {
-      res.sendStatus(400);
-      return
-    }
-    res.json(ranking);
+    res.sendStatus(200)
   } catch(err) {
     console.log(err);
     res.sendStatus(500);

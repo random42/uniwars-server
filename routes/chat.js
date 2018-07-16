@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const db = require('../utils/db');
 const monk = require('monk');
-const nsp = require('../utils/socket/chat');
+const nsp = require('../socket').chat;
 
 router.post('/create-group', async function(req,res,next) {
   try {

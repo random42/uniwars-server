@@ -44,5 +44,3 @@ async function postAuthenticate(socket) {
     g.answer({user, question, answer})
   })
 }
-
-module.exports = nsp;

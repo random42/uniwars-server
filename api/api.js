@@ -406,7 +406,7 @@ const HTTP = {
       description: ""
     }
   }
-};
+}
 
 const SOCKET = {
   MAIN: {
@@ -517,24 +517,39 @@ const SOCKET = {
 const PROJECTIONS = {
   USER: {
     FULL: {
-
+      FIELDS: ['-email','-private','-activity'],
+      COMPUTED: ['rank','uni','teams']
     },
     SMALL: {
-
+      FIELDS: ['username','uni','major','perf','picture'],
+      COMPUTED: []
     }
   },
   UNI: {
-
+    FULL: {
+      FIELDS: ['web_pages','name','country'],
+      COMPUTED: ['rank','users_count','rating']
+    }
   },
   TEAM: {
-
+    FULL: {
+      FIELDS: ['name','picture','players','perf'],
+      COMPUTED: ['players','rank']
+    }
   },
   CHAT: {
-
+    INFOS: {
+      FIELDS: ['-messages']
+    }
   },
   GAME: {
 
+  },
+  QUESTION: {
+    IN_GAME: {
+      FIELDS: ['-source','-source_category'] 
+    }
   }
 }
 
-module.exports = {HTTP,SOCKET}
+module.exports = {HTTP,SOCKET,PROJECTIONS}

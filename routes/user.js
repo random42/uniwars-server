@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const { HTTP, PROJECTIONS } = require('../api/api');
+const db = require('../utils/db');
 const debug = require('debug')('http:users');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -17,7 +18,6 @@ const picSize = {
 const majors = require('../assets/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
 const extern_login = ['facebook.com','google.com'];
-const Rank = require('../utils/rank');
 const DEFAULT_PERF = {
   rating: 1500,
   rd: 100,
@@ -29,54 +29,9 @@ const rankSort = {
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
-router.get('/', async function (req,res,next) {
-  try {
-    let query = req.query;
-    if (!query) {
-      res.sendStatus(400);
-      return;
-    }
-    let docs = await db.users.aggregate([
-      {
-        $match: query
-      },
-      {
-        $lookup: {
-          from: 'unis',
-          localField: 'uni',
-          foreignField: '_id',
-          as: 'uni'
-        }
-      },
-      {
-        $lookup: {
-         from: 'teams',
-         localField: 'teams',
-         foreignField: '_id',
-         as: 'teams'
-       }
-      },
-      {
-        $project: {
-          'uni.web_pages': 0,
-          'uni.domains': 0,
-          'uni.perf': 0,
-          'private': 0,
-          'news': 0,
-          'friends': 0,
-        }
-      }
-    ])
-    if (docs.length !== 1) {
-      res.sendStatus(500);
-      return;
-    }
-    res.json(docs[0]);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-
+router.get('/', async function(req,res,next) {
+  // TODO
+  res.sendStatus(200);
 });
 
 /*
@@ -188,12 +143,7 @@ router.get('/top', async function(req,res,next) {
       picture: 1,
       online: 1,
     }
-    let docs = await Rank.top({from,to,coll: db.users,sort,projection})
-    if (!docs) {
-      res.sendStatus(400);
-      return;
-    }
-    res.json(docs);
+    res.sendStatus(200);
   } catch (err) {
     console.log(err);
     res.sendStatus(500);

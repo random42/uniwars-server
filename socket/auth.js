@@ -7,7 +7,7 @@ module.exports = function(io, {
   timeout = 3000 // auth timeout
   }) {
   io.on('connection', function(socket) {
-    debug('try', socket.id);
+    debug('new', socket.id);
     let tmout = setTimeout(() => {
       if (!socket.auth) {
         debug('timeout', socket.id);
@@ -18,43 +18,19 @@ module.exports = function(io, {
     socket.on('auth', function(data) {
       authenticate(socket, data, function(err) {
         if (err) {
-          debug(err.message);
+          debug(err.message, socket.id);
           socket.disconnect(true);
         } else {
           socket.auth = true;
           postAuthenticate(socket, data);
           socket.emit('auth', true);
-          debug('in', socket.id);
+          debug('auth', socket.id);
         }
       })
     })
     socket.on('disconnect', () => {
       if (socket.auth)
         debug('out', socket.id);
-    })
-  })
-
-  _.forEach(io.nsps, (nsp, name) => {
-    // main namespace does not need auth
-    if (name === '/')
-      return
-    nsp.on('connection', (socket) => {
-      // slicing namespace name from id to obtain original id
-      let id = socket.id.slice(name.length + 1);
-      // checking auth
-      let main = io.of('/').connected[id];
-      if (!main || !main.auth) return
-      else {
-        // auth successful
-        socket.user_id = main.user_id;
-        socket.auth = true;
-        nsp.connections.set(socket.user_id, socket);
-      }
-    })
-    nsp.on('disconnect', (socket) => {
-      if (!socket.auth)
-        return;
-      nsp.connections.delete(socket.user_id);
     })
   })
 }

@@ -2,22 +2,12 @@ const MAX_MSG_LENGTH = 1024;
 const db = require('../../db');
 const monk = require('monk');
 const Utils = require('../utils')
-const bcrypt = require('bcrypt');
 const debug = require('debug')('socket:chat');
-const io = require('./io');
+const { server } = require('./index');
 
 let nsp = io.of('/chat');
 
 nsp.postAuthenticate = postAuthenticate
-
-/*
-  msg : {
-    chat: '_id',
-    text: '',
-    created_at: 12344,
-  }
-*/
-
 
 async function postAuthenticate(socket) {
   // joining chats
@@ -49,6 +39,7 @@ async function postAuthenticate(socket) {
 
 function checkMessage(msg) {
   const model = {
+    user: 'string',
     created_at: 'number',
     text: 'string'
   }
@@ -75,5 +66,3 @@ async function insertMsg(msg,chat,_id) {
     debug(err.message);
   }
 }
-
-module.exports = nsp;
