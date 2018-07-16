@@ -1,17 +1,18 @@
-const db = require('../../db');
+const db = require('../utils/db');
 const monk = require('monk');
-const namespace = require('../socket/game');
-const mm = require('../matchmaking');
-const Rating = require('../ratings');
+const namespace = require('../socket').game;
+const mm = require('../utils/matchmaking');
+const Rating = require('../utils/ratings');
 const Utils = require('../utils');
 const debug = require('debug')('game');
 const Maps = require('./maps');
-
-const MAX_QUESTIONS_RECORD = 300;
-const QUESTIONS_NUM = 5;
-const JOIN_TIMEOUT = 100; // ms
-const START_TIMEOUT = 1000; //
-const QUESTION_TIMEOUT = 10000; // 10 seconds for each answer after client received question
+const {
+  MAX_QUESTIONS_RECORD,
+  GAME_QUESTIONS,
+  GAME_JOIN_TIMEOUT,
+  GAME_START_TIMEOUT,
+  GAME_ANSWER_TIMEOUT
+} = require('../utils/constants')
 
 /*
 {
@@ -118,7 +119,7 @@ class Game {
     // emitting new_game message
     this.emit('new_game', this._id, this.type);
     // game gets canceled if at least one player does not join
-    this.joinTimeout = setTimeout(() => this.cancel(), JOIN_TIMEOUT);
+    this.joinTimeout = setTimeout(() => this.cancel(), GAME_JOIN_TIMEOUT);
     return this;
   }
 
@@ -161,7 +162,7 @@ class Game {
       {$match: {
         _id: {$nin: last_questions.map(q => q._id)}
       }},
-      {$sample: {size: QUESTIONS_NUM}},
+      {$sample: {size: GAME_QUESTIONS}},
     ]);
     // couldn't quite do it with one aggregation pipeline
   }
@@ -188,7 +189,7 @@ class Game {
         for (let p of this.players) {
           this.sendQuestion(p._id)
         }
-      }, START_TIMEOUT)
+      }, GAME_START_TIMEOUT)
     } catch(err) {
       console.log(err)
     }
@@ -302,7 +303,7 @@ class Game {
     Maps.q_timeouts.get(this._id).set(_id,
       setTimeout(() => {
         this.answer({user: _id, question: question._id, answer: null})
-      }, QUESTION_TIMEOUT))
+      }, GAME_ANSWER_TIMEOUT))
   }
 
   connected() {

@@ -13,18 +13,18 @@ const CHECK_TEAM_ADMIN = [
   '/accept-challenge',
 ]
 
-async function checkLoginToken(req,res,next) {
+async function checkAccessToken(req,res,next) {
   return next();
-  if (req.method !== 'GET' && NO_CHECK_TOKEN.indexOf(req.path) < 0) {
+  if (NO_CHECK_TOKEN.indexOf(req.path) < 0) {
     try {
       let query = req.get('user');
       let token = req.get('Authorization');
-      let doc = await db.users.findOne(query,'private');
+      let doc = await db.users.findOne(query,'private.access_token');
       if (!doc) {
         res.sendStatus(404);
         return;
       }
-      let right = await bcrypt.compare(token,doc.private.login_token);
+      let right = await bcrypt.compare(token, doc.private.access_token);
       if (right) next()
       else {
         res.sendStatus(401);
@@ -40,7 +40,7 @@ async function checkLoginToken(req,res,next) {
 }
 
 async function checkTeamAdmin(req, res, next) {
-  if (req.method !== 'GET' && CHECK_TEAM_ADMIN.indexOf(req.path) >= 0) {
+  if (CHECK_TEAM_ADMIN.indexOf(req.path) >= 0) {
     try {
       console.log('Check team admin')
       let user_id = req.get('user');
@@ -50,7 +50,6 @@ async function checkTeamAdmin(req, res, next) {
         next();
       } else {
         res.sendStatus(401)
-        return;
       }
     } catch (err) {
       console.log(err);
@@ -62,6 +61,6 @@ async function checkTeamAdmin(req, res, next) {
 }
 
 module.exports = {
-  checkLoginToken,
+  checkAccessToken,
   checkTeamAdmin
 };

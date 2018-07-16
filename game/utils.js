@@ -1,4 +1,4 @@
-const db = require('../../db');
+const db = require('../utils/db');
 const monk = require('monk');
 const debug = require('debug')('game');
 

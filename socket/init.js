@@ -14,7 +14,7 @@ let auth = require('./auth')(server, {
 })
 
 for (let nsp in server.nsps) {
-  let n = server[nsp];
+  let n = server.nsps[nsp];
   n.on('disconnect', (socket) => {
     if (socket.auth) {
       n.connections.delete(socket.user_id);

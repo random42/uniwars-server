@@ -1,14 +1,14 @@
-const db = require('../../db');
+const db = require('../utils/db');
 const monk = require('monk');
 const bcrypt = require('bcrypt');
-const io = require('./io');
+const {server} = require('./index');
 const debug = require('debug')('socket:game');
 const Maps = require('../game/maps');
 const _ = require('lodash/core');
-const mm = require('../matchmaking');
+const mm = require('../utils/matchmaking');
 const Utils = require('../utils');
 const gameUtils = require('../game/utils');
-let nsp = io.of('/game');
+let nsp = server.of('/game');
 nsp.postAuthenticate = postAuthenticate
 
 

@@ -1,11 +1,11 @@
-const MAX_MSG_LENGTH = 1024;
-const db = require('../../db');
+const { CHAT_MAX_MSG_LENGTH } = require('../utils/constants');
+const db = require('../utils/db');
 const monk = require('monk');
 const Utils = require('../utils')
 const debug = require('debug')('socket:chat');
 const { server } = require('./index');
 
-let nsp = io.of('/chat');
+let nsp = server.of('/chat');
 
 nsp.postAuthenticate = postAuthenticate
 

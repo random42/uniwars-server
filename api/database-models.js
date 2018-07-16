@@ -31,7 +31,7 @@ const user = {
   },
   "private": {
       "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
-      "token": null,
+      "access_token": null,
       "phone_number": '+393461625500',
       "chats": ["_id"],
       "last_questions": ["_id"] // last tot questions

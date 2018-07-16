@@ -1,3 +1,4 @@
+const debug = require('debug')('app')
 const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
@@ -11,11 +12,14 @@ const chat = require('./routes/chat');
 const bcrypt = require('bcrypt')
 const security = require('./utils/security');
 const cors = require('cors');
+require('./socket/init');
 
 let app = express();
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+// cross origins middlewares
 app.use(cors({ origin: '*' }));
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -32,13 +36,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // checks user token given at login time for every request
-app.use(security.checkLoginToken);
-app.use('team', security.checkTeamAdmin);
+app.use(security.checkAccessToken);
+app.use('/team', security.checkTeamAdmin);
 // async handler
 app.use((req, res, next) => {
   if (next.constructor.name === 'AsyncFunction') {
     next().catch((err) => {
-      console.log(err.message);
+      debug(err.message);
       res.sendStatus(500);
     })
   } else {

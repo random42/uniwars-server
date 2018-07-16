@@ -1,7 +1,7 @@
 const debug = require('debug')('game');
 const Game = require('./main');
-const db = require('../../db');
-const Ratings = require('../ratings');
+const db = require('../utils/db');
+const Ratings = require('../utils/ratings');
 const Utils = require('../utils');
 
 class Solo extends Game {
