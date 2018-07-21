@@ -16,7 +16,7 @@ nsp.postAuthenticate = postAuthenticate
 // game namespace post authenticate fn
 async function postAuthenticate(socket) {
   //socket.setMaxListeners(20);
-  let user = socket.user_id;
+  const user = socket.user_id;
   // middleware
   socket.use((packet,next) => {
     //console.log(packet);
@@ -24,21 +24,22 @@ async function postAuthenticate(socket) {
     // packet is array [event,...message]
   })
   //EVENTS
-  socket.on('search',(type) => {
+  socket.on('search',({type}) => {
     mm[type] && mm[type].push(user)
   });
-  socket.on('stop_search',(type) => {
+  socket.on('stop_search',({type}) => {
     mm[type] && mm[type].pull(user)
   })
 
   // after new_game event emitted
-  socket.on('join',(game_id) => {
-    Maps.starting.has(game_id) && Maps.starting.get(game_id).join(user);
+  socket.on('join',({game}) => {
+    Maps.starting.has(game) && Maps.starting.get(game).join(user);
   })
 
   socket.on('answer', async({answer, question, game}) => {
     // checks if user is in game
-    if (!(game in socket.rooms) || game === socket.id) return
+    if (!(game in socket.rooms) || game === socket.id)
+      return
     // gets game
     let g = await gameUtils.fetch(game);
     g.answer({user, question, answer})

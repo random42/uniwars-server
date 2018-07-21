@@ -117,7 +117,7 @@ class Game {
       namespace.connections.get(p._id).join(this._id);
     }
     // emitting new_game message
-    this.emit('new_game', this._id, this.type);
+    this.emit('new_game', {_id: this._id, type: this.type});
     // game gets canceled if at least one player does not join
     this.joinTimeout = setTimeout(() => this.cancel(), GAME_JOIN_TIMEOUT);
     return this;

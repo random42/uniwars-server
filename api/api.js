@@ -76,8 +76,7 @@ const HTTP = {
       method: 'put',
       url: '/user/login',
       params: {
-        username: '',
-        email: '',
+        user: 'email or username'
       },
       data: {
         password: ''
@@ -459,6 +458,7 @@ const SOCKET = {
         params: {
           type: 'solo',
         },
+        response: null,
         description: "The user will be pushed to the matchmaker of the specified game type."
       },
       {
@@ -466,14 +466,27 @@ const SOCKET = {
         params: {
           type: 'solo',
         },
+        response: null,
         description: "The user will be pulled from the matchmaker of the specified game type."
       },
       {
         event: 'join',
         params: {
-          _id: 'game _id',
+          game: '_id',
+          response: 'y' // y or anything else for no
         },
-        description: "The user wants to join the created game."
+        response: 'start_game',
+        description: "Response to 'new_game' event."
+      },
+      {
+        event: 'answer',
+        params: {
+          game: '_id',
+          question: '_id',
+          answer: 'answer'
+        },
+        response: 'question',
+        description: "Guess what"
       }
     ],
     OUT: [
@@ -483,20 +496,25 @@ const SOCKET = {
           _id: 'game _id',
           type: 'solo'
         },
+        response: 'join',
         description: "A new game can start, user must respond with 'join' message."
       },
       {
         event: 'start_game',
         params: {
-          game: 'game object without questions',
+          game: 'object',
         },
-        description: "All players joined the game, so it's officially started."
+        response: null,
+        description: `All players joined the game, so it's officially started.
+        The game sent has all teams' and users' infos for the client to render.`
       },
       {
         event: 'question',
         params: {
+          game: '_id',
           question: 'object'
         },
+        response: 'answer',
         description: "Each question will be sent alone. After this message the question timer will start."
       },
       {
@@ -506,6 +524,7 @@ const SOCKET = {
           question: '_id',
           answer: ''
         },
+        response: null,
         description: `Notifies a user of a teammate answer.
           It also notifies a user of his own answers.`
       },

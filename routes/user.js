@@ -15,7 +15,7 @@ const picSize = {
   medium: 256,
   large: 500
 }
-const majors = require('../assets/majors.json');
+const MAJORS = require('../assets/majors.json');
 const PhoneNumber = require('awesome-phonenumber');
 const extern_login = ['facebook.com','google.com'];
 const DEFAULT_PERF = {
@@ -36,7 +36,7 @@ router.get('/', async function(req,res,next) {
   const { _id, project } = req.query
   if (!_id || !project || HTTP.USER.GET_USER.params.project.indexOf(project) < 0)
     return res.sendStatus(400)
-  const doc
+  let doc
   switch (project) {
     case 'full': {
       doc = await crud.user.getFull({user: _id})
@@ -173,8 +173,13 @@ router.get('/rank', async function(req,res,next) {
 router.put('/login', async function(req, res, next) {
   // TODO maybe set online offline user in db
   let body = req.body
-  let query = req.query
-  let doc = await db.users.findOne(query)
+  let { user } = req.query
+  let doc = await db.users.findOne({
+    $or: [
+      {username: user},
+      {email: user}
+    ]
+  })
   if (!doc) return res.sendStatus(404)
   let auth = await bcrypt.compare(body.password,doc.private.password)
   if (!auth) return res.status(400).send("Wrong Password")
@@ -229,8 +234,8 @@ router.get('/picture', async function (req,res,next) {
 });
 
 router.post('/register', async function(req, res, next) {
-  let user = req.body;
-  let email = user.email;
+  let user = req.body
+  let { email } = user
   if (!checkRegisterForm(user)) {
     res.sendStatus(400);
     return;
@@ -250,11 +255,13 @@ router.post('/register', async function(req, res, next) {
     res.status(400).send('Username is already used.');
     return;
   }
+
   user.uni = monk.id(uni._id)
   user.private = {}
   user.perf = DEFAULT_PERF
-  user.activity = []
+  user.stats
   user.friends = []
+  user.activity = []
   let hash = await bcrypt.hash(user.password,saltRounds);
   user.private.password = hash;
   delete user.password;
@@ -463,18 +470,12 @@ function checkRegisterForm(user) {
     email: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,255}$/g,
     major: /^[a-z]+(\s+[a-z]+)*$/i,
-    username: /^(\w|\d){3,20}$/g,
+    username: /^.*$/g,
   }
   // checks regex
   for (let field in user) {
     user[field] = user[field].trim();
     if (!(user[field].length <= maxLength[field] && regex[field].test(user[field]))) {
-      return false;
-    }
-  }
-  // checks major
-  if ('major' in user) {
-    if (majors.indexOf(user.major.toUpperCase()) < 0) {
       return false;
     }
   }
