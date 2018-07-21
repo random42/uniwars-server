@@ -333,11 +333,10 @@ const HTTP = {
       method: 'put',
       url: '/chat/messages',
       params: {
-        time: Date.now(),
-        chat: '_id'
+        time: Date.now()
       },
       response: {
-        200: ["Array of messages with timestamp after 'time' parameter."],
+        200: ["Array of all user's chats with messages after 'time'."],
       },
       title: "Get messages",
       description: ""
@@ -379,9 +378,9 @@ const HTTP = {
       title: "Leave group",
       description: ""
     },
-    ADD_USER: {
+    ADD_USERS: {
       method: 'put',
-      url: '/chat/add-user',
+      url: '/chat/add-users',
       params: {
         chat: '_id',
         invited: ['_ids']
@@ -389,12 +388,12 @@ const HTTP = {
       response: {
         200: ["OK"],
       },
-      title: "Add user to group",
+      title: "Add users to group",
       description: ""
     },
-    REMOVE_USER: {
+    REMOVE_USERS: {
       method: 'put',
-      url: '/chat/remove-user',
+      url: '/chat/remove-users',
       params: {
         chat: '_id',
         removed: ['_ids']
@@ -402,7 +401,7 @@ const HTTP = {
       response: {
         200: ["OK"],
       },
-      title: "Remove user from group",
+      title: "Remove users from group",
       description: ""
     }
   }
@@ -533,8 +532,8 @@ const PROJECTIONS = {
   },
   TEAM: {
     FULL: {
-      FIELDS: ['name','picture','players','perf'],
-      COMPUTED: ['players','rank']
+      FIELDS: ['name','picture','users','perf'],
+      COMPUTED: ['users','rank']
     }
   },
   CHAT: {
@@ -547,7 +546,7 @@ const PROJECTIONS = {
   },
   QUESTION: {
     IN_GAME: {
-      FIELDS: ['-source','-source_category'] 
+      FIELDS: ['-source','-source_category']
     }
   }
 }

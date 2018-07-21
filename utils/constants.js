@@ -1,7 +1,5 @@
 /*
-
   Timeouts are measured in milliseconds
-
 */
 
 module.exports = {
@@ -11,4 +9,11 @@ module.exports = {
   GAME_START_TIMEOUT: 3000, // period of time between game start and first question submit
   GAME_ANSWER_TIMEOUT: 10000, // period of time to answer a question
   CHAT_MAX_MSG_LENGTH: 1024, // maximum characters per chat message
+  DEFAULT_PERF: {
+    rating: 1500,
+    rd: 100,
+    vol: 0.06
+  },
+  TEAM_MEMBERS: 5, // users in a team
+  GROUP_CHAT_MAX_MEMBERS: 50,
 }

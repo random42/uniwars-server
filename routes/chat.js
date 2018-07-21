@@ -3,272 +3,129 @@ const router = express.Router();
 const db = require('../utils/db');
 const monk = require('monk');
 const nsp = require('../socket').chat;
+const _ = require('lodash/core')
+const crud = require('../crud')
+const { GROUP_CHAT_MAX_MEMBERS } = require('../utils/constants')
+
+// TODO put regex in constants
 
 router.post('/create-group', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let user_oid = monk.id(user);
-    let participants = req.query.participants;
-    let check_participants = await areFriends(user,participants)
-    if (!check_participants) {
-      res.sendStatus(400);
-      return;
-    }
-    let chat = {};
-    // creating chat object
-    chat._id = monk.id();
-    chat.collection = "users";
-    chat.type = "group";
-    chat.name = req.query.name;
-    if (!checkName(chat.name)) {
-      res.sendStatus(400);
-      return;
-    }
-    chat.participants = participants.map((id) => monk.id(id));
-    chat.participants.push(user_oid);
-    chat.messages = [];
-    chat.admins = [user_oid];
-    // adding users to socket room
-    joinRoom(chat._id.toString(),chat.participants.map(a => a.toString()));
-    // updating database
-    let operations = [db.users.update({
-      _id: {$in: chat.participants}
-      },{
-      $push: {
-        'private.chats': chat._id
-      }
-    },{projection: ['_id']}),db.chats.insert(chat)];
-    await Promise.all(operations);
-    res.json(chat);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  const user = req.get('user')
+  let { name, participants } = req.query
+  let check =
+    name && participants
+    && participants instanceof Array
+    && participants.length > 0 && participants.length < GROUP_CHAT_MAX_MEMBERS -1
+  check = check && await checkPermissions({
+    user_id: user,
+    users: participants,
+    friends: true
+  })
+  if (!check) return res.sendStatus(400)
+  participants = participants.map((u) => {
+    return {_id: u}
+  })
+  participants.push({_id: user, admin: true})
+  const chat = await crud.chat.createChat({
+    name,
+    participants,
+    collection: "users",
+    type: "group",
+  })
+  res.json(chat);
+  joinRoom(chat._id.toString(), participants.map(u => u._id))
 })
 
 router.post('/create-private', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let partner = req.query.partner;
-    // checking if chat exists
-    let exists = await db.chats.findOne({
-      participants: {$all: [user,partner]}
-    },{projection: ['_id']});
-    if (exists) {
-      res.sendStatus(400);
-      return;
-    }
-    // creating chat object
-    let chat = {};
-    chat._id = monk.id();
-    chat.collection = "users";
-    chat.type = "duo";
-    chat.messages = [];
-    chat.participants = [monk.id(user),monk.id(partner)];
-    // adding users to socket room
-    joinRoom(chat._id.toString(),chat.participants.map(a => a.toString()));
-    // updating database
-    let operations = [db.users.update({
-      _id: {$in: chat.participants}
-      },{
-      $push: {
-        'private.chats': chat._id
-      }
-    }),db.chats.insert(chat)];
-    await Promise.all(operations);
-    res.json(chat);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
+  const user = req.get('user')
+  const { partner } = req.query
+  if (!partner) return res.sendStatus(400)
+  // checking if chat exists
+  let exists = await db.chats.findOne({
+    type: "duo",
+    participants: {$all: [user,partner]}
+  },{projection: ['_id']});
+  if (exists) {
+    return res.sendStatus(400)
   }
+  let check = await checkPermissions({
+    user_id: user,
+    users: [partner],
+    friends: true
+  })
+  if (!check) return res.sendStatus(400)
+  const chat = await crud.chat.createChat({
+    type: "duo",
+    name: null,
+    collection: "users",
+    participants: [{_id: user},{_id: partner}]
+  })
+  res.json(chat)
+  joinRoom(chat._id.toString(), [user,partner])
 })
 
 router.put('/messages', async function(req,res,next) {
-  try {
-    let time = req.query.time; // timestamp of last message
-    let chat = req.query.chat;
-    let user = req.get('user');
-    let allowed = await checkPermissions(user,chat,[user],{
-      participants: true
-    });
-    if (!allowed) {
-      res.sendStatus(400);
-      return;
-    }
-    let messages = await db.chats.aggregate([
-      {
-        $match: {_id: chat}
-      },
-      {
-        $project: { // filtering messages after queried timestamp
-          messages: {
-            $filter: {
-              input: '$messages',
-              as: 'msg',
-              cond: {
-                $gt: ['$$msg.created_at',time]
-              }
-            }
-          }
-        }
-      },
-      {
-        $unwind: '$messages'
-      },
-      {
-        $replaceRoot: {newRoot: '$messages'}
-      }
-    ]);
-    console.log(messages);
-    res.json(messages);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  let { time } = req.query
+  const user = req.get('user');
+  if (!time) return res.sendStatus(400)
+  time = parseInt(time)
+  if (isNaN(time)) return res.sendStatus(400)
+  const chats = await crud.chat.upToDateChats({user, time})
+  res.json(chats)
 })
 
 router.put('/leave-group', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let {chat} = req.query;
-    // no permissions check because if the user does not belong to chat nothing changes
-    // removing user from chat participants and admins
-    let update = await removeUsersFromChat(chat,[user]);
-    if (!update) {
-      res.sendStatus(400);
-    }
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  let user = req.get('user');
+  let {chat} = req.query;
+  if (!chat) return res.sendStatus(400)
+  await crud.chat.removeUsers({users: [user],chat})
+  res.sendStatus(200)
+  leaveRoom(chat, [user])
 })
 
 router.put('/add-users', async function(req,res,next) {
-  try {
-    let user_id = req.get('user');
-    let chat = req.query.chat;
-    let invited = req.query.invited;
-    let allowed = await checkPermissions(user_id,chat,invited,{
-      types: ['group'],
-      collections: ['users'],
-      admin: true,
-      friends: true,
-      not_participants: true,
-    });
-    if (!allowed) {
-      res.sendStatus(400);
-    } else {
-      let op = await addUsersToChat(chat,invited);
-      if (!op) {
-        res.sendStatus(400);
-        return;
-      }
-      joinRoom(chat_id,invited);
-      res.sendStatus(200);
-    }
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  const user = req.get('user')
+  let { chat, invited } = req.query
+  if (!chat || !invited || !(invited instanceof Array))
+    return res.sendStatus(400)
+  let allowed = await checkPermissions({
+    user_id: user,
+    users: invited,
+    types: ['group'],
+    collections: ['users'],
+    admin: true,
+    friends: true,
+    not_participants: true,
+  });
+  if (!allowed)
+    return res.sendStatus(400);
+  await crud.chat.addUsers({users: invited, chat})
+  res.sendStatus(200)
+  joinRoom(chat, invited)
 })
 
 router.put('/remove-users', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let removed = req.query.removed;
-    let chat = req.query.chat;
-    let allowed = await checkPermissions(user,chat,removed,{
-      types: ['group'],
-      collections: ['users'],
-      admin: true,
-      participants: true,
-    });
-    if (!allowed) {
-      res.sendStatus(400);
-    } else {
-      let op = await removeUsersFromChat(chat,removed);
-      if (!op) {
-        res.sendStatus(400);
-        return;
-      }
-      leaveRoom(chat,removed);
-      res.sendStatus(200);
-    }
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
+  const user = req.get('user');
+  let { removed, chat } = req.query
+  if (!chat || !removed || !(removed instanceof Array) || removed.length === 0)
+    return res.sendStatus(400)
+  let allowed = await checkPermissions({
+    user_id: user,
+    chat_id: chat,
+    users: removed,
+    types: ['group'],
+    collections: ['users'],
+    admin: true,
+    participants: true,
+  });
+  if (!allowed) {
+    res.sendStatus(400);
+  } else {
+    let op = await crud.chat.removeUsers({users: removed, chat})
+    res.sendStatus(200)
+    leaveRoom(chat,removed)
   }
 })
-
-async function addUsersToChat(chat,users) {
-  try {
-    let ops = await Promise.all([
-      // push chat in users chats
-      db.users.update({
-        _id: {$in: users}
-      },{
-        $push: {'private.chats': monk.id(chat)}
-      },{projection: ['_id']}),
-      // push users in chat's participants array
-      db.chats.findOneAndUpdate(chat,{
-        $push: {
-          participants: {$each: users.map(user => monk.id(user))}
-        }
-      },{projection: ['_id']})
-    ]);
-    if (!ops || !ops[0] || !ops[1]) return false;
-    // joining socket rooms
-    joinRoom(chat,users);
-    return true;
-  } catch(err) {
-    console.log(err);
-    return false;
-  }
-}
-
-async function removeUsersFromChat(chat,users) {
-  try {
-    let ops = await Promise.all([
-      // pull chat from users' chats
-      db.users.update({_id: {$in: users}},{
-        $pull: {'private.chats': chat}
-      },{projection: ['_id']}),
-      // pull users from chat participants and admins
-      db.chats.findOneAndUpdate(chat,{
-        $pull: {
-          participants: {$each: users},
-          admins: {$each: users},
-        }
-      },{projection: ['_id','admins']})
-    ]);
-    if (!ops || !ops[0] || !ops[1]) return false;
-    let chatDoc = ops[1];
-    // if there are no admins left all participants become admins
-    if (chatDoc.admins.length === 0) {
-      db.chats.findOneAndUpdate(chat,{
-        $push: {
-          admins: {$each: '$participants'}
-        }
-      },{projection: ['_id']})
-    }
-    leaveRoom(chat,users);
-    return true;
-  } catch(err) {
-    console.log(err);
-    return false;
-  }
-}
-
-async function areFriends(user,arr) {
-  let doc = db.users.findOne(user,'friends');
-  if (arr.length > friends.length) return false;
-  for (let i in arr) {
-    if (doc.friends.indexOf(arr[i]) < 0) {
-      return false;
-    }
-  }
-  return true;
-}
 
 function leaveRoom(chat,users) {
   users.forEach((user) => {
@@ -288,7 +145,10 @@ function joinRoom(chat,users) {
   })
 }
 
-async function checkPermissions(user_id,chat_id,users,{
+async function checkPermissions({
+  user_id,
+  users = [],
+  chat_id,
   types, // allowed chat types
   collections, // allowed chat collections
   admin, // user_id is admin
@@ -296,14 +156,20 @@ async function checkPermissions(user_id,chat_id,users,{
   not_participants, // users are not participants
   participants  // users are participants
   }) {
-  let get = await Promise.all([db.chats.findOne(chat,'-messages'),
-    db.users.findOne(user,['private','friends'])
-  ]);
-  let chat = get[0];
-  let user = get[1];
+
+  let user, chat
+  if (user_id)
+    user = await db.users.findOne(user_id,['private.chats','friends'])
+  if (chat_id) {
+    chat = await db.chats.findOne(chat_id,'-messages')
+    if (!chat) return false
+  }
   if (types && types.indexOf(chat.type) < 0) return false;
   if (collections && collections.indexOf(chat.collection) < 0) return false;
-  if (admin && chat.admins.indexOf(user_id) < 0) return false;
+  if (admin && !_.find(chat.participants, {
+    _id: user_id,
+    admin: true
+  })) return false;
   if (friends) {
     for (let i in users) {
       if (user.friends.indexOf(users[i]) < 0) {
@@ -318,7 +184,7 @@ async function checkPermissions(user_id,chat_id,users,{
       }
     }
   }
-  if (participants) {
+  else if (participants) {
     for (let i in users) {
       if (chat.participants.indexOf(users[i]) < 0) {
         return false;

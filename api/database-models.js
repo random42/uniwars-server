@@ -58,8 +58,6 @@ const user = {
     }
   }],
   "online_time": 796,
-  "online": true,
-  "playing": true,
   "friends": ["_ids"]
 }
 
@@ -74,7 +72,7 @@ const team = {
     "large": ""
   },
   // TODO
-  "players": [
+  "users": [
     {
       "_id": "",
       "admin": true
@@ -104,9 +102,9 @@ const uni = {
   ],
   "name": "University of Turin",
   "alpha_two_code": "IT",
-  "state-province": null,
+  "state_province": null,
   "domains": [
-      "unito.it"
+    "unito.it"
   ],
   "country": "Italy",
   "chat": "_id"
@@ -133,7 +131,6 @@ const chat = {
   ],
 }
 
-
 const game = {
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
@@ -150,12 +147,12 @@ const game = {
       "question": "_id",
       "answer": ""
     }],
-    "rating": 2412
+    "perf": {} // to have an improvement function of users
   }],
   // if it is a team game
-  "teams": ["_id1","_id2"],
+  "teams": ["_ids"],
   "questions": ["_ids"],
-  "result": 1, // 1, 0, 0.5
+  "result": 1, // 1 if side0 wins, 0.5 draw, 0 side1 wins
   "status": "play", // end
 }
 

@@ -1,5 +1,12 @@
 const database = require('monk')('mongodb://roberto.sero:6a2snh8QphPrrsuZ@ds062797.mlab.com:62797/uniwars');
 
+const stringIdsMid = ({collection, monkInstance}) => next => (args, method) => {
+  return next(args, method).then((doc) => {
+    return JSON.parse(JSON.stringify(doc))
+  })
+}
+
+database.addMiddleware(stringIdsMid)
 
 module.exports = {
   db: database,

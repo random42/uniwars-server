@@ -12,6 +12,7 @@ const chat = require('./routes/chat');
 const bcrypt = require('bcrypt')
 const security = require('./utils/security');
 const cors = require('cors');
+const db = require('./utils/db')
 require('./socket/init');
 
 let app = express();
