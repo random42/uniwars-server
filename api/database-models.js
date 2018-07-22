@@ -46,17 +46,6 @@ const user = {
     "squad": {},
     "team": {}
   },
-  "activity": [{
-    "interval": {
-      "start": 125254254,
-      "end": 134452435,
-    },
-    "games": {
-      "solo": 23,
-      "squad": 12,
-      "team": 1
-    }
-  }],
   "online_time": 796,
   "friends": ["_ids"]
 }

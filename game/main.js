@@ -6,6 +6,8 @@ const Rating = require('../utils/ratings');
 const Utils = require('../utils');
 const debug = require('debug')('game');
 const Maps = require('./maps');
+const _ = require('lodash/core')
+const Crud = require('../crud')
 const {
   MAX_QUESTIONS_RECORD,
   GAME_QUESTIONS,
@@ -14,22 +16,6 @@ const {
   GAME_ANSWER_TIMEOUT
 } = require('../utils/constants')
 
-/*
-{
-  _id: '',
-  players: [{_id,
-            side: 0 | 1,
-            index: 0,
-            correct: [{question: _id, answer: string}],
-            incorrect: as correct,
-            picture,
-            username,
-            perf}],
-  type: 'solo',
-  status: null, create/play/end
-  teams: [{_id, side, perf, name, picture}]
-}
-*/
 
 class Game {
 
@@ -55,43 +41,9 @@ class Game {
         _id: id,
         side: side0.indexOf(id) >= 0 ? 0 : 1,
         index: 0, // current question index
-        correct: [],
-        incorrect: []
+        answers: []
       })
     }
-  }
-
-  /*
-    fetch users details and create questions
-
-  */
-  async init() {
-    let ops = []
-    let getUsers = db.users.find({
-      _id: {$in: this.players.map(p => p._id)}
-    },['username','perf','picture'])
-    .then((users) => {
-      for (let u of users) {
-        let player = this.getPlayer(u._id.toString());
-        player.perf = u.perf;
-        player.picture = u.picture;
-        player.username = u.username;
-      }
-    });
-    ops.push(getUsers);
-    ops.push(this.createQuestions());
-    return Promise.all(ops)
-  }
-
-  // fetch game from db
-  async fetch() {
-    let game = await db.games.findOne(this._id);
-    if (!game) throw new Error("Game does not exist")
-    game = Utils.stringifyIds(game);
-    for (let i in game) {
-      this[i] = game[i]
-    }
-    return this;
   }
 
   // return undefined if at least one player is not connected
@@ -158,41 +110,37 @@ class Game {
       }}
     ]);
     // query a sample of questions that don't match with users' last questions
-    this.questions = await db.questions.aggregate([
+    let questions = await db.questions.aggregate([
       {$match: {
         _id: {$nin: last_questions.map(q => q._id)}
       }},
       {$sample: {size: GAME_QUESTIONS}},
-    ]);
+    ])
+    this.questions = questions
     // couldn't quite do it with one aggregation pipeline
   }
 
   async start() {
-    try {
-      this.status = 'play';
-      debug('Start', this._id);
-      Maps.q_timeouts.set(this._id, new Map());
-      // fetch users details, creates questions
-      await this.init()
-      this.created_at = Date.now();
-      // pushing into the db
-      await db.games.insert(this);
-      // let's not inform the client about the questions' _ids
-      // sending start_game event
-      this.stringify();
-      this.emit('start_game',{
-        ...this,
-        questions: undefined,
-      });
-      // set timeout for emitting first question
-      setTimeout(() => {
-        for (let p of this.players) {
-          this.sendQuestion(p._id)
-        }
-      }, GAME_START_TIMEOUT)
-    } catch(err) {
-      console.log(err)
-    }
+    this.status = 'play'
+    debug('Start', this._id)
+    Maps.q_timeouts.set(this._id, new Map())
+    this.created_at = Date.now()
+    await this.createQuestions()
+    // pushing into the db
+    await db.games.insert(this)
+    // let's not inform the client about the questions' _ids
+    // sending game_start event
+    this.stringify();
+    this.emit('game_start',{
+      ...this,
+      questions: undefined,
+    });
+    // set timeout for emitting first question
+    setTimeout(() => {
+      for (let p of this.players) {
+        this.sendQuestion(p._id)
+      }
+    }, GAME_START_TIMEOUT)
   }
 
   // if not all players have joined
@@ -227,68 +175,25 @@ class Game {
     namespace.connections.get(id).emit(ev, ...message)
   }
 
-
   async answer({user, question, answer}) {
-    console.time('answer');
-    let player = this.getPlayer(user);
-    if (!player) return Promise.reject("Wrong player");
-    let questions = this.questions;
+    console.time('answer')
+    let player = this.getPlayer(user)
+    if (!player) return Promise.reject("Wrong player")
+    let questions = this.questions
     // if the user has no more questions
     if (player.index === questions.length) return Promise.reject("No more questions");
-    let realQuestion = questions[player.index];
+    let realQuestion = questions[player.index]
     // wrong question
     if (question !== realQuestion._id) return Promise.reject("Wrong question");
     debug(JSON.stringify(arguments[0]));
     // clears question timeout
     clearTimeout(Maps.q_timeouts.get(this._id).get(user));
-    // checks answer
-    let correct = answer === realQuestion.correct_answer ? 'correct' : 'incorrect';
     // modifies the object too in case game ends
     player.index++
-    player[correct].push({question, answer})
-    // update game database
-    return db.games.findOneAndUpdate({
-      _id: this._id,
-      'players._id': monk.id(user)
-    },{
-      // increment questions' index
-      $inc: {
-        'players.$.index': 1
-      },
-      // push answer
-      $push: {
-        ['players.$.'+correct]: {
-          question: monk.id(question),
-          answer
-        }
-      }
-    }).then(() => console.timeEnd('answer'));
-    // checks if game is over
-    if (player.index === questions.length && this.isOver())
-      return this.end()
-    // SQUAD
-    if (this.type !== 'solo') {
-      this.emitToSide(player.side,'mate_answer',{
-        user: player._id,
-        question: realQuestion._id,
-        answer
-      })
-
-      // if all side's players answered, send next question
-      let all = true;
-      let start = player.side ? half_length : 0
-      let length = this.players.length
-      for (let i = start; i < length && all; i++) {
-        if (this.players[i].index !== player.index) {
-          all = false;
-        }
-      }
-      if (all) {
-        this.players.forEach((p) => {
-          this.sendQuestion(p)
-        })
-      }
-    }
+    player.answers.push({question, answer})
+    // update database
+    crud.game.setAnswer({game: this._id, user: player._id, question, answer})
+    .then(() => console.timeEnd('answer'))
   }
 
   sendQuestion(user) {
@@ -298,7 +203,7 @@ class Game {
     // else
     let _id = player._id;
     let question = this.questions[player.index];
-    this.emitToPlayer(_id, 'question', question);
+    this.emitToPlayer(_id, 'question', {game: this._id, question});
     // sets question timeout
     Maps.q_timeouts.get(this._id).set(_id,
       setTimeout(() => {
@@ -317,8 +222,7 @@ class Game {
   }
 
   getPlayer(_id) {
-    let p = Utils.findObjectById(this.players,_id)
-    return p
+    return _.find(this.players, {_id})
   }
 
   isPlayer(_id) {
@@ -355,7 +259,12 @@ class Game {
     result: 1
   }
   */
-  getStats(users) { // arguments are fresh db data
+  async getStats() {
+    let users = await db.users.find({
+      _id: {
+        $in: this.players.map(p => p._id)
+      }
+    },['stats'])
     let half_length = this.players.length / 2
     let stats = {},
     side0_points = 0,
@@ -422,44 +331,39 @@ class Game {
     debug(JSON.stringify(this, null, 3));
     console.time('end')
     // delete q_timeouts reference
-    Maps.q_timeouts.delete(this._id);
-    let players = this.players;
-    let questions = this.questions;
-    // fetch users_doc
-    let users_doc = await db.users.find({
-      _id: {$in: players.map(p => p._id)}
-    },['private.last_questions','stats']);
-    users_doc = Utils.stringifyIds(users_doc);
-    // get new ratings, category hit miss, questions' hit miss
-    let stats = this.getStats(users_doc);
-    debug('STATS')
+    Maps.q_timeouts.delete(this._id)
+    const stats = await this.getStats()
+    debug('Stats')
     debug(JSON.stringify(stats, null, 3));
-    // questions object ids to put in db
-    let q_oids = questions.map(q => monk.id(q._id));
-    // update database
-    let usersUpdate = stats.players.map(p => {
-      let u = Utils.findObjectById(users_doc, p._id);
-      let resultField;
-      if (stats.result === 0.5) resultField = 'draws'
+    // all end updates methods have 'atEndUpdate' at the beginning
+    let ops = []
+    for (let i in this) {
+      if (i.indexOf('atEndUpdate') >= 0) {
+        ops.push(this[i](stats))
+      }
+    }
+    await Promise.all(ops)
+    console.timeEnd('end');
+  }
+
+  async atEndUpdateUsers(stats) {
+    let ops = stats.players.map(p => {
+      let resultField
+      if (stats.result === 0.5)
+        resultField = 'draws'
       else if ((stats.result === 1 && !p.side) || (stats.result === 0 && p.side))
         resultField = 'wins'
-      else resultField = 'losses'
+      else
+        resultField = 'losses'
       let query = {
         _id: p._id,
-        /*
-        activity: {
-          $elemMatch: {
-            'interval.end': {$exists: false}
-          }
-        }
-        */
       }
       let update = {
         $push: {
           // pushing questions to last_questions
           // no need of $addToSet as questions cannot match
           'private.last_questions': {
-            $each: q_oids,
+            $each: this.questions.map(q => monk.id(q._id)),
             // maintains a limited number of questions' records
             $slice: -MAX_QUESTIONS_RECORD
           },
@@ -471,41 +375,40 @@ class Game {
         },
         // add win/loss/draw to games[type]
         $inc: {
-          ['games.'+this.type+'.' + resultField]: 1,
-          //['activity.$.games.' + this.type]: 1
+          ['games.' + this.type + '.' + resultField]: 1,
         },
       };
       return db.users.findOneAndUpdate(query,update)
     })
-    let gameUpdate = db.games.findOneAndUpdate(this._id,{
+    return Promise.all(ops)
+  }
+
+  async atEndUpdateGame(stats) {
+    return db.games.findOneAndUpdate(this._id,{
       $set: {
         result: stats.result,
         status: 'ended',
-        ended_at: Date.now(),
-        // keeping only the minimum
-        questions: q_oids,
+        ended_at: Date.now()
       },
       // not possible in MongoDB 3.4
       $unset: {
-        'players.$[].index': "",
-        'players.$[].picture': "",
-        'players.$[].username': "",
+        'players.$[].index': ""
       }
     })
-    let questionsUpdate = stats.questions.map(q => {
+  }
+
+  async atEndUpdateQuestions(stats) {
+    let ops = stats.questions.map(q => {
       return db.questions.findOneAndUpdate(q._id,
         // increment hit and miss
         {$inc: {hit: q.hit,miss: q.miss}})
     })
-    await Promise.all(
-      [...usersUpdate,...questionsUpdate, gameUpdate, this.updateRatings()]
-    )
-    console.timeEnd('end');
+    return Promise.all(ops)
   }
 
   // turns every ObjectID to String
   stringify() {
-    let g = Utils.stringifyIds(this);
+    let g = JSON.parse(JSON.stringify(this))
     for (let i in g) {
       this[i] = g[i];
     }

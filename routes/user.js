@@ -259,9 +259,8 @@ router.post('/register', async function(req, res, next) {
   user.uni = monk.id(uni._id)
   user.private = {}
   user.perf = DEFAULT_PERF
-  user.stats
+  user.stats = []
   user.friends = []
-  user.activity = []
   let hash = await bcrypt.hash(user.password,saltRounds);
   user.private.password = hash;
   delete user.password;

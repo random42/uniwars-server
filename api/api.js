@@ -475,7 +475,7 @@ const SOCKET = {
           game: '_id',
           response: 'y' // y or anything else for no
         },
-        response: 'start_game',
+        response: 'game_start',
         description: "Response to 'new_game' event."
       },
       {
@@ -500,7 +500,7 @@ const SOCKET = {
         description: "A new game can start, user must respond with 'join' message."
       },
       {
-        event: 'start_game',
+        event: 'game_start',
         params: {
           game: 'object',
         },
@@ -528,6 +528,9 @@ const SOCKET = {
         description: `Notifies a user of a teammate answer.
           It also notifies a user of his own answers.`
       },
+      {
+        event: 'game_end'
+      }
     ]
   }
 }

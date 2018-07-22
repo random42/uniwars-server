@@ -7,6 +7,26 @@ const NO_PROJ = {projection: {_id: 1}}
 
 module.exports = {
 
+  async fetchGameWithQuestions({game}) {
+    const pipeline = [
+      {
+        $match: {_id: game}
+      },
+      {
+        $lookup: {
+          from: 'questions',
+          localField: 'questions',
+          foreignField: '_id',
+          as: 'questions'
+        }
+      }
+    ]
+    let doc = await db.games.aggregate(pipeline)
+    if (doc.length !== 1)
+      return
+    return doc[0]
+  },
+
   async getQuestions({game}) {
     const pipeline = [
       {
@@ -27,6 +47,7 @@ module.exports = {
       }
     ]
     let doc = await db.games.aggregate(pipeline)
+    if (doc.length !== 1) return
     return doc[0].questions
   },
 
@@ -45,9 +66,9 @@ module.exports = {
       }
     ]
     let doc = await db.games.aggregate(pipeline)
-    if (!doc.length === 1) return undefined
+    if (doc.length !== 1) return
     doc = doc[0]
-    if (index >= doc.questions.length) return undefined
+    if (index >= doc.questions.length) return
     return doc.questions[index]
   },
 
@@ -80,7 +101,7 @@ module.exports = {
     let doc = await db.games.aggregate(pipeline)
     if (doc.length !== 1) return undefined
     doc = doc[0]
-    doc.users_docs.map((item, index, arr) => {
+    _.forEach(doc.users_docs, (item, index, arr) => {
       let user = doc.users[index]
       user.picture = item.picture
       user.username = item.username

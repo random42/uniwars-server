@@ -1,6 +1,7 @@
 const db = require('../utils/db');
 const monk = require('monk');
-const debug = require('debug')('game');
+const debug = require('debug')('game')
+const crud = require('../crud')
 
 const classes = {
   'solo': require('./solo'),
@@ -22,9 +23,9 @@ const UTILS = {
 
   // fetch game and initialize it with right class
   async fetch(_id) {
-    let game = await db.games.findOne(_id);
-    if (!game) return;
-    return new classes[game.type](game);
+    let game = await crud.game.fetchGameWithQuestions(_id)
+    if (!game) return Promise.reject("Game does not exist!")
+    return new classes[game.type](game)
   }
 }
 

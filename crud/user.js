@@ -89,7 +89,7 @@ module.exports = {
   },
 
   async rank() {
-    
+
   },
 
   rankPipeline: [
