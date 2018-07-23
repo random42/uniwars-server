@@ -53,7 +53,6 @@ router.get('/', async function(req,res,next) {
 
 router.get('/search', async function(req,res,next) {
   try {
-    debug('asdsasd')
     const PAGE_RESULTS = 20;
     let { text, page } = req.query;
     page = parseInt(page);
@@ -82,7 +81,6 @@ router.get('/search', async function(req,res,next) {
     }
     // if text has only letters then search on full_name too
     if (!(/\W/.test(text))) {
-      debug('only letters');
       pipeline.$match.full_name = {
         $regex: text,
         // case insensitive
@@ -255,7 +253,6 @@ router.post('/register', async function(req, res, next) {
     res.status(400).send('Username is already used.');
     return;
   }
-
   user.uni = monk.id(uni._id)
   user.private = {}
   user.perf = DEFAULT_PERF
@@ -265,7 +262,8 @@ router.post('/register', async function(req, res, next) {
   user.private.password = hash;
   delete user.password;
   await db.users.insert(user);
-});
+  res.sendStatus(200)
+})
 
 router.put('/picture', async function(req,res,next) {
   // set headers Content-Type to application/octet-stream
@@ -467,9 +465,9 @@ function checkRegisterForm(user) {
     first_name : /^[a-z]+(\s+[a-z]+)*$/i,
     last_name : /^[a-z]+(\s+[a-z]+)*$/i,
     email: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-    password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,255}$/g,
+    password: /^.{8,255}$/g,
     major: /^[a-z]+(\s+[a-z]+)*$/i,
-    username: /^.*$/g,
+    username: /^.{3,20}$/g,
   }
   // checks regex
   for (let field in user) {

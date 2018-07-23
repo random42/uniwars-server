@@ -23,19 +23,22 @@ for (let nsp in server.nsps) {
 }
 
 function postAuthenticate(socket, data) {
-  let { _id } = data;
-  let id = socket.id;
+  let { _id } = data
+  let id = socket.id
+  // server and main nsp map
+  server.connections.set(_id, socket)
   const nspPostAuth = (_id, id, nsp) => {
-    let s = nsp.connected[nsp.name + '#' + id];
+    let s = nsp.connected[nsp.name + '#' + id]
     if (s) {
-      nsp.connnections.set(_id, s);
-      s.user_id = _id;
+      // other namespaces map
+      nsp.connections.set(_id, s)
+      s.user_id = _id
+      nsp.postAuthenticate(s)
     }
-    nsp.postAuthenticate(s);
   }
   for (let nsp in server.nsps) {
-    nspPostAuth(_id, id, server[nsp]);
-    debug(server[nsp].connections);
+    nspPostAuth(_id, id, server.nsps[nsp])
+    // debug(server.nsps[nsp].connections.keys())
   }
 }
 

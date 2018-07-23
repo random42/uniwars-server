@@ -7,7 +7,7 @@ const Utils = require('../utils');
 const debug = require('debug')('game');
 const Maps = require('./maps');
 const _ = require('lodash/core')
-const Crud = require('../crud')
+const crud = require('../crud')
 const {
   MAX_QUESTIONS_RECORD,
   GAME_QUESTIONS,
@@ -120,21 +120,58 @@ class Game {
     // couldn't quite do it with one aggregation pipeline
   }
 
+  async fetchUsers(...fields) {
+    return db.users.find({
+      _id: {
+        $in: this.players.map(p => p._id)
+      }
+    }, fields, {multi: true})
+  }
+
+  // look up users and teams infos
+  async clientInfos(users) {
+  }
+
+  async insertInDb() {
+    let obj = JSON.parse(JSON.stringify(this))
+    obj._id = monk.id(obj._id)
+    for (let i in obj.players) {
+      let player = obj.players[i]
+      player._id = monk.id(player._id)
+    }
+    obj.questions = obj.questions.map((q) => monk.id(q._id))
+    return db.games.insert(obj)
+  }
+
+  copyFields(users, ...fields) {
+    for (let i in users) {
+      let player = this.getPlayer(users[i]._id)
+      for (let f of fields) {
+        player[f] = users[i][f]
+      }
+    }
+  }
+
   async start() {
     this.status = 'play'
     debug('Start', this._id)
     Maps.q_timeouts.set(this._id, new Map())
     this.created_at = Date.now()
-    await this.createQuestions()
-    // pushing into the db
-    await db.games.insert(this)
+    let ops = await Promise.all([
+      this.createQuestions(),
+      this.fetchUsers('username','perf','picture')
+    ])
+    let users = ops[1]
+    this.copyFields(users, 'perf', 'username', 'picture')
     // let's not inform the client about the questions' _ids
     // sending game_start event
-    this.stringify();
-    this.emit('game_start',{
+    this.emit('game_start', {game: {
       ...this,
-      questions: undefined,
-    });
+      questions: []
+    }});
+    // pushing into the db
+    await this.insertInDb()
+    this.stringify()
     // set timeout for emitting first question
     setTimeout(() => {
       for (let p of this.players) {
@@ -146,16 +183,16 @@ class Game {
   // if not all players have joined
   cancel() {
     if (this.status !== 'create') return
-    debug('Canceling game', this._id);
+    debug('cancel', this._id);
     // sending cancel_game event
-    // this.emit('cancel_game',this._id);
+    // this.emit('cancel_game',this._id)
     // deleting room
     for (let p of this.players) {
       namespace.connections.has(p._id) &&
       namespace.connections.get(p._id).leave(this._id);
     }
     // putting joined users back in the matchmaker
-    mm[this.type].push(this.joined);
+    mm[this.type].push(this.joined)
     // delete game
     Maps.starting.delete(this._id)
   }
@@ -176,7 +213,6 @@ class Game {
   }
 
   async answer({user, question, answer}) {
-    console.time('answer')
     let player = this.getPlayer(user)
     if (!player) return Promise.reject("Wrong player")
     let questions = this.questions
@@ -184,16 +220,17 @@ class Game {
     if (player.index === questions.length) return Promise.reject("No more questions");
     let realQuestion = questions[player.index]
     // wrong question
-    if (question !== realQuestion._id) return Promise.reject("Wrong question");
-    debug(JSON.stringify(arguments[0]));
+    if (question !== realQuestion._id) {
+      return Promise.reject("Wrong question")
+    }
+    debug(JSON.stringify(arguments[0]))
     // clears question timeout
-    clearTimeout(Maps.q_timeouts.get(this._id).get(user));
-    // modifies the object too in case game ends
+    clearTimeout(Maps.q_timeouts.get(this._id).get(user))
+    // modify the object
     player.index++
     player.answers.push({question, answer})
     // update database
-    crud.game.setAnswer({game: this._id, user: player._id, question, answer})
-    .then(() => console.timeEnd('answer'))
+    await crud.game.setAnswer({game: this._id, user, question, answer})
   }
 
   sendQuestion(user) {
@@ -272,7 +309,10 @@ class Game {
     // getting sides' points, adding user
     stats.players = this.players.map((p) => {
       let u = Utils.findObjectById(users, p._id)
-      let points = p.correct.length
+      let points = p.answers.filter((ans) => {
+        let question = _.find(this.questions, {_id: ans.question})
+        return ans.answer === question.correct_answer
+      }).length
       let side = p.side
       if (side === 0) {
         side0_points += points
@@ -300,12 +340,12 @@ class Game {
       for (let p in this.players) {
         let player = this.players[p]
         let p_stats = stats.players[p]
-        let category = Utils.findObjectByKey(p_stats.stats, 'category', question.category)
+        let category = _.find(p_stats.stats, {'category': question.category})
         if (!category) {
           category = {category: question.category, hit: 0, miss: 0}
           p_stats.stats.push(category)
         }
-        if (Utils.findObjectByKey(player.correct, 'question', question._id)) {
+        if (_.find(player.answers, {question: question._id}).answer === question.correct_answer) {
           category.hit++
           q_stats.hit++
         } else {
@@ -327,8 +367,7 @@ class Game {
   }
 
   async end() {
-    debug('Ending game')
-    debug(JSON.stringify(this, null, 3));
+    debug('Game end')
     console.time('end')
     // delete q_timeouts reference
     Maps.q_timeouts.delete(this._id)
@@ -337,12 +376,23 @@ class Game {
     debug(JSON.stringify(stats, null, 3));
     // all end updates methods have 'atEndUpdate' at the beginning
     let ops = []
-    for (let i in this) {
-      if (i.indexOf('atEndUpdate') >= 0) {
-        ops.push(this[i](stats))
+    for (let i in this.prototype) {
+      if (i.indexOf('atEnd') >= 0) {
+        ops.push(this.prototype[i](stats))
       }
     }
+    debug('Ops',ops.length)
     await Promise.all(ops)
+    this.emitToSide(0, 'game_end', stats)
+    debug(stats.result)
+    let other = {...stats}
+    if (stats.result !== 0.5) {
+      if (stats.result === 1)
+        other.result = 0
+      else other.result = 1
+    }
+    debug(other.result)
+    this.emitToSide(1, 'game_end', other)
     console.timeEnd('end');
   }
 

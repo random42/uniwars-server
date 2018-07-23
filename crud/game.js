@@ -1,6 +1,7 @@
 const debug = require('debug')('crud:game')
 const db = require('../utils/db')
 const _ = require('lodash/core')
+const monk = require('monk')
 const { PROJECTIONS } = require('../api/api')
 const utils = require('../utils')
 const NO_PROJ = {projection: {_id: 1}}
@@ -10,27 +11,36 @@ module.exports = {
   async fetchGameWithQuestions({game}) {
     const pipeline = [
       {
-        $match: {_id: game}
+        $match: {_id: monk.id(game)}
       },
       {
         $lookup: {
           from: 'questions',
           localField: 'questions',
           foreignField: '_id',
-          as: 'questions'
+          as: 'questions_docs'
         }
       }
     ]
     let doc = await db.games.aggregate(pipeline)
     if (doc.length !== 1)
       return
-    return doc[0]
+    doc = doc[0]
+    // to have the same questions order
+    let questions = []
+    for (let _id of doc.questions) {
+      let q = _.find(doc.questions_docs, {_id})
+      questions.push(q)
+    }
+    doc.questions = questions
+    delete doc.questions_docs
+    return doc
   },
 
   async getQuestions({game}) {
     const pipeline = [
       {
-        $match: {_id: game}
+        $match: {_id: monk.id(game)}
       },
       {
         $lookup: {
@@ -54,7 +64,7 @@ module.exports = {
   async getQuestion({game, index}) {
     const pipeline = [
       {
-        $match: { _id: game }
+        $match: { _id: monk.id(game) }
       },
       {
         $lookup: {
@@ -79,7 +89,7 @@ module.exports = {
   async joinUsersAndTeams({game}) {
     const pipeline = [
       {
-        $match: { _id: game }
+        $match: { _id: monk.id(game) }
       },
       {
         $lookup: {
@@ -128,7 +138,7 @@ module.exports = {
     return db.games.findOneAndUpdate({
       _id: game,
       // to specify the user to update
-      players: { _id: user }
+      players:  { $elemMatch: {_id: monk.id(user)} }
     },{
       $push: {
         'players.$.answers': {
@@ -139,7 +149,9 @@ module.exports = {
       $inc: {
         'players.$.index': 1
       }
-    }, NO_PROJ)
+    }, {
+      ...NO_PROJ
+    })
   },
 
   /*

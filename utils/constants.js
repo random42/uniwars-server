@@ -4,8 +4,8 @@
 
 module.exports = {
   MAX_QUESTIONS_RECORD: 300, // number of last questions that will not appear again to a user
-  GAME_QUESTIONS: 10, // questions per game
-  GAME_JOIN_TIMEOUT: 100, // period of time in which all clients must join or refuse the created game
+  GAME_QUESTIONS: 5, // questions per game
+  GAME_JOIN_TIMEOUT: 1000, // period of time in which all clients must join or refuse the created game
   GAME_START_TIMEOUT: 3000, // period of time between game start and first question submit
   GAME_ANSWER_TIMEOUT: 10000, // period of time to answer a question
   CHAT_MAX_MSG_LENGTH: 1024, // maximum characters per chat message

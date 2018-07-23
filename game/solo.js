@@ -3,17 +3,20 @@ const Game = require('./main');
 const db = require('../utils/db');
 const Ratings = require('../utils/ratings');
 const Utils = require('../utils');
+const crud = require('../crud')
 
 class Solo extends Game {
   constructor(arg) {
     super(arg)
   }
 
-  async answer(data) {
+  async answer({user, question, answer}) {
     try {
-      await super.answer(data)
-      this.sendQuestion(ans.user)
-      this.isOver() && this.end()
+      await super.answer(arguments[0])
+      this.sendQuestion(user)
+      this.isOver() && this.end().catch((err) => {
+        console.log(err)
+      })
     } catch(err) {
       debug(err);
     }

@@ -19,7 +19,12 @@ async function postAuthenticate(socket) {
   const user = socket.user_id;
   // middleware
   socket.use((packet,next) => {
-    //console.log(packet);
+    let [ event, ...message ] = packet
+    debug({
+      user,
+      event,
+      message
+    })
     next();
     // packet is array [event,...message]
   })
@@ -41,7 +46,12 @@ async function postAuthenticate(socket) {
     if (!(game in socket.rooms) || game === socket.id)
       return
     // gets game
-    let g = await gameUtils.fetch(game);
-    g.answer({user, question, answer})
+    try {
+      let g = await gameUtils.fetch(game);
+      g.answer({user, question, answer})
+    }
+    catch(err) {
+      console.log(err)
+    }
   })
 }
