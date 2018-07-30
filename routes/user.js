@@ -4,25 +4,24 @@ const { HTTP, PROJECTIONS } = require('../api/api');
 const db = require('../utils/db');
 const debug = require('debug')('http:users');
 const fs = require('fs');
-const bcrypt = require('bcrypt');
-const path = require('path');
-const project_path = __dirname.slice(0,__dirname.indexOf(path.basename(__dirname)));
-const sharp = require('sharp');
-const monk = require('monk');
-const baseURL = 'http://localhost:3000';
+const bcrypt = require('bcrypt')
+const socket = require('../socket')
+const path = require('path')
+const project_path = __dirname.slice(0,__dirname.indexOf(path.basename(__dirname)))
+const sharp = require('sharp')
+const monk = require('monk')
+const baseURL = 'http://localhost:3000'
 const picSize = {
   small: 100,
   medium: 256,
   large: 500
 }
-const MAJORS = require('../assets/majors.json');
-const PhoneNumber = require('awesome-phonenumber');
-const extern_login = ['facebook.com','google.com'];
-const DEFAULT_PERF = {
-  rating: 1500,
-  rd: 100,
-  vol: 0.06
-}
+const MAJORS = require('../assets/majors.json')
+const {
+  DEFAULT_PERF,
+  PAGE_RESULTS,
+  USERNAME_LENGTH
+} = require('../utils/constants')
 const rankSort = {
   'games.solo': -1
 }
@@ -30,9 +29,8 @@ const crud = require('../crud')
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
-// TODO online time on socket auth and disconnect
 
-router.get('/', async function(req,res,next) {
+router.get('/', async function(req, res, next) {
   const { _id, project } = req.query
   if (!_id || !project || HTTP.USER.GET_USER.params.project.indexOf(project) < 0)
     return res.sendStatus(400)
@@ -48,53 +46,45 @@ router.get('/', async function(req,res,next) {
   }
   if (!doc)
     return res.sendStatus(404)
+  doc.online = socket.server.connections.has(_id)
   res.json(doc)
 })
 
-router.get('/search', async function(req,res,next) {
-  try {
-    const PAGE_RESULTS = 20;
-    let { text, page } = req.query;
-    page = parseInt(page);
-    let check = () => {
-      return
-      text.length < 1024 &&
-      (page ||
-      page === 0)
-    }
-    if (!check()) return;
-    let pipeline = {
-      // match text in username and full_name
+router.get('/search', async function(req, res, next) {
+  let { text, page } = req.query
+  if (!text || !page || isNaN(page) || text.length > USERNAME_LENGTH.MAX)
+    return res.sendStatus(400)
+  page = parseInt(page)
+  let regex = new RegExp(text);
+  let pipeline = [
+    {
       $match: {
         username: {
-          $regex: text,
+          $regex: regex,
           // case insensitive
           $options: 'i',
         }
-      },
-      $skip: page * PAGE_RESULTS,
-      $limit: PAGE_RESULTS,
+      }
+    },
+    // match text in username and full_name
+    {
+      $skip: page * PAGE_RESULTS
+    },
+    {
+      $limit: PAGE_RESULTS
+    },
+    {
       $project: {
         username: 1,
         picture: 1,
       }
     }
-    // if text has only letters then search on full_name too
-    if (!(/\W/.test(text))) {
-      pipeline.$match.full_name = {
-        $regex: text,
-        // case insensitive
-        $options: 'i',
-      }
-    }
-    // query
-    let results = await db.users.aggregate(pipeline);
-    res.json(results);
-  } catch(err) {
-    res.sendStatus(500);
-  }
+  ]
+  let docs = await db.users.aggregate(pipeline)
+  res.json(docs)
 })
 
+// TODO
 router.delete('/',async function(req,res,next) {
   try {
     let query = {_id: req.get('user')};
@@ -112,8 +102,8 @@ router.delete('/',async function(req,res,next) {
             new Promise((res,rej) => {
               fs.unlink(pic_path + size + '/' + query._id + '.png',(err) => {
                 if (err) {
-                  console.log(err);
-                  rej();
+                  console.log(err)
+                  rej()
                 }
                 else res()
               });
@@ -138,38 +128,20 @@ router.delete('/',async function(req,res,next) {
 })
 
 router.get('/top', async function(req,res,next) {
-  try {
-    let from = parseInt(req.query.from);
-    let to = parseInt(req.query.to);
-    let field = 'perf.rating';
-    let sort = {};
-    sort[field] = -1;
-    sort = {...sort,...rankSort}
-    let projection = {
-      username: 1,
-      perf: 1,
-      uni: 1,
-      picture: 1,
-      online: 1,
-    }
-    res.sendStatus(200);
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  let { from, to } = req.query
+  if (isNaN(from) || isNaN(to))
+    return res.sendStatus(400)
+  from = parseInt(from)
+  to = parseInt(to)
+  let docs = await crud.user.top({from, to})
+  res.json(docs)
 })
 
+//TODO
 router.get('/rank', async function(req,res,next) {
-  try {
-
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
 })
 
 router.put('/login', async function(req, res, next) {
-  // TODO maybe set online offline user in db
   let body = req.body
   let { user } = req.query
   let doc = await db.users.findOne({
@@ -181,10 +153,10 @@ router.put('/login', async function(req, res, next) {
   if (!doc) return res.sendStatus(404)
   let auth = await bcrypt.compare(body.password,doc.private.password)
   if (!auth) return res.status(400).send("Wrong Password")
-  // password correct
+  // password is correct
   // generate user access token
   let token = monk.id().toString()
-  // hash login_token
+  // hash access token
   let hash = await bcrypt.hash(token, saltRounds)
   let updatedDoc = await db.users.findOneAndUpdate(doc._id, {
     $set: {
@@ -194,38 +166,24 @@ router.put('/login', async function(req, res, next) {
   res.json({user: doc, token});
 });
 
+
+// TODO
 router.put('/logout', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let doc = await db.users.findOneAndUpdate(user,{
-      $inc: { online_time: (Date.now() - monk.id(token).getTimestamp())},
-      $set: {
-        online: false,
-        'private.access_token': null,
-      }
-    });
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
 });
 
 router.get('/picture', async function (req,res,next) {
   let _id = req.query._id;
   let size = req.query.size;
-  if (!_id || (size && !(size in picSize))) {
-    res.sendStatus(400);
+  if (!_id || !size || ['small','medium','large'].indexOf(size) < 0) {
+    res.sendStatus(400)
     return
   }
-  let user = await db.users.findOne(_id,'picture');
+  let user = await db.users.findOne(_id, 'picture');
   if (!user) {
-    res.sendStatus(404)
-    return
+    return res.sendStatus(404)
   }
   if (typeof user.picture === 'string') {
-    res.redirect(user.picture);
-    return
+    return res.redirect(user.picture)
   }
   let picture = user.picture[size];
   res.redirect(picture);
@@ -266,15 +224,14 @@ router.post('/register', async function(req, res, next) {
 })
 
 router.put('/picture', async function(req,res,next) {
-  // set headers Content-Type to application/octet-stream
-  let query = {_id: req.get('user')};
-  let _id = req.get('user');
-  let picture = req.body;
+  // header Content-Type must be application/octet-stream
+  let _id = req.get('user')
+  let picture = req.body
   let infos = await Promise.all([
     (sharp(picture).resize(picSize.large,picSize.large).toFile('./public/images/profile_pictures/large/'+_id+'.png')),
     (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/medium/'+_id+'.png')),
     (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/small/'+_id+'.png')),
-    db.users.findOneAndUpdate(query,{
+    db.users.findOneAndUpdate(_id,{
       $set: {
         picture: {
           small: baseURL+'/images/profile_pictures/small/'+_id+'.png',
@@ -287,167 +244,56 @@ router.put('/picture', async function(req,res,next) {
   res.sendStatus(200)
 })
 
-router.put('/add-friend', async function (req,res,next) {
-  try {
-    let from = req.get('user');
-    let to = req.query.to;
-    let update = await db.users.findOneAndUpdate({
-      _id: to,
-      'news': {$ne: { // not pushing news if there is one friend_request pending
-        type: "friend_request",
-        user: from
-      }}
-    },{
-      $push: {
-        'news': {
-          type: "friend_request",
-          user: from,
-          created_at: Date.now(),
-        }
-      }
-    });
-    if (!update) {
-      res.sendStatus(400);
-      return;
+router.put('/add-friend', async function (req, res, next) {
+  let user = req.get('user')
+  let { to } = req.query
+  await db.users.findOneAndUpdate(to, {
+    $addToSet: {
+      'private.friend_requests': monk.id(user)
     }
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  })
+  res.sendStatus(200)
 })
 
-router.put('/get-news', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let doc = await db.findOne(user,'news');
-    res.json(doc.news || []);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-})
-
-router.put('/respond-friend-request', async function (req,res,next) {
-  try {
-    let response = req.query.response;
-    let user = req.get('user');
-    let friend = req.query.user;
-    let remove_news = await db.users.findOneAndUpdate({
-      _id: user,
-      news: { // verify the request
-        type: "friend_request",
-        user: friend
-      }
-    },{
-      $pull: {
-        news: {
-          type: "friend_request",
-          user: friend
-        }
-      }
-    });
-    if (!remove_news) { // there was no friend request
-      res.sendStatus(400);
-      return;
+router.put('/respond-friend-request', async function (req, res, next) {
+  let user = req.get('user')
+  let { to, response } = req.query
+  user = monk.id(user)
+  to = monk.id(to)
+  let update = await db.users.findOneAndUpdate({
+    _id: user,
+    'private.friend_requests': to
+  }, {
+    $pull: {
+      'private.friend_requests': to
     }
-    if (response !== 'y') {
-      res.sendStatus(200);
-      return;
-    }
-    // update friends array
-    let ops = await Promise.all([
-      db.users.findOneAndUpdate(user,{
-        $push: {
-          friends: friend
-        }
-      }),
-      db.users.findOneAndUpdate(friend,{
-        $push: {
-          friends: user
-        }
-      })
-    ])
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-})
-
-router.put('/challenge', async function (req,res,next) {
-  try {
-    let from = req.get('user');
-    let to = req.query.to;
-    let update = await db.users.findOneAndUpdate({
-      _id: to,
-      news: {$ne: {
-        type: "challenge",
-        user: from
-      }}
-    },{
-      $push: {
-        news: {
-          type: "challenge",
-          user: from,
-          created_at: Date.now()
-        }
+  }, {projection: {_id: 1}})
+  if (!update) // then there was no friend request
+    return res.sendStatus(400)
+  if (response !== 'y') // then the request was rejected
+    return res.sendStatus(200)
+  let updates = [
+    db.users.findOneAndUpdate(user, {
+      $addToSet: {
+        'friends': to
+      }
+    }),
+    db.users.findOneAndUpdate(to, {
+      $addToSet: {
+        'friends': user
       }
     })
-    if (!update) {
-      res.sendStatus(400);
-      return;
-    }
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
-})
-
-router.put('/respond-challenge', async function (req,res,next) {
-  try {
-    let response = req.query.response;
-    let user = req.get('user');
-    let enemy_id = req.query.user;
-    let remove_news = await db.users.findOneAndUpdate({
-      _id: user,
-      news: {
-        type: "challenge",
-        user: enemy_id
-      }
-    },{
-      $pull: {
-        news: {
-          type: "challenge",
-          user: enemy_id
-        }
-      }
-    })
-    if (!remove_news) {
-      res.sendStatus(400);
-      return;
-    }
-    if (response !== 'y') {
-      res.sendStatus(200);
-      return;
-    }
-    let enemy = await db.users.findOne(enemy,['online','playing']);
-    if (enemy.online && !enemy.playing) {
-      //TODO start game
-      res.sendStatus(200);
-    } else {
-      res.status(201).json(enemy);
-    }
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  ]
+  await Promise.all(updates)
+  res.sendStatus(200)
 })
 
 function getUniByEmail(email) {
-  let regex = /[a-z]+\.[a-z]+$/i;
-  let domain = email.match(regex)[0];
+  let regex = /[a-z]+\.[a-z]+$/i
+  let match = email.match(regex)
+  if (!match || match.length !== 1)
+    return
+  let domain = match[0]
   return db.unis.findOne({domains:domain},['_id']);
 }
 

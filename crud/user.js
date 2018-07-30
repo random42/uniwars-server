@@ -89,8 +89,12 @@ module.exports = {
     return db.users.aggregate(pipeline)
   },
 
-  async rank() {
-
+  async addOnlineTime({user, time}) {
+    return db.users.findOneAndUpdate(user, {
+      $inc: {
+        'online_time': time
+      }
+    })
   },
 
   rankPipeline: [
