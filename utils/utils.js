@@ -32,5 +32,8 @@ module.exports = {
 
   isAsync(fn) {
    return fn.constructor.name === 'AsyncFunction';
-  }
+  },
+
+  // TODO Buffer picture => file
+  async savePicture({buffer, path, fileName}) {},
 }

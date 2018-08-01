@@ -4,262 +4,189 @@ const db = require('../utils/db');
 const bcrypt = require('bcrypt');
 const sharp = require('sharp');
 const monk = require('monk');
+const crud = require('../crud')
+const {
+  MAX_TEAM_MEMBERS
+} = require('../utils/constants')
 const majors = require('../assets/majors.json');
-const MIN_PLAYERS = 5;
-const saltRounds = 12;
+const MIN_PLAYERS = 5
+const saltRounds = 12
 
 
 router.get('/', async function(req,res,next) {
-  let query = req.query;
-  let team = await db.teams.findOne(query);
-  if (!team) {
-    res.sendStatus(404);
-  } else {
-    res.json(team);
-  }
-});
+  let { _id, project } = req.query
+  if (!_id) return res.sendStatus(400)
+  let doc = await crud.team.fetchWithUsers({_id})
+  if (!doc) return res.sendStatus(404)
+  res.json(doc)
+})
 
 router.delete('/', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let team = req.query.team;
-    let doc = await db.teams.findOne({
-      _id: team,
-      founder: user
-    });
-    if (!doc) { // team non esistente o utente non founder
-      res.sendStatus(400);
-      return;
-    }
-    let clean = await Promise.all([
-      // toglie il team dai players
-      db.users.update(
-        // sono piu' i players in un team o i team a cui appartiene ogni player?
-        { _id: {
-            $in: doc.players
-        }},
-        {
-          $pull: {
-            teams: {
-              _id: team
-            }
-          }
-        }, {multi: true}
-      ),
-      // elimina il team
-      db.teams.findOneAndDelete(team)
-    ])
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  let user = req.get('user');
+  let team = req.query.team;
+  let doc = await db.teams.findOne({
+    _id: team,
+    founder: user
+  });
+  if (!doc) // team non esistente o utente non founder
+    return res.sendStatus(400)
+  let ops = await crud.team.delete({team})
+  if (ops) res.sendStatus(200)
+  else res.sendStatus(400)
 })
 
 router.get('/top', async function(req,res,next) {
-  try {
-
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  let { from, to } = req.query
+  if (isNaN(from) || isNaN(to))
+    return res.sendStatus(400)
+  from = parseInt(from)
+  to = parseInt(to)
+  let docs = await crud.team.top(req.query)
+  res.json(docs)
 })
 
+// TODO
 router.get('/rank', async function(req,res,next) {
-  try {
-
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
 })
 
 router.post('/create', async function(req,res,next) {
-  try {
-    let name = req.body.name;
-    let user = req.get('user');
-    let user_id = monk.id(user);
-    // check name
-    let exists = await db.teams.findOne({name: name});
-    if (exists) {
-      res.status(400).send('name used');
-      return;
-    }
-    // creates id,
-    let _id = monk.id();
-    // inserts team
-    let createTeam = async (_id,name) => {
-      let team = await db.teams.insert({
-        _id,
-        name,
-        founder: user_id,
-        players: [user_id],
-        admins: [user_id]
-      })
-      return team;
-    }
-    let end = await Promise.all([
-      createTeam(_id,name),
-      // update user
-      db.users.findOneAndUpdate(user,{
-        $push: {
-          teams: _id
-        },
-      })
-    ])
-    res.json(end[0]);
-  } catch (err) {
-    console.log(err);
+  let { name, invited } = req.body
+  let user = req.get('user')
+  // check name
+  let exists = await db.teams.findOne({name});
+  if (exists) {
+    res.status(400).send('Name already taken');
+    return
   }
-
+  // inserts team
+  let doc = await crud.team.create({name, founder: user, users: invited})
+  res.json(doc)
 })
 
 router.put('/invite', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let team = req.query.team;
-    let invited = req.query.invited;
-    let invitation = await db.users.findOneAndUpdate({
-      _id: invited,
-      'news.teams.invitations': {$ne: {team}}
-    },{
-      $push: {
-        'news.teams.invitations': {
-          user,team
-        }
-      }
-    })
-    if (!invitation) {
-      res.status(400).send('already invited');
-      return;
+  let user = req.get('user')
+  let { team, invited } = req.query
+  if (!team || !Array.isArray(invited))
+    res.sendStatus(400)
+  let invitation = await db.users.update({
+    _id: {
+      $in: invited
+    },
+    // will not send invitation to team users
+    teams: {
+      $not: team
     }
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  },
+  {
+    $push: {
+      'private.news': {
+        'type': 'team_invitation',
+        'team': monk.id(team),
+        'user': monk.id(user)
+      }
+    }
+  },{multi: true, projection: {_id: 1}})
+  res.sendStatus(200);
 });
 
 router.put('/respond-invite', async function(req,res,next) {
-  try {
-    let team = req.query.team;
-    let user = req.get('user');
-    let response = req.query.response;
-    if (response === 'y') {
-      let updateUser = await db.users.findOneAndUpdate({_id: user,
-        'news.teams.invitations': team
-      },{
-        $pull: {
-          'news.teams.invitations': {
-            team
-          }
-        },
-        $push: {
-          teams: monk.id(team)
-        }
-      });
-      if (!updateUser) { // no invitation found
-        res.sendStatus(400);
-        return;
-      }
-      let updateTeam = await
-        // join team
-        db.teams.findOneAndUpdate(team,{
-          $push: {
-            players: monk.id(user)
-          }
-        })
+  let user = req.get('user')
+  let { team, response } = req.query
+  if (!team || !response)
+    return res.sendStatus(400)
+  let update = await db.users.findOneAndUpdate({
+    _id: user,
+    'private.news': {
+      'type': 'team_invitation',
+      team
     }
-    else {
-      let updateUser = await db.users.findOneAndUpdate({_id: user,
-        'news.teams.invitations': team
-      },{
-        $pull: {
-          'news.teams.invitations': {
-            team
-          }
-        }
-      });
-      if (!updateUser) { // no invitation found
-        res.sendStatus(400);
-        return;
+  },{
+    $pull: {
+      'private.news': {
+        'type': 'team_invitation',
+        team
       }
     }
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
+  },{projection: { _id: 1}})
+  if (!update) // no invitation
+    return res.sendStatus(400)
+  if (response !== 'y')
+    return res.sendStatus(200)
+  else {
+    await crud.team.addMember({team, user})
+    res.sendStatus(200)
   }
 })
 
 router.put('/challenge', async function(req,res,next) {
-  try {
-    let user = req.get('user');
-    let team = req.query.team;
-    let enemy = req.query.enemy;
-    // add news in team doc
-    let update = await db.teams.findOneAndUpdate({
-      _id: enemy,
-      challenges: {$ne: team}
-    },{
-      $push : {
-        challenges: team
-      }
-    })
-    if (!update) {
-      res.status(400).send('already challenged');
-      return;
+  let user = req.get('user')
+  let { team, enemy } = req.query.team
+  if (!team || !enemy) return res.sendStatus(400)
+  const pass = await check({
+    users: [user],
+    team,
+    areAdmins: true
+  })
+  if (!pass) return res.sendStatus(400)
+  await db.teams.findOneAndUpdate(enemy, {
+    $addToSet: {
+      'challenges': monk.id(team)
     }
-    // add news in founder doc
-    let news = await db.users.findOneAndUpdate({
-      _id: update.founder
-    },{
-      $push: {
-        news: {
-          type: "team_challenge",
-          user,
-          team,
-          created_at: Date.now()
-        }
-      }
-    })
-    res.sendStatus(200);
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  })
+  res.sendStatus(200)
 });
 
 router.put('/respond-challenge', async function(req,res,next) {
-  try {
-    let response = req.query.response;
-    let user = req.get('user');
-    let team_id = req.query.team;
-    let enemy_id = req.query.enemy;
-    // remove challenge from user team doc
-    let enemy = await db.teams.findOneAndUpdate({
-      _id: team_id,
-      challenges: enemy_id
-    },{
-      $pull: {
-        challenges: enemy_id
-      }
-    })
-    if (!enemy) { // no challenge
-      res.sendStatus(400);
-      return;
+  let user = req.get('user')
+  let { team, enemy, response } = req.query
+  if (!(team && enemy && response))
+    return res.sendStatus(400)
+  const pass = await check({
+    users: [user],
+    team,
+    areAdmins: true
+  })
+  if (!pass) return res.sendStatus(400)
+  let removeNews = await db.teams.findOneAndUpdate(team, {
+    $pull: {
+      'challenges': enemy
     }
-    if (response !== 'y') {
-      res.sendStatus(200);
-      return;
-    }
-  } catch(err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
+  })
+  if (response !== 'y') return res.sendStatus(200)
+  else // TODO start game if possible
 })
 
 
+
+const check = async ({
+  users,
+  team, // can be _id or team object
+  areInTeam,
+  areNotInTeam,
+  areAdmins,
+  }) => {
+  const doc = typeof(team) === 'string' ? await db.findOne(team) : team
+  if (!doc) return false
+  if (areInTeam) {
+    for (let u of users) {
+      if (!_.find(doc.users, {_id: u}))
+        return false
+    }
+  }
+  if (areAdmins) {
+    for (let u of users) {
+      if (!_.find(doc.users, {_id: u, admin: true}))
+        return false
+    }
+  }
+  if (areNotInTeam) {
+    for (let u of users) {
+      if (_.find(doc.users, {_id: u}))
+        return false
+    }
+  }
+  return true
+}
 
 
 

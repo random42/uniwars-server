@@ -14,6 +14,11 @@ module.exports = {
     rd: 100,
     vol: 0.06
   },
-  TEAM_MEMBERS: 5, // users in a team
+  MAX_TEAM_MEMBERS: 5, // users in a team
   GROUP_CHAT_MAX_MEMBERS: 50,
+  MAX_PAGE_RESULTS: 20,
+  USERNAME_LENGTH: {
+    MIN: 4,
+    MAX: 20
+  }
 }

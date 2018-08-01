@@ -9,11 +9,7 @@ const user = {
   "uni": {
       "$oid": "5a3dac7dfaaa577114d0cfaf"
   },
-  "major": {
-    "FOD1P": 1100,
-    "name": "GENERAL AGRICULTURE",
-    "category": "Agriculture & Natural Resources"
-  },
+  "major": "GENERAL AGRICOLTURE",
   "perf": {
     "rating": 1234,
     "rd": 100, // rating deviation
@@ -34,7 +30,21 @@ const user = {
       "access_token": null,
       "phone_number": '+393461625500',
       "chats": ["_id"],
-      "last_questions": ["_id"] // last tot questions
+      "last_questions": ["_id"], // last tot questions
+      "friend_requests": ["users_ids"],
+      "news": [
+        {
+          "type": "friend_request"
+          "user": "_id"
+        },{
+          "type": "team_invitation",
+          "team": "_id",
+          "user": "_id"
+        },{
+          "type": "solo_challenge",
+          "user": "_id"
+        }
+      ]
   },
   "teams": ["_ids"],
   "games": {

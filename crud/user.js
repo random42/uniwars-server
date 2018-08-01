@@ -89,8 +89,37 @@ module.exports = {
     return db.users.aggregate(pipeline)
   },
 
-  async rank() {
+  async addOnlineTime({user, time}) {
+    return db.users.findOneAndUpdate(user, {
+      $inc: {
+        'online_time': time
+      }
+    })
+  },
 
+  async removeFriends({user, friends}) {
+    let ops = [
+      db.users.update({
+        '_id': {
+          $in: friends
+        },
+        'friends': user
+      },{
+        $pull: {
+          'friends': user
+        }
+      },{
+        multi: true
+      }),
+      db.users.findOneAndUpdate(user, {
+        $pull: {
+          'friends': {
+            $in: friends
+          }
+        }
+      })
+    ]
+    return Promise.all(ops)
   },
 
   rankPipeline: [

@@ -11,7 +11,7 @@ class Solo {
 
   push(users) {
     debug('Pushing', users)
-    let length;
+    let length
     // one user
     if (typeof users === 'string') {
       length = this.queue.push(users);

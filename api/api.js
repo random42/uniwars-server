@@ -141,31 +141,6 @@ const HTTP = {
       title: "Get profile picture",
       description: "",
     },
-    CHALLENGE: {
-      method: 'put',
-      url: '/user/challenge',
-      params: {
-        to: "_id",
-      },
-      response: {
-        200: ["OK"],
-      },
-      title: "Challenge",
-      description: "Challenge another user to a solo game."
-    },
-    RESPOND_CHALLENGE: {
-      method: 'put',
-      url: '/user/respond-challenge',
-      params: {
-        response: ['y','n'],
-        user: '_id'
-      },
-      response: {
-        200: ["OK"],
-      },
-      title: "Respond challenge",
-      description: ""
-    },
     ADD_FRIEND: {
       method: 'put',
       url: '/user/add-friend',
@@ -183,7 +158,7 @@ const HTTP = {
       url: '/user/respond-friend-request',
       params: {
         response: ['y','n'],
-        user: '_id'
+        to: '_id'
       },
       response: {
         200: ["OK"],
@@ -191,6 +166,18 @@ const HTTP = {
       title: "Respond friend request",
       description: "",
     },
+    REMOVE_FRIEND: {
+      method: 'put',
+      url: '/user/remove-friends',
+      params: {
+        friends: ['_ids']
+      },
+      response: {
+        200: ["OK"],
+      },
+      title: "Remove friends",
+      description: "",
+    }
   },
 
   UNI : {
@@ -209,15 +196,14 @@ const HTTP = {
       description: ""
     },
     TOP: {
-
-      // TODO
       method: 'get',
       url: '/uni/top',
       params: {
         from: 0,
         to: 10,
       },
-      title: "",
+      title: "Top",
+      description: ""
     },
     RANK: {
       method: 'get',
@@ -266,7 +252,6 @@ const HTTP = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request","Name already taken"],
       },
       title: "Respond invite",
       description: ""
@@ -305,6 +290,7 @@ const HTTP = {
       url: '/team/create',
       data: {
         name: "bestTeamEver",
+        invited: ['_ids']
       },
       response: {
         200: ["OK"],
@@ -556,6 +542,9 @@ const PROJECTIONS = {
     FULL: {
       FIELDS: ['name','picture','users','perf'],
       COMPUTED: ['users','rank']
+    },
+    SMALL: {
+      FIELDS: ['name','picture','perf']
     }
   },
   CHAT: {

@@ -1,6 +1,7 @@
 const db = require('../utils/db');
 const debug = require('debug')('socket:main');
 const bcrypt = require('bcrypt');
+const crud = require('../crud')
 let { server } = require('./index');
 require('./main');
 require('./chat');
@@ -17,7 +18,8 @@ for (let nsp in server.nsps) {
   let n = server.nsps[nsp];
   n.on('disconnect', (socket) => {
     if (socket.auth) {
-      n.connections.delete(socket.user_id);
+      let user = socket.user_id
+      n.connections.delete(user)
     }
   })
 }
@@ -25,6 +27,11 @@ for (let nsp in server.nsps) {
 function postAuthenticate(socket, data) {
   let { _id } = data
   let id = socket.id
+  socket.authTime = Date.now()
+  socket.on('disconnect', () => {
+    crud.user.addOnlineTime({user, time: Date.now() - socket.authTime})
+    .catch(err => debug(err.message))
+  })
   // server and main nsp map
   server.connections.set(_id, socket)
   const nspPostAuth = (_id, id, nsp) => {
