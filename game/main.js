@@ -192,7 +192,7 @@ class Game {
       namespace.connections.get(p._id).leave(this._id);
     }
     // putting joined users back in the matchmaker
-    mm[this.type].push(this.joined)
+    //mm[this.type].push(this.joined)
     // delete game
     Maps.starting.delete(this._id)
   }
