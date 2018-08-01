@@ -31,7 +31,20 @@ const user = {
       "phone_number": '+393461625500',
       "chats": ["_id"],
       "last_questions": ["_id"], // last tot questions
-      "friend_requests": ["users_id"]
+      "friend_requests": ["users_ids"],
+      "news": [
+        {
+          "type": "friend_request"
+          "user": "_id"
+        },{
+          "type": "team_invitation",
+          "team": "_id",
+          "user": "_id"
+        },{
+          "type": "solo_challenge",
+          "user": "_id"
+        }
+      ]
   },
   "teams": ["_ids"],
   "games": {

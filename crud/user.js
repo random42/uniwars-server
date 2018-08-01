@@ -97,6 +97,31 @@ module.exports = {
     })
   },
 
+  async removeFriends({user, friends}) {
+    let ops = [
+      db.users.update({
+        '_id': {
+          $in: friends
+        },
+        'friends': user
+      },{
+        $pull: {
+          'friends': user
+        }
+      },{
+        multi: true
+      }),
+      db.users.findOneAndUpdate(user, {
+        $pull: {
+          'friends': {
+            $in: friends
+          }
+        }
+      })
+    ]
+    return Promise.all(ops)
+  },
+
   rankPipeline: [
     {
       $sort: {

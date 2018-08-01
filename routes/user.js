@@ -171,7 +171,7 @@ router.put('/login', async function(req, res, next) {
 router.put('/logout', async function(req,res,next) {
 });
 
-router.get('/picture', async function (req,res,next) {
+router.get('/picture', async function(req,res,next) {
   let _id = req.query._id;
   let size = req.query.size;
   if (!_id || !size || ['small','medium','large'].indexOf(size) < 0) {
@@ -249,7 +249,10 @@ router.put('/add-friend', async function (req, res, next) {
   let { to } = req.query
   await db.users.findOneAndUpdate(to, {
     $addToSet: {
-      'private.friend_requests': monk.id(user)
+      'private.news': {
+        'type': 'friend_request',
+        'user': monk.id(user)
+      }
     }
   })
   res.sendStatus(200)
@@ -262,10 +265,16 @@ router.put('/respond-friend-request', async function (req, res, next) {
   to = monk.id(to)
   let update = await db.users.findOneAndUpdate({
     _id: user,
-    'private.friend_requests': to
+    'private.news': {
+      type: 'friend_request',
+      user: to
+    }
   }, {
     $pull: {
-      'private.friend_requests': to
+      'private.news': {
+        type: 'friend_request',
+        user: to
+      }
     }
   }, {projection: {_id: 1}})
   if (!update) // then there was no friend request
@@ -285,6 +294,15 @@ router.put('/respond-friend-request', async function (req, res, next) {
     })
   ]
   await Promise.all(updates)
+  res.sendStatus(200)
+})
+
+router.put('/remove-friend', async function(req, res, next) {
+  let user = req.get('user')
+  let { friends } = req.query
+  if (!Array.isArray(friends))
+    return res.sendStatus(400)
+  await crud.user.removeFriends({ user, friends })
   res.sendStatus(200)
 })
 

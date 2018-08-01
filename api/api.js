@@ -166,6 +166,18 @@ const HTTP = {
       title: "Respond friend request",
       description: "",
     },
+    REMOVE_FRIEND: {
+      method: 'put',
+      url: '/user/remove-friends',
+      params: {
+        friends: ['_ids']
+      },
+      response: {
+        200: ["OK"],
+      },
+      title: "Remove friends",
+      description: "",
+    }
   },
 
   UNI : {
@@ -240,7 +252,6 @@ const HTTP = {
       },
       response: {
         200: ["OK"],
-        400: ["Bad Request","Name already taken"],
       },
       title: "Respond invite",
       description: ""
@@ -279,6 +290,7 @@ const HTTP = {
       url: '/team/create',
       data: {
         name: "bestTeamEver",
+        invited: ['_ids']
       },
       response: {
         200: ["OK"],
@@ -530,6 +542,9 @@ const PROJECTIONS = {
     FULL: {
       FIELDS: ['name','picture','users','perf'],
       COMPUTED: ['users','rank']
+    },
+    SMALL: {
+      FIELDS: ['name','picture','perf']
     }
   },
   CHAT: {

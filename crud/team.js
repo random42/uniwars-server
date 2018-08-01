@@ -9,6 +9,38 @@ const { DEFAULT_PERF } = require('../utils/constants')
 
 module.exports = {
 
+  fetchWithUsers(query) {
+    let pipeline = [
+      {
+        $match: query,
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'users',
+          foreignField: '_id',
+          as: 'users'
+        }
+      },
+      {
+        $project: {
+          'name': 1,
+          'picture': 1,
+          'perf': 1,
+          'games': 1,
+          'founder': 1,
+          'users._id': 1,
+          'users.username': 1,
+          'users.picture': 1,
+          'users.perf': 1,
+        }
+      },
+    ]
+    let docs = await db.teams.aggregate(pipeline)
+    if (docs.length !== 1) return
+    else return docs[0]
+  },
+
   /*
     assumes that founder is not in users array
     creates the team and the team chat
@@ -42,18 +74,37 @@ module.exports = {
       participants: users
     })
     let updateUsers = db.users.update({
-      _id: { $in: users.map(u => u._id)}
+      _id: { $in: users.map(u => u._id) }
     },{
       $addToSet: {
         teams: team_id
       }
     })
-    let res = await Promise.all([team,chat])
+    let res = await Promise.all([team, chat, updateUsers])
     return res[0]
   },
 
   async delete({team}) {
-    return db.teams.findOneAndDelete(team)
+    let doc = await db.teams.findOne(team)
+    if (!doc) return
+    return Promise.all([
+      // toglie il team dai players
+      db.users.update(
+        // sono piu' i players in un team o i team a cui appartiene ogni player?
+        { _id: {
+            $in: doc.users.map(u => u._id)
+        }},
+        {
+          $pull: {
+            teams: {
+              _id: team
+            }
+          }
+        }, {multi: true}
+      ),
+      // elimina il team
+      db.teams.findOneAndDelete(team)
+    ])
   },
 
   async addMember({team, user}) {
@@ -104,5 +155,20 @@ module.exports = {
     })
   },
 
-
+  async top({from, to}) {
+    let pipeline = require('./user').rankPipeline
+    pipeline = pipeline.concat([{
+      $skip: from
+    },{
+      $limit: to - from
+    },{
+      $project: {
+        'name': 1,
+        'picture': 1,
+        'perf': 1,
+        'rank': 1,
+      }
+    }])
+    return db.teams.aggregate(pipeline)
+  },
 }
