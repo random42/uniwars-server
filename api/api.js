@@ -193,7 +193,7 @@ const HTTP = {
         404: ["Not Found"]
       },
       title: "Get uni",
-      description: ""
+      description: "Get uni with rank."
     },
     TOP: {
       method: 'get',

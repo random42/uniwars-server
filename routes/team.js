@@ -30,7 +30,7 @@ router.delete('/', async function(req,res,next) {
   });
   if (!doc) // team non esistente o utente non founder
     return res.sendStatus(400)
-  let ops = await crud.team.delete({team})
+  let ops = await crud.team.delete({ team })
   if (ops) res.sendStatus(200)
   else res.sendStatus(400)
 })
@@ -155,7 +155,6 @@ router.put('/respond-challenge', async function(req,res,next) {
   if (response !== 'y') return res.sendStatus(200)
   else // TODO start game if possible
 })
-
 
 
 const check = async ({

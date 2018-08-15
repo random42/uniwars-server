@@ -26,25 +26,25 @@ const user = {
     "large": "",
   },
   "private": {
-      "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
-      "access_token": null,
-      "phone_number": '+393461625500',
-      "chats": ["_id"],
-      "last_questions": ["_id"], // last tot questions
-      "friend_requests": ["users_ids"],
-      "news": [
-        {
-          "type": "friend_request"
-          "user": "_id"
-        },{
-          "type": "team_invitation",
-          "team": "_id",
-          "user": "_id"
-        },{
-          "type": "solo_challenge",
-          "user": "_id"
-        }
-      ]
+    "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
+    "access_token": null,
+    "phone_number": '+393461625500',
+    "chats": ["_id"],
+    "last_questions": ["_id"], // last tot questions
+    "friend_requests": ["users_ids"],
+    "news": [
+      {
+        "type": "friend_request"
+        "user": "_id"
+      },{
+        "type": "team_invitation",
+        "team": "_id",
+        "user": "_id"
+      },{
+        "type": "solo_challenge",
+        "user": "_id"
+      }
+    ]
   },
   "teams": ["_ids"],
   "games": {

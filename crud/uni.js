@@ -26,6 +26,18 @@ module.exports = {
     }
   },
 
+  async top({from, to}) {
+    // adding $skip and $limit stages after $sort
+    let pipeline = this.rankPipeline.concat([
+      {
+        $skip: from
+      },{
+        $limit: to-from
+      }
+    ])
+    return db.users.aggregate(pipeline)
+  },
+
   rankPipeline: [
     {
       $group: {

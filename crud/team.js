@@ -88,19 +88,16 @@ module.exports = {
     let doc = await db.teams.findOne(team)
     if (!doc) return
     return Promise.all([
-      // toglie il team dai players
+      // remove team from users
       db.users.update(
-        // sono piu' i players in un team o i team a cui appartiene ogni player?
         { _id: {
             $in: doc.users.map(u => u._id)
         }},
         {
           $pull: {
-            teams: {
-              _id: team
-            }
+            teams: team
           }
-        }, {multi: true}
+        }, { multi: true }
       ),
       // elimina il team
       db.teams.findOneAndDelete(team)
