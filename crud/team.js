@@ -9,7 +9,7 @@ const { DEFAULT_PERF } = require('../utils/constants')
 
 module.exports = {
 
-  fetchWithUsers(query) {
+  async fetchWithUsers(query) {
     let pipeline = [
       {
         $match: query,

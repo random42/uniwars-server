@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { HTTP, PROJECTIONS } = require('../api/api');
-const db = require('../utils/db');
-const debug = require('debug')('http:users');
-const fs = require('fs');
+const express = require('express')
+const router = express.Router()
+const { HTTP, PROJECTIONS } = require('../api/api')
+const db = require('../utils/db')
+const debug = require('debug')('http:users')
+const fs = require('fs')
 const bcrypt = require('bcrypt')
 const socket = require('../socket')
 const path = require('path')

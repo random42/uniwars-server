@@ -12,7 +12,9 @@ module.exports = {
    * returns chat
   */
   async createChat({type, name, collection, participants}) {
-    let chat = {
+    if (participants.length > 2 && type !== 'group')
+      return Promise.reject("More than two participants in 'duo' chat")
+    const chat = {
       _id: monk.id(),
       collection,
       type,
@@ -114,4 +116,5 @@ module.exports = {
   async deleteChat({chat}) {
     return db.chats.findOneAndRemove(chat)
   },
+
 }

@@ -18,7 +18,7 @@ class Solo extends Game {
         console.log(err)
       })
     } catch(err) {
-      debug(err);
+      debug(err)
     }
   }
 
