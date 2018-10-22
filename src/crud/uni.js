@@ -1,44 +1,9 @@
 const debug = require('debug')('db_queries:uni')
 const db = require('../utils/db')
 const monk = require('monk')
-const { PROJECTIONS } = require('../api/api');
+const { PROJECTIONS } = require('../../api/api');
 const utils = require('../utils')
-
-module.exports = {
-  async getFull({uni}) {
-    const projection = {
-      alpha_two_code: 0,
-      'state-province': 0,
-      domains: 0,
-      chat: 0
-    }
-    let pipeline = this.rankPipeline.concat([{
-      $match: { _id: uni }
-    },{
-      $project: projection
-    }])
-    let doc = await db.users.aggregate(pipeline)
-    if (doc.length === 0) {
-      doc = await db.unis.findOne(uni, projection)
-      return doc
-    } else {
-      return doc[0]
-    }
-  },
-
-  async top({from, to}) {
-    // adding $skip and $limit stages after $sort
-    let pipeline = this.rankPipeline.concat([
-      {
-        $skip: from
-      },{
-        $limit: to-from
-      }
-    ])
-    return db.users.aggregate(pipeline)
-  },
-
-  rankPipeline: [
+const RANK_PIPELINE = [
     {
       $group: {
         _id: "$uni",
@@ -82,4 +47,41 @@ module.exports = {
       $replaceRoot: { newRoot: '$doc' }
     }
   ]
+
+class Uni {
+
+  static async getFull({uni}) {
+    const projection = {
+      alpha_two_code: 0,
+      'state-province': 0,
+      domains: 0,
+      chat: 0
+    }
+    let pipeline = RANK_PIPELINE.concat([{
+      $match: { _id: uni }
+    },{
+      $project: projection
+    }])
+    let doc = await db.users.aggregate(pipeline)
+    if (doc.length === 0) {
+      doc = await db.unis.findOne(uni, projection)
+      return doc
+    } else {
+      return doc[0]
+    }
+  }
+
+  static async top({from, to}) {
+    // adding $skip and $limit stages after $sort
+    let pipeline = RANK_PIPELINE.concat([
+      {
+        $skip: from
+      },{
+        $limit: to-from
+      }
+    ])
+    return db.users.aggregate(pipeline)
+  }
 }
+
+exports = Uni

@@ -17,8 +17,6 @@ require('./socket/init');
 
 let app = express();
 
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
 
 // cross origins middlewares
 app.use(cors({ origin: '*' }));
@@ -59,7 +57,7 @@ app.use('/team', teams);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   let err = new Error('Not Found');
-  err.status = 404;
+  req.status = 404;
   next(err);
 });
 

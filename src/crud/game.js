@@ -2,13 +2,19 @@ const debug = require('debug')('crud:game')
 const db = require('../utils/db')
 const _ = require('lodash/core')
 const monk = require('monk')
-const { PROJECTIONS } = require('../api/api')
+const { PROJECTIONS } = require('../../api/api')
 const utils = require('../utils')
 const NO_PROJ = {projection: {_id: 1}}
 
-module.exports = {
+class Game {
 
-  async fetchGameWithQuestions({game}) {
+  /**
+   * async fetchWithQuestions - description
+   *
+   * @param  {Object} {game} description
+   * @return {Object} Game with questions objects
+   */
+  static async fetchWithQuestions({game}) {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -24,7 +30,7 @@ module.exports = {
     ]
     let doc = await db.games.aggregate(pipeline)
     if (doc.length !== 1)
-      return
+      return Promise.reject("No game found.")
     doc = doc[0]
     // to have the same questions order
     let questions = []
@@ -34,10 +40,10 @@ module.exports = {
     }
     doc.questions = questions
     delete doc.questions_docs
-    return doc
-  },
+    return new Game(doc)
+  }
 
-  async getQuestions({game}) {
+  static async getQuestions({game}) {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -59,9 +65,9 @@ module.exports = {
     let doc = await db.games.aggregate(pipeline)
     if (doc.length !== 1) return
     return doc[0].questions
-  },
+  }
 
-  async getQuestion({game, index}) {
+  static async getQuestion({game, index}) {
     const pipeline = [
       {
         $match: { _id: monk.id(game) }
@@ -80,13 +86,13 @@ module.exports = {
     doc = doc[0]
     if (index >= doc.questions.length) return
     return doc.questions[index]
-  },
+  }
 
-  /*
+  /**
     game with users' usernames and picture,
     as well as teams' names, rating and picture
   */
-  async joinUsersAndTeams({game}) {
+  static async joinUsersAndTeams({game}) {
     const pipeline = [
       {
         $match: { _id: monk.id(game) }
@@ -129,12 +135,12 @@ module.exports = {
       })
     }
     return doc
-  },
+  }
 
-  /*
+  /**
     pushes the answer and update the question index of the player
   */
-  async setAnswer({game, user, question, answer}) {
+  static async setAnswer({game, user, question, answer}) {
     return db.games.findOneAndUpdate({
       _id: game,
       // to specify the user to update
@@ -152,15 +158,15 @@ module.exports = {
     }, {
       ...NO_PROJ
     })
-  },
+  }
 
-  /*
+  /**
     counts points of each side and sets the result consequently
     sets 'ended_at' and 'status' fields
     removes 'index' field from players
     returns updated game
   */
-  async endGame({game}) {
+  static async endGame({game}) {
     let fetch = await Promise.all([
       db.games.findOne(game),
       this.getQuestions({game})
@@ -183,6 +189,7 @@ module.exports = {
     else if (side0 === side1) game.result = 0.5
     else game.result = 0
     return db.games.findOneAndUpdate(game._id, game)
-  },
-
+  }
 }
+
+exports = Game

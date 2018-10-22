@@ -4,10 +4,10 @@
  * Module dependencies.
  */
 
-const app = require('../app');
-const db = require('../utils/db');
-const debug = require('debug')('uniwars:server');
-const http = require('http');
+const app = require('./app')
+const db = require('./utils/db')
+const debug = require('debug')('uniwars:server')
+const http = require('http')
 
 
 /**
@@ -27,7 +27,7 @@ const server = http.createServer(app);
  * Create server socket
  */
 
-const io = require('../socket').server;
+const io = require('./socket').server;
 
 /**
  * Listen on provided port, on all network interfaces and connect to database

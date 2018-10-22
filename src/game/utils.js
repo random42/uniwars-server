@@ -23,7 +23,7 @@ const UTILS = {
 
   // fetch game and initialize it with right class
   async fetch(_id) {
-    let game = await crud.game.fetchGameWithQuestions({game: _id})
+    let game = await crud.game.fetchWithQuestions({game: _id})
     if (!game) return Promise.reject("Game does not exist!")
     return new classes[game.type](game)
   }

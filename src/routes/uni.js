@@ -4,7 +4,7 @@ const db = require('../utils/db')
 const bcrypt = require('bcrypt')
 const sharp = require('sharp')
 const monk = require('monk')
-const MAJORS = require('../assets/majors.json')
+const MAJORS = require('../../assets/majors.json')
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12
 

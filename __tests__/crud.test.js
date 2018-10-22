@@ -3,6 +3,7 @@ const config = require('./config')
 const {db} = config
 
 beforeAll(async () => {
+  await db.db
   await db.clearDatabase()
   await db.putSomeUsers(100)
 })
@@ -18,16 +19,10 @@ const participants = db.getUsers(0, 20)
     }
 })
 
-describe('chat', () => {
-  test('createChat', async () => {
+// test('a', async () => {
+//
+// })
 
-    const chat = {
-      type: 'group',
-      collection: 'users',
-      name: 'a',
-      participants,
-    }
-    const doc = await crud.chat.createChat(chat)
-    expect(doc).toMatchObject(chat)
-  })
+describe('', () => {
+
 })

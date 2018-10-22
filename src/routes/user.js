@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { HTTP, PROJECTIONS } = require('../api/api')
+const { HTTP, PROJECTIONS } = require('../../api/api')
 const db = require('../utils/db')
 const debug = require('debug')('http:users')
 const fs = require('fs')
@@ -16,7 +16,7 @@ const picSize = {
   medium: 256,
   large: 500
 }
-const MAJORS = require('../assets/majors.json')
+const MAJORS = require('../../assets/majors.json')
 const {
   DEFAULT_PERF,
   PAGE_RESULTS,

@@ -1,17 +1,17 @@
 const debug = require('debug')('db_queries:chat')
 const db = require('../utils/db')
-const { PROJECTIONS } = require('../api/api')
+const { PROJECTIONS } = require('../../api/api')
 const utils = require('../utils')
 const monk = require('monk')
 
 const NO_PROJ = {projection: {_id: 1}}
 
-module.exports = {
+class Chat {
   /*
    * participants array has already admins
    * returns chat
   */
-  async createChat({type, name, collection, participants}) {
+  static async createChat({type, name, collection, participants}) {
     if (participants.length > 2 && type !== 'group')
       return Promise.reject("More than two participants in 'duo' chat")
     const chat = {
@@ -25,14 +25,14 @@ module.exports = {
       })
     }
     return db.chats.insert(chat)
-  },
+  }
   /*
     returns all user's chats with messages with greater timestamp than time
   */
-  async upToDateChats({user, time}) {
+  static async upToDateChats(user, time) {
     const pipeline = [
       {
-        $match: {_id: user}
+        $match: { _id: user }
       },
       {
         $lookup: {
@@ -61,9 +61,9 @@ module.exports = {
       }
     ]
     return db.users.aggregate(pipeline);
-  },
+  }
 
-  async removeUsers({users, chat}) {
+  static async removeUsers({users, chat}) {
     let chatUpdate = db.chats.findOneAndUpdate(chat, {
       $pull: {
         participants: {
@@ -83,9 +83,9 @@ module.exports = {
       }
     }, {...NO_PROJ, multi: true})
     return Promise.all([chatUpdate,userUpdate])
-  },
+  }
 
-  async addUsers({users, chat}) {
+  static async addUsers({users, chat}) {
     let chatUpdate = db.chats.findOneAndUpdate(chat, {
       $addToSet: {
         participants: {
@@ -102,19 +102,22 @@ module.exports = {
         'private.chats': monk.id(chat)
       }
     }, {...NO_PROJ, multi: true})
-    return Promise.all([chatUpdate,userUpdate])
-  },
+    return Promise.all([chatUpdate,usersUpdate])
+  }
 
-  async changeChatName({chat, name}) {
+  static async changeChatName({chat, name}) {
     return db.chats.findOneAndUpdate(chat, {
       $set: {
         name
       }
     }, NO_PROJ)
-  },
+  }
 
-  async deleteChat({chat}) {
+  static async deleteChat({chat}) {
     return db.chats.findOneAndRemove(chat)
-  },
+  }
 
 }
+
+
+exports = Chat

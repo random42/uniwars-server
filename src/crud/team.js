@@ -2,14 +2,14 @@ const debug = require('debug')('db_queries:team')
 const db = require('../utils/db')
 const monk = require('monk')
 const _ = require('lodash/core')
-const { PROJECTIONS } = require('../api/api');
+const { PROJECTIONS } = require('../../api/api');
 const utils = require('../utils')
 
 const { DEFAULT_PERF } = require('../utils/constants')
 
-module.exports = {
+class Team {
 
-  async fetchWithUsers(query) {
+  static async fetchWithUsers(query) {
     let pipeline = [
       {
         $match: query,
@@ -39,14 +39,14 @@ module.exports = {
     let docs = await db.teams.aggregate(pipeline)
     if (docs.length !== 1) return
     else return docs[0]
-  },
+  }
 
   /*
     assumes that founder is not in users array
     creates the team and the team chat
     returns team doc
   */
-  async create({name, users, founder}) {
+  static async create({name, users, founder}) {
     users = users.map(u => { return {_id: monk.id(u), admin: false} })
     users.push({_id: monk.id(founder), admin: true})
     const team_id = monk.id()
@@ -82,9 +82,9 @@ module.exports = {
     })
     let res = await Promise.all([team, chat, updateUsers])
     return res[0]
-  },
+  }
 
-  async delete({team}) {
+  static async delete({team}) {
     let doc = await db.teams.findOne(team)
     if (!doc) return
     return Promise.all([
@@ -102,9 +102,9 @@ module.exports = {
       // elimina il team
       db.teams.findOneAndDelete(team)
     ])
-  },
+  }
 
-  async addMember({team, user}) {
+  static async addMember({team, user}) {
     let updates = [
       db.teams.findOneAndUpdate(team,{
         $push: {
@@ -121,9 +121,9 @@ module.exports = {
       })
     ]
     return Promise.all(updates)
-  },
+  }
 
-  async removeMember({team, user}) {
+  static async removeMember({team, user}) {
     let updates = [
       db.teams.findOneAndUpdate(team,{
         $pull: {
@@ -139,9 +139,9 @@ module.exports = {
       })
     ]
     return Promise.all(updates)
-  },
+  }
 
-  async makeAdmin({team, user}) {
+  static async makeAdmin({team, user}) {
     return db.teams.findOneAndUpdate({
       _id: team,
       users: { _id: user }
@@ -150,9 +150,9 @@ module.exports = {
         'users.$.admin': true
       }
     })
-  },
+  }
 
-  async top({from, to}) {
+  static async top({from, to}) {
     let pipeline = require('./user').rankPipeline
     pipeline = pipeline.concat([{
       $skip: from
@@ -167,5 +167,7 @@ module.exports = {
       }
     }])
     return db.teams.aggregate(pipeline)
-  },
+  }
 }
+
+exports = Team

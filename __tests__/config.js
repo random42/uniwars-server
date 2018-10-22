@@ -14,14 +14,15 @@ const dbUtils = {
   clearDatabase() {
     return Promise.all([
       db.users.remove({}),
-      db.teams.remove({}),
-      db.chats.remove({}),
+      db.teams.remove({})
     ])
   },
 
   getUsers(from, to) {
     return USERS.slice(from, to)
-  }
+  },
+
+
 }
 
 

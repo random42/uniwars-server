@@ -23,7 +23,7 @@ class Game {
   constructor({_id, side0, side1, type }) {
     // if _id is present the game was fetched from database
     if (_id) {
-      let game = arguments[0];
+      let game = arguments[0]
       for (let i in game) {
         this[i] = game[i];
       }
@@ -108,7 +108,7 @@ class Game {
           $addToSet: "$_id"
         }
       }}
-    ]);
+    ])
     // query a sample of questions that don't match with users' last questions
     let questions = await db.questions.aggregate([
       {$match: {

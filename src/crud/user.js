@@ -1,12 +1,39 @@
 const debug = require('debug')('db_queries:user')
 const db = require('../utils/db')
 const monk = require('monk')
-const { PROJECTIONS } = require('../api/api');
+const { PROJECTIONS } = require('../../api/api');
 const utils = require('../utils')
+const RANK_PIPELINE = [
+    {
+      $sort: {
+        'perf.rating': -1
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        doc: { $push: "$$ROOT" }
+      }
+    },
+    {
+      $unwind: {
+        path: '$doc',
+        includeArrayIndex: 'rank'
+      }
+    },
+    {
+      $project: {
+        'doc.rank': '$rank'
+      }
+    },
+    {
+      $replaceRoot: { newRoot: '$doc' }
+    }
+  ]
 
-module.exports = {
-  async getFull({user}) {
-    let pipeline = this.rankPipeline.concat([
+class User {
+  static async getFull({user}) {
+    let pipeline = RANK_PIPELINE.concat([
       {
         $match: user
       },
@@ -46,9 +73,9 @@ module.exports = {
     let docs = db.users.aggregate(pipeline)
     if (docs.length === 0) return
     else return docs[0]
-  },
+  }
 
-  async getSmall({user}) {
+  static async getSmall({user}) {
     let pipeline = [
       {
         $match: user
@@ -75,11 +102,11 @@ module.exports = {
     let docs = db.users.aggregate(pipeline)
     if (docs.length === 0) return
     else return docs[0]
-  },
+  }
 
-  async top({from, to}) {
+  static async top({from, to}) {
     // adding $skip and $limit stages after $sort
-    let pipeline = this.rankPipeline.concat([
+    let pipeline = RANK_PIPELINE.concat([
       {
         $skip: from
       },{
@@ -87,17 +114,17 @@ module.exports = {
       }
     ])
     return db.users.aggregate(pipeline)
-  },
+  }
 
-  async addOnlineTime({user, time}) {
+  static async addOnlineTime({user, time}) {
     return db.users.findOneAndUpdate(user, {
       $inc: {
         'online_time': time
       }
     })
-  },
+  }
 
-  async removeFriends({user, friends}) {
+  static async removeFriends({user, friends}) {
     let ops = [
       db.users.update({
         '_id': {
@@ -120,33 +147,7 @@ module.exports = {
       })
     ]
     return Promise.all(ops)
-  },
-
-  rankPipeline: [
-    {
-      $sort: {
-        'perf.rating': -1
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        doc: { $push: "$$ROOT" }
-      }
-    },
-    {
-      $unwind: {
-        path: '$doc',
-        includeArrayIndex: 'rank'
-      }
-    },
-    {
-      $project: {
-        'doc.rank': '$rank'
-      }
-    },
-    {
-      $replaceRoot: { newRoot: '$doc' }
-    }
-  ]
+  }
 }
+
+exports = User

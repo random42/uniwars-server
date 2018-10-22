@@ -136,7 +136,7 @@ const game = {
   },
   "created_at": Date.now(),
   "ended_at": Date.now(),
-  "type": "solo", // solo, squad, team
+  "type": "solo", // solo, squad
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1

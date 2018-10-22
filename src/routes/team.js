@@ -8,7 +8,7 @@ const crud = require('../crud')
 const {
   MAX_TEAM_MEMBERS
 } = require('../utils/constants')
-const majors = require('../assets/majors.json');
+const majors = require('../../assets/majors.json');
 const MIN_PLAYERS = 5
 const saltRounds = 12
 
@@ -153,11 +153,11 @@ router.put('/respond-challenge', async function(req,res,next) {
     }
   })
   if (response !== 'y') return res.sendStatus(200)
-  else // TODO start game if possible
+  // TODO start game if possible
 })
 
 
-const check = async ({
+const check = async ( {
   users,
   team, // can be _id or team object
   areInTeam,
