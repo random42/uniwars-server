@@ -1,4 +1,4 @@
-const database = require('monk')('mongodb://roberto.sero:6a2snh8QphPrrsuZ@ds062797.mlab.com:62797/uniwars');
+import database from 'monk')('mongodb://roberto.sero:6a2snh8QphPrrsuZ@ds062797.mlab.com:62797/uniwars';
 
 const stringIdsMid = ({collection, monkInstance}) => next => (args, method) => {
   return next(args, method).then((doc) => {
@@ -8,7 +8,7 @@ const stringIdsMid = ({collection, monkInstance}) => next => (args, method) => {
 
 database.addMiddleware(stringIdsMid)
 
-module.exports = {
+export default {
   db: database,
   users: database.get("users"),
   unis: database.get("unis"),

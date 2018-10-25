@@ -1,7 +1,7 @@
-const debug = require('debug')('socket:main');
+const debug = require('debug')('socket:index')
 
 // creating server
-let server = require('socket.io')({
+export let server = require('socket.io')({
   //transports: ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling', 'polling'],
   serveClient: false,
 });
@@ -9,17 +9,13 @@ let server = require('socket.io')({
 // authenticated sockets indexed by user_id
 server.connections = new Map();
 
-let main = server.of('/');
+export let main = server.of('/');
 main.connections = server.connections;
-
-let chat = server.of('/chat')
-chat.connections = new Map()
-let game = server.of('/game')
+export let game = server.of('/game')
 game.connections = new Map()
 
-module.exports = {
+export default {
   server,
   main,
-  chat,
   game
 }

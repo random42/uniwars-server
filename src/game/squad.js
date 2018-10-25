@@ -1,9 +1,9 @@
-const debug = require('debug')('game');
-const Game = require('./main');
+import Game from './main';
+const debug = require('debug')('game:squad')
 
 class Squad extends Game {
 
 }
 
 
-module.exports = Squad;
+export default Squad;

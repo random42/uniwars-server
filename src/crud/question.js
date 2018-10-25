@@ -1,11 +1,11 @@
-const debug = require('debug')('db_queries:question')
-const db = require('../utils/db')
+import debug from 'debug')('db_queries:question'
+import db from '../utils/db'
 const { PROJECTIONS } = require('../../api/api');
-const utils = require('../utils')
+import utils from '../utils'
 
 class Question {
 
 }
 
 
-exports = Question
+export default Question

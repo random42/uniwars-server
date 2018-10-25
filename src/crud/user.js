@@ -1,9 +1,15 @@
-const debug = require('debug')('db_queries:user')
-const db = require('../utils/db')
-const monk = require('monk')
+import debug from 'debug')('db_queries:user'
+import db from '../utils/db'
+import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api');
-const utils = require('../utils')
-const RANK_PIPELINE = [
+import utils from '../utils'
+
+
+/**
+ * Outputs all documents sorted by perf.rating with 'rank'
+ * field attached
+ */
+export const RANK_PIPELINE = [
     {
       $sort: {
         'perf.rating': -1
@@ -150,4 +156,4 @@ class User {
   }
 }
 
-exports = User
+export default User

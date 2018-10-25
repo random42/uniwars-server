@@ -2,7 +2,7 @@
   Timeouts are measured in milliseconds
 */
 
-module.exports = {
+export default const C = {
   MAX_QUESTIONS_RECORD: 300, // number of last questions that will not appear again to a user
   GAME_QUESTIONS: 5, // questions per game
   GAME_JOIN_TIMEOUT: 1000, // period of time in which all clients must join or refuse the created game

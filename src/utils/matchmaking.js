@@ -1,7 +1,7 @@
-const db = require('./db');
-const monk = require('monk');
-const gameUtils = require('../game/utils');
-const debug = require('debug')('mm');
+import db from './db';
+import monk from 'monk';
+import gameUtils from '../game/utils';
+import debug from 'debug')('mm';
 
 // 1v1
 class Solo {
@@ -71,7 +71,7 @@ class Squad {
 }
 
 
-module.exports = {
+export default {
   "solo": new Solo(),
   "squad": new Squad(),
 }

@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../utils/db');
-const bcrypt = require('bcrypt');
-const monk = require('monk');
+import db from '../utils/db';
+import bcrypt from 'bcrypt';
+import monk from 'monk';
 
 const game_types = [
   'solo',
@@ -19,4 +19,4 @@ router.put('/stuff', async (req,res,next) => {
   }
 })
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   findIndexById(array,id) {
     for (let i in array) {
       if (array[i]._id === id) {

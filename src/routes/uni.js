@@ -1,12 +1,10 @@
-const express = require('express')
+import express from 'express'
 const router = express.Router()
-const db = require('../utils/db')
-const bcrypt = require('bcrypt')
-const sharp = require('sharp')
-const monk = require('monk')
-const MAJORS = require('../../assets/majors.json')
+import db from '../utils/db'
+import monk from 'monk'
+import MAJORS from '../../assets/majors.json'
+const debug = require('debug')('http:uni')
 // see https://github.com/kelektiv/node.bcrypt.js
-const saltRounds = 12
 
 
 router.get('/', async function(req,res,next) {
@@ -33,4 +31,4 @@ router.get('/rank', async function(req,res,next) {
 })
 
 
-module.exports = router;
+export default router;

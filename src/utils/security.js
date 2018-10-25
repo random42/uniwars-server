@@ -1,5 +1,5 @@
-const db = require('./db');
-const bcrypt = require('bcrypt');
+import db from './db';
+import bcrypt from 'bcrypt';
 
 
 const NO_CHECK_TOKEN = [
@@ -60,7 +60,7 @@ async function checkTeamAdmin(req, res, next) {
   }
 }
 
-module.exports = {
+export default {
   checkAccessToken,
   checkTeamAdmin
 };

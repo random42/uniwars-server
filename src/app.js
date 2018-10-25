@@ -1,21 +1,20 @@
 const debug = require('debug')('app')
-const express = require('express');
-const path = require('path');
-const favicon = require('serve-favicon');
-const logger = require('morgan');
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const users = require('./routes/user');
-const unis = require('./routes/uni');
-const teams = require('./routes/team');
-const chat = require('./routes/chat');
-const bcrypt = require('bcrypt')
-const security = require('./utils/security');
-const cors = require('cors');
-const db = require('./utils/db')
-require('./socket/init');
+import express from 'express'
+import path from 'path'
+import favicon from 'serve-favicon'
+import logger from 'morgan'
+import cookieParser from 'cookie-parser'
+import bodyParser from 'body-parser'
+import users from './routes/user'
+import unis from './routes/uni'
+import teams from './routes/team'
+import chat from './routes/chat'
+import security from './utils/security'
+import cors from 'cors'
+import db from './utils/db'
+require('./socket/init')
 
-let app = express();
+let app = express()
 
 
 // cross origins middlewares
@@ -59,7 +58,7 @@ app.use(function(req, res, next) {
   let err = new Error('Not Found');
   req.status = 404;
   next(err);
-});
+})
 
 // error handler
 app.use(function(err, req, res, next) {
@@ -73,4 +72,4 @@ app.use(function(err, req, res, next) {
 });
 
 
-module.exports = app;
+export default app;

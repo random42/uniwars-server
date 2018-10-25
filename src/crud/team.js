@@ -1,9 +1,9 @@
-const debug = require('debug')('db_queries:team')
-const db = require('../utils/db')
-const monk = require('monk')
-const _ = require('lodash/core')
+import debug from 'debug')('db_queries:team'
+import db from '../utils/db'
+import monk from 'monk'
+import _ from 'lodash/core'
 const { PROJECTIONS } = require('../../api/api');
-const utils = require('../utils')
+import utils from '../utils'
 
 const { DEFAULT_PERF } = require('../utils/constants')
 
@@ -153,7 +153,7 @@ class Team {
   }
 
   static async top({from, to}) {
-    let pipeline = require('./user').rankPipeline
+    const pipeline = require('./user').rankPipeline
     pipeline = pipeline.concat([{
       $skip: from
     },{
@@ -170,4 +170,4 @@ class Team {
   }
 }
 
-exports = Team
+export default Team

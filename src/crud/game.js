@@ -1,20 +1,25 @@
+// @flow
 const debug = require('debug')('crud:game')
-const db = require('../utils/db')
-const _ = require('lodash/core')
-const monk = require('monk')
+import db from '../utils/db'
+import _ from 'lodash/core'
+import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api')
-const utils = require('../utils')
+import utils from '../utils'
 const NO_PROJ = {projection: {_id: 1}}
 
+
+/**
+ *
+ */
 class Game {
 
   /**
    * async fetchWithQuestions - description
    *
-   * @param  {Object} {game} description
+   * @param  {Object} game description
    * @return {Object} Game with questions objects
    */
-  static async fetchWithQuestions({game}) {
+  static async fetchWithQuestions(game) {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -32,7 +37,7 @@ class Game {
     if (doc.length !== 1)
       return Promise.reject("No game found.")
     doc = doc[0]
-    // to have the same questions order
+    // $lookup does not maintain the order
     let questions = []
     for (let _id of doc.questions) {
       let q = _.find(doc.questions_docs, {_id})
@@ -192,4 +197,4 @@ class Game {
   }
 }
 
-exports = Game
+export default Game

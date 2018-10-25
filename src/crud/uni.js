@@ -1,8 +1,8 @@
-const debug = require('debug')('db_queries:uni')
-const db = require('../utils/db')
-const monk = require('monk')
+import debug from 'debug')('db_queries:uni'
+import db from '../utils/db'
+import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api');
-const utils = require('../utils')
+import utils from '../utils'
 const RANK_PIPELINE = [
     {
       $group: {
@@ -84,4 +84,4 @@ class Uni {
   }
 }
 
-exports = Uni
+export default Uni
