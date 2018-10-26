@@ -1,16 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../utils/db');
-const bcrypt = require('bcrypt');
-const sharp = require('sharp');
-const monk = require('monk');
-const crud = require('../crud')
+import db from '../utils/db'
+import monk from 'monk'
+import crud from '../crud'
+const debug = require('debug')('http:team')
 const {
   MAX_TEAM_MEMBERS
 } = require('../utils/constants')
-const majors = require('../../assets/majors.json');
+import majors from '../../assets/majors.json';
 const MIN_PLAYERS = 5
-const saltRounds = 12
 
 
 router.get('/', async function(req,res,next) {
@@ -189,4 +187,4 @@ const check = async ( {
 
 
 
-module.exports = router;
+export default router;

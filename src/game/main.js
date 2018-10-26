@@ -1,13 +1,13 @@
-const db = require('../utils/db');
-const monk = require('monk');
-const namespace = require('../socket').game;
-const mm = require('../utils/matchmaking');
-const Rating = require('../utils/ratings');
-const Utils = require('../utils');
-const debug = require('debug')('game')
-const Maps = require('./maps');
-const _ = require('lodash/core')
-const crud = require('../crud')
+import db from '../utils/db';
+import monk from 'monk';
+import { game as namespace } from '../socket';
+import mm from '../utils/matchmaking';
+import Rating from '../utils/ratings';
+import Utils from '../utils';
+import Maps from './cache';
+import _ from 'lodash/core'
+import crud from '../crud'
+const debug = require('debug')('game:main')
 const {
   MAX_QUESTIONS_RECORD,
   GAME_QUESTIONS,
@@ -469,4 +469,4 @@ class Game {
 
 
 
-module.exports = Game
+export default Game

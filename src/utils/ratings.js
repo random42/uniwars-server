@@ -1,4 +1,4 @@
-const glicko2 = require('glicko2');
+import glicko2 from 'glicko2';
 let settings = {
   // tau : "Reasonable choices are between 0.3 and 1.2, though the system should
   //       be tested to decide which value results in greatest predictive accuracy."
@@ -38,4 +38,4 @@ function squadMatch(side0, side1, result) {
 
 }
 
-module.exports = {soloMatch, squadMatch }
+export default {soloMatch, squadMatch }

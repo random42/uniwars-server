@@ -1,22 +1,22 @@
-const express = require('express')
+import express from 'express'
 const router = express.Router()
 const { HTTP, PROJECTIONS } = require('../../api/api')
-const db = require('../utils/db')
-const debug = require('debug')('http:users')
-const fs = require('fs')
-const bcrypt = require('bcrypt')
-const socket = require('../socket')
-const path = require('path')
+import db from '../utils/db'
+const debug = require('debug')('http:user')
+import fs from 'fs'
+import bcrypt from 'bcrypt'
+import socket from '../socket'
+import path from 'path'
 const project_path = __dirname.slice(0,__dirname.indexOf(path.basename(__dirname)))
-const sharp = require('sharp')
-const monk = require('monk')
+import sharp from 'sharp'
+import monk from 'monk'
 const baseURL = 'http://localhost:3000'
 const picSize = {
   small: 100,
   medium: 256,
   large: 500
 }
-const MAJORS = require('../../assets/majors.json')
+import MAJORS from '../../assets/majors.json'
 const {
   DEFAULT_PERF,
   PAGE_RESULTS,
@@ -25,7 +25,7 @@ const {
 const rankSort = {
   'games.solo': -1
 }
-const crud = require('../crud')
+import crud from '../crud'
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
@@ -347,4 +347,4 @@ function checkRegisterForm(user) {
   return true;
 }
 
-module.exports = router;
+export default router;

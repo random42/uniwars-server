@@ -1,13 +1,13 @@
-const db = require('../utils/db');
-const monk = require('monk');
-const bcrypt = require('bcrypt');
+import db from '../utils/db';
+import monk from 'monk';
+import bcrypt from 'bcrypt';
 const {server} = require('./index');
-const debug = require('debug')('socket:game');
-const Maps = require('../game/maps');
-const _ = require('lodash/core');
-const mm = require('../utils/matchmaking');
-const Utils = require('../utils');
-const gameUtils = require('../game/utils');
+const debug = require('debug')('socket:game')
+import Maps from '../game/maps';
+import _ from 'lodash/core';
+import mm from '../utils/matchmaking';
+import Utils from '../utils';
+import gameUtils from '../game/utils';
 let nsp = server.of('/game');
 nsp.postAuthenticate = postAuthenticate
 

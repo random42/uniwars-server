@@ -2,17 +2,18 @@
   "name": "uniwars-api",
   "version": "0.0.0",
   "private": true,
-  "main": "src/server.js",
+  "main": "lib/server.js",
   "debug": "DEBUG='game*,http*,socekt:game'",
   "scripts": {
     "start": "node $npm_package_main",
-    "dev": "$npm_package_debug nodemon $npm_package_main",
-    "build": "./node_modules/.bin/tsc",
-    "watch": "./node_modules/.bin/tsc --watch",
-    "test": "./node_modules/.bin/jest",
-    "docs": "./node_modules/.bin/esdoc && open docs/index.html"
+    "dev": "NODE_ENV='TEST' yarn run watch & $npm_package_debug nodemon $npm_package_main",
+    "build": "babel src -d lib",
+    "watch": "$npm_package_scripts_build -w",
+    "test": "jest",
+    "docs": "esdoc && open docs/index.html"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.0.0",
     "awesome-phonenumber": "^2.2.5",
     "bcrypt": "^3.0.2",
     "body-parser": "~1.18.2",
@@ -32,20 +33,22 @@
     "util": "^0.10.3"
   },
   "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-export-default-from": "^7.0.0",
+    "@babel/plugin-proposal-export-namespace-from": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-flow": "^7.0.0",
     "axios": "^0.18.0",
     "esdoc": "^1.1.0",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
+    "esdoc-flow-type-plugin": "^1.1.0",
     "esdoc-standard-plugin": "^1.0.0",
+    "flow-bin": "^0.83.0",
     "jest": "^23.6.0",
     "nodemon": "^1.18.4",
     "supertest": "^3.3.0"
   },
-  "esdoc": {
-    "source": "src",
-    "destination": "docs",
-    "plugins": [
-      {
-        "name": "esdoc-standard-plugin"
-      }
-    ]
-  }
+  "jest": {}
 }

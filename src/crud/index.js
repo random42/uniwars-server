@@ -1,8 +1,5 @@
-module.exports = {
-  chat: require('./chat'),
-  question: require('./question'),
-  game: require('./game'),
-  team: require('./team'),
-  uni: require('./uni'),
-  user: require('./user')
-}
+export Game from './game'
+export Question from './question'
+export Team from './team'
+export User from './user'
+export Uni from './uni'

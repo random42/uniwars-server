@@ -1,14 +1,15 @@
-const db = require('../utils/db');
-const debug = require('debug')('socket:main');
-const bcrypt = require('bcrypt');
-const crud = require('../crud')
+import db from '../utils/db';
+const debug = require('debug')('socket:init')
+import bcrypt from 'bcrypt';
+import crud from '../crud'
 let { server } = require('./index');
 require('./main');
 require('./chat');
 require('./game');
 
 // authenticate sockets
-let auth = require('./auth')(server, {
+import auth from './auth'
+auth(server, {
   authenticate,
   postAuthenticate,
   timeout: 1000

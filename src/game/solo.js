@@ -1,9 +1,10 @@
-const debug = require('debug')('game');
-const Game = require('./main');
-const db = require('../utils/db');
-const Ratings = require('../utils/ratings');
-const Utils = require('../utils');
-const crud = require('../crud')
+import Game from './main'
+import db from '../utils/db'
+import Ratings from '../utils/ratings'
+import Utils from '../utils'
+import crud from '../crud'
+
+const debug = require('debug')('game:solo')
 
 class Solo extends Game {
   constructor(arg) {
@@ -55,4 +56,4 @@ class Solo extends Game {
   }
 }
 
-module.exports = Solo;
+export default Solo;

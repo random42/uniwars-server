@@ -4,10 +4,12 @@
  * Module dependencies.
  */
 
-const app = require('./app')
-const db = require('./utils/db')
+import "@babel/polyfill"
+
+import app from './app'
+import db from './utils/db'
 const debug = require('debug')('uniwars:server')
-const http = require('http')
+import http from 'http'
 
 
 /**
@@ -27,7 +29,7 @@ const server = http.createServer(app);
  * Create server socket
  */
 
-const io = require('./socket').server;
+import {server as io} from './socket'
 
 /**
  * Listen on provided port, on all network interfaces and connect to database
@@ -111,4 +113,4 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
-module.exports = server
+export default server

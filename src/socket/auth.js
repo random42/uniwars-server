@@ -1,7 +1,7 @@
-const debug = require('debug')('socket:auth');
-const _ = require('lodash/core');
+const debug = require('debug')('socket:auth')
+import _ from 'lodash/core';
 
-module.exports = function(io, {
+export default function(io, {
   authenticate,
   postAuthenticate,
   timeout = 3000 // auth timeout
