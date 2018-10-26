@@ -1,4 +1,4 @@
-import debug from 'debug')('db_queries:user'
+const debug = require('debug')('crud:user')
 import db from '../utils/db'
 import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api');

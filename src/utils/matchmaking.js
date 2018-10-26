@@ -1,7 +1,7 @@
 import db from './db';
 import monk from 'monk';
 import gameUtils from '../game/utils';
-import debug from 'debug')('mm';
+const debug = require('debug')('mm')
 
 // 1v1
 class Solo {

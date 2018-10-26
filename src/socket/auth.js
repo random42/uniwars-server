@@ -1,4 +1,4 @@
-import debug from 'debug')('socket:auth';
+const debug = require('debug')('socket:auth')
 import _ from 'lodash/core';
 
 export default function(io, {

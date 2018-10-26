@@ -9,9 +9,8 @@ import users from './routes/user'
 import unis from './routes/uni'
 import teams from './routes/team'
 import chat from './routes/chat'
-import security from './utils/security'
+import {security, db} from './utils'
 import cors from 'cors'
-import db from './utils/db'
 require('./socket/init')
 
 let app = express()

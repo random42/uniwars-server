@@ -1,5 +1,5 @@
-import db from './db';
-import bcrypt from 'bcrypt';
+import db from './db'
+import bcrypt from 'bcrypt'
 
 
 const NO_CHECK_TOKEN = [
@@ -13,7 +13,7 @@ const CHECK_TEAM_ADMIN = [
   '/accept-challenge',
 ]
 
-async function checkAccessToken(req,res,next) {
+export async function checkAccessToken(req,res,next) {
   return next();
   if (NO_CHECK_TOKEN.indexOf(req.path) < 0) {
     try {
@@ -39,7 +39,7 @@ async function checkAccessToken(req,res,next) {
   }
 }
 
-async function checkTeamAdmin(req, res, next) {
+export async function checkTeamAdmin(req, res, next) {
   if (CHECK_TEAM_ADMIN.indexOf(req.path) >= 0) {
     try {
       console.log('Check team admin')
@@ -59,8 +59,3 @@ async function checkTeamAdmin(req, res, next) {
     next();
   }
 }
-
-export default {
-  checkAccessToken,
-  checkTeamAdmin
-};

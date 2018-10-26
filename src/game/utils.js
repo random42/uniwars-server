@@ -9,7 +9,7 @@ const classes = {
   'team': require('./team'),
 }
 
-const UTILS = {
+export default const utils = {
   /**
    * Creates a game.
    *
@@ -32,6 +32,3 @@ const UTILS = {
     return new classes[game.type](game)
   }
 }
-
-
-export default UTILS;

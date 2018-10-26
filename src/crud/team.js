@@ -1,4 +1,4 @@
-import debug from 'debug')('db_queries:team'
+const debug = require('debug')('crud:team')
 import db from '../utils/db'
 import monk from 'monk'
 import _ from 'lodash/core'
