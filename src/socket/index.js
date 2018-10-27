@@ -4,7 +4,7 @@ const debug = require('debug')('socket:index')
 export let server = require('socket.io')({
   //transports: ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling', 'polling'],
   serveClient: false,
-});
+})
 
 // authenticated sockets indexed by user_id
 server.connections = new Map();
@@ -14,8 +14,4 @@ main.connections = server.connections;
 export let game = server.of('/game')
 game.connections = new Map()
 
-export default {
-  server,
-  main,
-  game
-}
+export default module.exports

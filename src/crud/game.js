@@ -1,25 +1,19 @@
-// @flow
+
 const debug = require('debug')('crud:game')
-import db from '../utils/db'
-import _ from 'lodash/core'
+import { db } from '../utils/db'
+import { _ } from 'lodash/core'
 import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api')
-import utils from '../utils'
+import { utils } from '../utils'
 const NO_PROJ = {projection: {_id: 1}}
 
-
-/**
- *
- */
-class Game {
+export class Game {
 
   /**
-   * async fetchWithQuestions - description
    *
-   * @param  {Object} game description
-   * @return {Object} Game with questions objects
+   *
    */
-  static async fetchWithQuestions(game) {
+  static async fetchWithQuestions(game : string) : Promise<Game> {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -48,7 +42,7 @@ class Game {
     return new Game(doc)
   }
 
-  static async getQuestions({game}) {
+  static async getQuestions(game : string) : Array<Question> {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -68,11 +62,11 @@ class Game {
       }
     ]
     let doc = await db.games.aggregate(pipeline)
-    if (doc.length !== 1) return
+    if (doc.length !== 1)
     return doc[0].questions
   }
 
-  static async getQuestion({game, index}) {
+  static async getQuestion(game : string, index : number) {
     const pipeline = [
       {
         $match: { _id: monk.id(game) }
@@ -97,7 +91,7 @@ class Game {
     game with users' usernames and picture,
     as well as teams' names, rating and picture
   */
-  static async joinUsersAndTeams({game}) {
+  static async joinUsersAndTeams(game : string) {
     const pipeline = [
       {
         $match: { _id: monk.id(game) }
@@ -145,7 +139,7 @@ class Game {
   /**
     pushes the answer and update the question index of the player
   */
-  static async setAnswer({game, user, question, answer}) {
+  static async setAnswer(game : string, user : string, question : string, answer : string) {
     return db.games.findOneAndUpdate({
       _id: game,
       // to specify the user to update
@@ -171,10 +165,10 @@ class Game {
     removes 'index' field from players
     returns updated game
   */
-  static async endGame({game}) {
+  static async endGame(game : string) {
     let fetch = await Promise.all([
       db.games.findOne(game),
-      this.getQuestions({game})
+      Game.getQuestions(game)
     ])
     game = fetch[0]
     let questions = fetch[1]
@@ -196,5 +190,3 @@ class Game {
     return db.games.findOneAndUpdate(game._id, game)
   }
 }
-
-export default Game

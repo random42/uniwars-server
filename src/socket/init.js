@@ -1,14 +1,13 @@
-import db from '../utils/db';
+import { db } from '../utils/db';
 const debug = require('debug')('socket:init')
 import bcrypt from 'bcrypt';
 import crud from '../crud'
 let { server } = require('./index');
-require('./main');
-require('./chat');
-require('./game');
+require('./main')
+require('./game')
 
 // authenticate sockets
-import auth from './auth'
+import { auth } from './auth'
 auth(server, {
   authenticate,
   postAuthenticate,

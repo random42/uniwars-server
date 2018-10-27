@@ -1,13 +1,15 @@
 const debug = require('debug')('crud:team')
-import db from '../utils/db'
+import { db } from '../utils/db'
+import { Model } from './model'
+import type { ID } from '../types'
 import monk from 'monk'
-import _ from 'lodash/core'
+import { _ } from 'lodash/core'
 const { PROJECTIONS } = require('../../api/api');
-import utils from '../utils'
+import { utils } from '../utils'
 
 const { DEFAULT_PERF } = require('../utils/constants')
 
-class Team {
+export class Team extends Model {
 
   static async fetchWithUsers(query) {
     let pipeline = [
@@ -169,5 +171,3 @@ class Team {
     return db.teams.aggregate(pipeline)
   }
 }
-
-export default Team

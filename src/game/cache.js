@@ -1,4 +1,4 @@
-const Maps = {
+export const Maps = {
   /**
    *
    *  starting games indexed by _id
@@ -15,5 +15,3 @@ const Maps = {
   */
   timeouts: new Map(),
 }
-
-export default Maps

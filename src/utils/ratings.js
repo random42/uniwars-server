@@ -38,4 +38,4 @@ function squadMatch(side0, side1, result) {
 
 }
 
-export default {soloMatch, squadMatch }
+export const Ratings = { soloMatch, squadMatch }

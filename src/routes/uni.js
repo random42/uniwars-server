@@ -1,8 +1,8 @@
 import express from 'express'
-const router = express.Router()
-import db from '../utils/db'
+export const router = express.Router()
+import { db } from '../utils/db'
 import monk from 'monk'
-import MAJORS from '../../assets/majors.json'
+import { MAJORS } from '../../assets/majors.json'
 const debug = require('debug')('http:uni')
 // see https://github.com/kelektiv/node.bcrypt.js
 
@@ -31,4 +31,4 @@ router.get('/rank', async function(req,res,next) {
 })
 
 
-export default router;
+

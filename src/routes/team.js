@@ -1,13 +1,13 @@
 import express from 'express';
-const router = express.Router();
-import db from '../utils/db'
+export const router = express.Router()
+import { db } from '../utils/db'
 import monk from 'monk'
-import crud from '../crud'
+import { crud } from '../crud'
 const debug = require('debug')('http:team')
 const {
   MAX_TEAM_MEMBERS
 } = require('../utils/constants')
-import majors from '../../assets/majors.json';
+import { majors } from '../../assets/majors.json';
 const MIN_PLAYERS = 5
 
 
@@ -184,7 +184,3 @@ const check = async ( {
   }
   return true
 }
-
-
-
-export default router;

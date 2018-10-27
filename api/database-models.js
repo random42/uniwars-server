@@ -20,11 +20,6 @@ const user = {
     "hit": 3425,
     "miss": 123
   }],
-  "picture": {
-    "small": "",
-    "medium": "",
-    "large": "",
-  },
   "private": {
     "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
@@ -47,15 +42,12 @@ const user = {
     ]
   },
   "teams": ["_ids"],
-  "games": {
-    "solo": {
-      "wins": 123,
-      "losses": 123,
-      "draws": 44
-    },
-    "squad": {},
-    "team": {}
-  },
+  "games": [{
+    "type": "solo",
+    "wins": 1234,
+    "losses": 1234,
+    "draws": 43
+  }],
   "online_time": 796,
   "friends": ["_ids"]
 }

@@ -1,14 +1,13 @@
 import express from 'express'
-const router = express.Router()
 const { HTTP, PROJECTIONS } = require('../../api/api')
-import db from '../utils/db'
+import { db } from '../utils/db'
 const debug = require('debug')('http:user')
-import fs from 'fs'
+import { fs } from 'fs'
 import bcrypt from 'bcrypt'
-import socket from '../socket'
+import { socket } from '../socket'
 import path from 'path'
 const project_path = __dirname.slice(0,__dirname.indexOf(path.basename(__dirname)))
-import sharp from 'sharp'
+import { sharp } from 'sharp'
 import monk from 'monk'
 const baseURL = 'http://localhost:3000'
 const picSize = {
@@ -16,7 +15,7 @@ const picSize = {
   medium: 256,
   large: 500
 }
-import MAJORS from '../../assets/majors.json'
+import { MAJORS } from '../../assets/majors.json'
 const {
   DEFAULT_PERF,
   PAGE_RESULTS,
@@ -29,6 +28,7 @@ import crud from '../crud'
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
+export const router = express.Router()
 
 router.get('/', async function(req, res, next) {
   const { _id, project } = req.query
@@ -346,5 +346,3 @@ function checkRegisterForm(user) {
   }
   return true;
 }
-
-export default router;

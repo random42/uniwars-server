@@ -522,16 +522,6 @@ const SOCKET = {
 }
 
 const PROJECTIONS = {
-  USER: {
-    FULL: {
-      FIELDS: ['-email','-private','-activity'],
-      COMPUTED: ['rank','uni','teams']
-    },
-    SMALL: {
-      FIELDS: ['username','uni','major','perf','picture'],
-      COMPUTED: []
-    }
-  },
   UNI: {
     FULL: {
       FIELDS: ['web_pages','name','country'],

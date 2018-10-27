@@ -1,4 +1,4 @@
-import db from './db'
+import { db } from '../utils'
 import bcrypt from 'bcrypt'
 
 
@@ -43,7 +43,7 @@ export async function checkTeamAdmin(req, res, next) {
   if (CHECK_TEAM_ADMIN.indexOf(req.path) >= 0) {
     try {
       console.log('Check team admin')
-      let user_id = req.get('user');
+      let user_id = req.get('user')
       let team_id = req.query.team;
       let team = await db.teams.findOne(team_id);
       if (team.admins.indexOf(user_id) >= 0) {
@@ -59,3 +59,5 @@ export async function checkTeamAdmin(req, res, next) {
     next();
   }
 }
+
+export default module.exports

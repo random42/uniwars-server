@@ -1,4 +1,5 @@
 const secret = require('../../secret/db.json')
+// TODO
 const auth = secret.test
 const database = require('monk')
 (`mongodb://${auth.user}:${auth.password}@ds062797.mlab.com:62797/uniwars`)
@@ -11,7 +12,7 @@ const stringIdsMid = ({collection, monkInstance}) => next => (args, method) => {
 
 database.addMiddleware(stringIdsMid)
 
-export default {
+export const db = {
   db: database,
   users: database.get("users"),
   unis: database.get("unis"),

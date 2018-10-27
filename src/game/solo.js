@@ -1,12 +1,12 @@
-import Game from './main'
-import db from '../utils/db'
-import Ratings from '../utils/ratings'
-import Utils from '../utils'
-import crud from '../crud'
+import { Game } from './main'
+import { db } from '../utils/db'
+import { Ratings } from '../utils/ratings'
+import { Utils } from '../utils'
+import { crud } from '../crud'
 
 const debug = require('debug')('game:solo')
 
-class Solo extends Game {
+export class Solo extends Game {
   constructor(arg) {
     super(arg)
   }
@@ -55,5 +55,3 @@ class Solo extends Game {
     return Promise.all(ops)
   }
 }
-
-export default Solo;

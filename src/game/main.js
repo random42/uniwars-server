@@ -1,10 +1,12 @@
-import db from '../utils/db';
+// @flow
+
+import { db } from '../utils/db';
 import monk from 'monk';
+import type { ID, GameType } from '../types'
 import { game as namespace } from '../socket';
-import mm from '../utils/matchmaking';
-import Rating from '../utils/ratings';
-import Utils from '../utils';
-import Maps from './cache';
+import { mm } from '../utils';
+import { Rating } from '../utils'
+import { Maps } from './cache';
 import _ from 'lodash/core'
 import crud from '../crud'
 const debug = require('debug')('game:main')
@@ -17,7 +19,7 @@ const {
 } = require('../utils/constants')
 
 
-class Game {
+export class Game {
 
   // creates players array and _id or copies argument if _id is present
   constructor({_id, side0, side1, type }) {
@@ -263,7 +265,7 @@ class Game {
   }
 
   isPlayer(_id) {
-    return Utils.findIndexById(this.players,_id) > -1
+    return _.find(this.players, {_id}) !== undefined
   }
 
   isOver() {
@@ -308,7 +310,7 @@ class Game {
     side1_points = 0
     // getting sides' points, adding user
     stats.players = this.players.map((p) => {
-      let u = Utils.findObjectById(users, p._id)
+      let u = _.find(users, {_id: p._id})
       let points = p.answers.filter((ans) => {
         let question = _.find(this.questions, {_id: ans.question})
         return ans.answer === question.correct_answer
@@ -466,7 +468,25 @@ class Game {
 
 }
 
+/**
+ * Creates a game.
+ *
+ * @param {Object} game
+ * @param {string[]} game.side0 Users' _ids of first team
+ * @param {string[]} game.side1 Second team
+ * @param {string[]} game.teams _ids of teams (if it is a team game)
+ * @param {string} game.type Game type
+ * @return {Game} Game initialized with the right class
+ */
+Game.create = (side0 : ID[], side1: ID[], type: GameType, teams: ID[]) => {
+  debug('creation', arguments)
+  // TODO
+  return new classes[type](arguments[0]).create()
+}
 
-
-
-export default Game
+// fetch game and initialize it with right class
+async function fetch(_id) {
+  let game = await crud.Game.fetchWithQuestions({game: _id})
+  if (!game) return Promise.reject("Game does not exist!")
+  return new classes[game.type](game)
+}

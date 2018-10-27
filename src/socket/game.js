@@ -1,13 +1,11 @@
-import db from '../utils/db';
+import { db } from '../utils';
 import monk from 'monk';
 import bcrypt from 'bcrypt';
 const {server} = require('./index');
 const debug = require('debug')('socket:game')
-import Maps from '../game/maps';
+import { Maps } from '../game';
 import _ from 'lodash/core';
-import mm from '../utils/matchmaking';
-import Utils from '../utils';
-import gameUtils from '../game/utils';
+import { mm, utils } from '../utils';
 let nsp = server.of('/game');
 nsp.postAuthenticate = postAuthenticate
 
@@ -47,7 +45,7 @@ async function postAuthenticate(socket) {
       return
     // gets game
     try {
-      let g = await gameUtils.fetch(game);
+      let g = {}
       g.answer({user, question, answer})
     }
     catch(err) {

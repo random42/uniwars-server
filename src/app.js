@@ -1,23 +1,21 @@
 const debug = require('debug')('app')
-import express from 'express'
-import path from 'path'
-import favicon from 'serve-favicon'
-import logger from 'morgan'
-import cookieParser from 'cookie-parser'
-import bodyParser from 'body-parser'
-import users from './routes/user'
-import unis from './routes/uni'
-import teams from './routes/team'
-import chat from './routes/chat'
-import {security, db} from './utils'
-import cors from 'cors'
+import  express  from 'express'
+import  path  from 'path'
+import  favicon  from 'serve-favicon'
+import  logger  from 'morgan'
+import  cookieParser  from 'cookie-parser'
+import  bodyParser  from 'body-parser'
+import routes from './routes'
+import { db } from './utils'
+import security from "./security"
+import  cors  from 'cors'
 require('./socket/init')
 
 let app = express()
 
 
 // cross origins middlewares
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: '*' }))
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin");
@@ -34,7 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // checks user token given at login time for every request
 app.use(security.checkAccessToken);
-app.use('/team', security.checkTeamAdmin);
+app.use('/team', security.checkTeamAdmin)
 // async handler
 app.use((req, res, next) => {
   if (next.constructor.name === 'AsyncFunction') {
@@ -47,10 +45,9 @@ app.use((req, res, next) => {
   }
 })
 // routes
-app.use('/user',users);
-app.use('/chat',chat);
-app.use('/uni',unis);
-app.use('/team', teams);
+app.use('/user',routes.user);
+app.use('/uni',routes.uni);
+app.use('/team', routes.team);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
