@@ -1,4 +1,4 @@
-// @flow
+
 
 import { db } from '../utils/db';
 import monk from 'monk';
