@@ -10,13 +10,13 @@ import { Maps } from './cache';
 import _ from 'lodash/core'
 import crud from '../crud'
 const debug = require('debug')('game:main')
-const {
+import {
   MAX_QUESTIONS_RECORD,
   GAME_QUESTIONS,
   GAME_JOIN_TIMEOUT,
   GAME_START_TIMEOUT,
   GAME_ANSWER_TIMEOUT
-} = require('../utils/constants')
+} from '../constants'
 
 
 export class Game {

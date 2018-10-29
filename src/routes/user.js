@@ -20,7 +20,7 @@ const {
   DEFAULT_PERF,
   PAGE_RESULTS,
   USERNAME_LENGTH
-} = require('../utils/constants')
+} = require('../constants')
 const rankSort = {
   'games.solo': -1
 }

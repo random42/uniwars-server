@@ -7,7 +7,7 @@ import { _ } from 'lodash/core'
 const { PROJECTIONS } = require('../../api/api');
 import { utils } from '../utils'
 
-const { DEFAULT_PERF } = require('../utils/constants')
+const { DEFAULT_PERF } = require('../constants')
 
 export class Team extends Model {
 

@@ -1,12 +1,12 @@
 import express from 'express';
 export const router = express.Router()
-import { db } from '../utils/db'
+import { db } from '../utils'
 import monk from 'monk'
 import { crud } from '../crud'
 const debug = require('debug')('http:team')
 const {
   MAX_TEAM_MEMBERS
-} = require('../utils/constants')
+} = require('../constants')
 import { majors } from '../../assets/majors.json';
 const MIN_PLAYERS = 5
 
