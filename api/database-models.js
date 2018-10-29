@@ -1,14 +1,10 @@
 const user = {
-  "_id": {
-      "$oid": "5abbd98270534c2bf947416c"
-  },
+  "_id": "",
   "username": "random",
   "email": "roberto.sero@edu.unito.it",
   "first_name": "Roberto",
   "last_name": "Sero",
-  "uni": {
-      "$oid": "5a3dac7dfaaa577114d0cfaf"
-  },
+  "uni": "_id",
   "major": "GENERAL AGRICOLTURE",
   "perf": {
     "rating": 1234,
@@ -23,25 +19,25 @@ const user = {
   "private": {
     "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
-    "phone_number": '+393461625500',
+    "phone_number": '+393461235933',
     "chats": ["_id"],
     "last_questions": ["_id"], // last tot questions
-    "friend_requests": ["users_ids"],
     "news": [
       {
-        "type": "friend_request"
+        "type": "friend_request",
         "user": "_id"
       },{
         "type": "team_invitation",
         "team": "_id",
-        "user": "_id"
       },{
         "type": "solo_challenge",
         "user": "_id"
       }
     ]
   },
-  "teams": ["_ids"],
+  "teams": [{
+    "_id": ""
+  }],
   "games": [{
     "type": "solo",
     "wins": 1234,
@@ -49,7 +45,10 @@ const user = {
     "draws": 43
   }],
   "online_time": 796,
-  "friends": ["_ids"]
+  "friends": [{
+    "_id": "",
+    // eventual infos of friend (like authorization to see real name)
+  }]
 }
 
 const team = {
@@ -57,11 +56,6 @@ const team = {
       "$oid": "5abbd98270534c2bf947416c"
   },
   "name": "MyTeam",
-  "picture": {
-    "small": "",
-    "medium": "",
-    "large": ""
-  },
   // TODO
   "users": [
     {
@@ -75,7 +69,10 @@ const team = {
     "rd": 100, // rating deviation
     "vol": 0.06, // volatility
   },
-  "challenges": ["team_id"],
+  "news": [{
+    "type": "team_challenge",
+    "team": "_id"
+  }],
   "games": {
     "wins": 12,
     "losses": 19,
