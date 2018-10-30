@@ -1,8 +1,9 @@
 
-const debug = require('debug')('crud:game')
+const debug = require('debug')('models:game')
 import { db } from '../utils/db'
 import { _ } from 'lodash/core'
 import monk from 'monk'
+import type { ID, GameType } from '../types'
 const { PROJECTIONS } = require('../../api/api')
 import { utils } from '../utils'
 const NO_PROJ = {projection: {_id: 1}}
@@ -13,7 +14,7 @@ export class Game {
    *
    *
    */
-  static async fetchWithQuestions(game : string) : Promise<Game> {
+  static async fetchWithQuestions(game : ID) : Promise<Game> {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}

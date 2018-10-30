@@ -42,14 +42,22 @@
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-flow": "^7.0.0",
     "axios": "^0.18.0",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
     "esdoc": "^1.1.0",
     "esdoc-ecmascript-proposal-plugin": "^1.0.0",
     "esdoc-flow-type-plugin": "^1.1.0",
     "esdoc-standard-plugin": "^1.0.0",
     "flow-bin": "^0.83.0",
     "jest": "^23.6.0",
+    "jest-flow-transform": "^1.0.1",
     "nodemon": "^1.18.4",
+    "regenerator-runtime": "^0.12.1",
     "supertest": "^3.3.0"
   },
-  "jest": {}
+  "jest": {
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest"
+    }
+  }
 }

@@ -6,7 +6,7 @@ import { Game } from '../game'
 // 1v1
 class Solo {
   constructor() {
-    this.queue = [];
+    this.queue = []
   }
 
   push(users) {
@@ -33,7 +33,7 @@ class Solo {
     const side0 = [players[0]]
     const side1 = [players[1]]
     debug('Matching',players);
-    gameUtils.create({side0,side1,type: 'solo'});
+    Game.create(side0, side1, 'solo');
   }
 }
 
@@ -66,7 +66,7 @@ class Squad {
     const side0 = players.slice(0,5);
     const side1 = players.slice(5,10);
     debug('Matching',side0,side1);
-    Game.create({side0,side1,type: 'squad'})
+    Game.create(side0, side1, 'squad')
   }
 }
 

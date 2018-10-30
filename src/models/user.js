@@ -1,6 +1,6 @@
 // @flow
 
-const debug = require('debug')('crud:user')
+const debug = require('debug')('models:user')
 import { Model } from './model'
 import * as PL from './pipelines'
 import type { ID, Category, GameType, Collection } from '../types'
@@ -182,9 +182,13 @@ export class User extends Model {
    */
 
   static async friendRequest(from : ID, to : ID) {
-    
+
   }
 
+
+  /**
+   * asd 
+   */
   static async removeFriendship(userA : ID, userB : ID) {
     let ops = []
     let update = (id1 : ID, id2 : ID) => {

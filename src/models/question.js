@@ -1,6 +1,6 @@
 // @flow
 
-const debug = require('debug')('crud:question')
+const debug = require('debug')('models:question')
 import { Model } from './model'
 import type { ID, Category, Difficulty } from '../types'
 import { db } from '../utils/db'

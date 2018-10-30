@@ -1,4 +1,4 @@
-const db = require('../utils/db')
+import { db } from '../src/utils'
 const USERS = require('../data/users_1000.json')
 
 test('a',() => {
@@ -16,6 +16,10 @@ const dbUtils = {
       db.users.remove({}),
       db.teams.remove({})
     ])
+  },
+
+  clearCollections(...names) {
+    return Promise.all(names.map((n) => db[n].remove({})))
   },
 
   getUsers(from, to) {

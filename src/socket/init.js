@@ -1,7 +1,7 @@
 import { db } from '../utils/db';
 const debug = require('debug')('socket:init')
 import bcrypt from 'bcrypt';
-import crud from '../crud'
+import models from '../models'
 let { server } = require('./index');
 require('./main')
 require('./game')
@@ -29,7 +29,7 @@ function postAuthenticate(socket, data) {
   let id = socket.id
   socket.authTime = Date.now()
   socket.on('disconnect', () => {
-    crud.user.addOnlineTime({user, time: Date.now() - socket.authTime})
+    models.user.addOnlineTime({user, time: Date.now() - socket.authTime})
     .catch(err => debug(err.message))
   })
   // server and main nsp map

@@ -1,4 +1,4 @@
-const debug = require('debug')('crud:team')
+const debug = require('debug')('models:team')
 import { db } from '../utils/db'
 import { Model } from './model'
 import type { ID } from '../types'

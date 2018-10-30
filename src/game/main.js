@@ -1,14 +1,12 @@
-
-
 import { db } from '../utils/db';
 import monk from 'monk';
-import type { ID, GameType } from '../types'
+import { Model, Question, User, Team } from '../models'
+//import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
 import { game as namespace } from '../socket';
 import { mm } from '../utils';
 import { Rating } from '../utils'
 import { Maps } from './cache';
 import _ from 'lodash/core'
-import crud from '../crud'
 const debug = require('debug')('game:main')
 import {
   MAX_QUESTIONS_RECORD,
@@ -19,34 +17,25 @@ import {
 } from '../constants'
 
 
-export class Game {
+export class Game extends Model {
 
-  // creates players array and _id or copies argument if _id is present
-  constructor({_id, side0, side1, type }) {
-    // if _id is present the game was fetched from database
-    if (_id) {
-      let game = arguments[0]
-      for (let i in game) {
-        this[i] = game[i];
-      }
-      this.stringify();
-      return;
-    }
-    // else a new game is created from the other params
-    this._id = monk.id().toString();
-    this.status = null;
-    this.players = [];
-    this.type = type;
-    // next line assures that side0 is [0,length/2] and side1...
-    for (let id of side0.concat(side1)) {
-      this.players.push({
-        _id: id,
-        side: side0.indexOf(id) >= 0 ? 0 : 1,
-        index: 0, // current question index
-        answers: []
-      })
-    }
-  }
+  // _id: ID
+  // status: GameStatus
+  // created_at: number
+  // ended_at: number
+  // type: GameType
+  // players: Array<{
+  //   _id: ID,
+  //   side: 0 | 1,
+  //   index: number,
+  //   answers: Array<{
+  //     question: ID,
+  //     answer: string
+  //   }>,
+  //   perf: Perf
+  // }>
+  // questions: ID[] | Question[]
+  // result: GameResult
 
   // return undefined if at least one player is not connected
   // else return this
@@ -54,21 +43,21 @@ export class Game {
     // checks all players are connected, if not...
     // pushes all connected players back into the matchmaker
     let conns = this.connected();
-    if (conns.length < this.players.length) {
-      mm[this.type].push(conns);
-      debug(this._id, 'Not all players are connected');
-      return;
-    }
+    // if (conns.length < this.players.length) {
+    //   mm[this.type].push(conns);
+    //   //debug(this._id, 'Not all players are connected')
+    //   return
+    // }
     // keep the game in memory
-    Maps.starting.set(this._id,this);
-    this.status = 'create';
+    Maps.starting.set(this._id, this)
+    this.status = 'create'
     // array of players who emitted 'join' message
-    this.joined = [];
+    this.joined = []
     // creating game room
     for (let p of this.players) {
       // player connection has been checked before
       // namespace.connections.has(p._id) &&
-      namespace.connections.get(p._id).join(this._id);
+      namespace.connections.get(p._id).join(this._id)
     }
     // emitting new_game message
     this.emit('new_game', {_id: this._id, type: this.type});
@@ -78,13 +67,13 @@ export class Game {
   }
 
   // starts game if all players joined
-  join(user_id) {
+  join(user) {
     if (this.status !== 'create' || // wrong status
-      !this.isPlayer(user_id) || // wrong player
+      !this.isPlayer(user) || // wrong player
       // player has joined yet
-      this.joined.indexOf(user_id) >= 0) return
+      this.joined.indexOf(user) >= 0) return
     else {
-      let length = this.joined.push(user_id);
+      let length = this.joined.push(user);
       // if all players have joined
       if (length === this.players.length) {
         // start game
@@ -232,7 +221,7 @@ export class Game {
     player.index++
     player.answers.push({question, answer})
     // update database
-    await crud.game.setAnswer({game: this._id, user, question, answer})
+    await models.game.setAnswer({game: this._id, user, question, answer})
   }
 
   sendQuestion(user) {
@@ -466,27 +455,4 @@ export class Game {
     }
   }
 
-}
-
-/**
- * Creates a game.
- *
- * @param {Object} game
- * @param {string[]} game.side0 Users' _ids of first team
- * @param {string[]} game.side1 Second team
- * @param {string[]} game.teams _ids of teams (if it is a team game)
- * @param {string} game.type Game type
- * @return {Game} Game initialized with the right class
- */
-Game.create = (side0 : ID[], side1: ID[], type: GameType, teams: ID[]) => {
-  debug('creation', arguments)
-  // TODO
-  return new classes[type](arguments[0]).create()
-}
-
-// fetch game and initialize it with right class
-async function fetch(_id) {
-  let game = await crud.Game.fetchWithQuestions({game: _id})
-  if (!game) return Promise.reject("Game does not exist!")
-  return new classes[game.type](game)
 }

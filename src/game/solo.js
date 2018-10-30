@@ -2,7 +2,7 @@ import { Game } from './main'
 import { db } from '../utils/db'
 import { Ratings } from '../utils/ratings'
 import { Utils } from '../utils'
-import { crud } from '../crud'
+import { models } from '../models'
 
 const debug = require('debug')('game:solo')
 

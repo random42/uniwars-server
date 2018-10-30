@@ -1,5 +1,5 @@
 
-const debug = require('debug')('crud:uni')
+const debug = require('debug')('models:uni')
 import { Model } from './model'
 import { db } from '../utils/db'
 import type { ID } from '../types'

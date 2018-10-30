@@ -125,7 +125,7 @@ const game = {
   },
   "created_at": Date.now(),
   "ended_at": Date.now(),
-  "type": "solo", // solo, squad
+  "type": "solo", // solo, squad, team
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1
@@ -135,7 +135,7 @@ const game = {
       "question": "_id",
       "answer": ""
     }],
-    "perf": {} // to have an improvement function of users
+    "perf": {} // user perf, useful to have an improvement function of users
   }],
   // if it is a team game
   "teams": ["_ids"],

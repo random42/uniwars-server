@@ -2,7 +2,7 @@ import express from 'express';
 export const router = express.Router()
 import { db } from '../utils'
 import monk from 'monk'
-import { crud } from '../crud'
+import { models } from '../models'
 const debug = require('debug')('http:team')
 const {
   MAX_TEAM_MEMBERS
@@ -14,7 +14,7 @@ const MIN_PLAYERS = 5
 router.get('/', async function(req,res,next) {
   let { _id, project } = req.query
   if (!_id) return res.sendStatus(400)
-  let doc = await crud.team.fetchWithUsers({_id})
+  let doc = await models.team.fetchWithUsers({_id})
   if (!doc) return res.sendStatus(404)
   res.json(doc)
 })
@@ -28,7 +28,7 @@ router.delete('/', async function(req,res,next) {
   });
   if (!doc) // team non esistente o utente non founder
     return res.sendStatus(400)
-  let ops = await crud.team.delete({ team })
+  let ops = await models.team.delete({ team })
   if (ops) res.sendStatus(200)
   else res.sendStatus(400)
 })
@@ -39,7 +39,7 @@ router.get('/top', async function(req,res,next) {
     return res.sendStatus(400)
   from = parseInt(from)
   to = parseInt(to)
-  let docs = await crud.team.top(req.query)
+  let docs = await models.team.top(req.query)
   res.json(docs)
 })
 
@@ -57,7 +57,7 @@ router.post('/create', async function(req,res,next) {
     return
   }
   // inserts team
-  let doc = await crud.team.create({name, founder: user, users: invited})
+  let doc = await models.team.create({name, founder: user, users: invited})
   res.json(doc)
 })
 
@@ -111,7 +111,7 @@ router.put('/respond-invite', async function(req,res,next) {
   if (response !== 'y')
     return res.sendStatus(200)
   else {
-    await crud.team.addMember({team, user})
+    await models.team.addMember({team, user})
     res.sendStatus(200)
   }
 })

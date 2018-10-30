@@ -11,7 +11,7 @@ router.get('/', async function(req,res,next) {
   let { _id, project } = req.query
   if (!_id)
     return res.sendStatus(400)
-  let doc = await crud.uni.getFull({uni: _id})
+  let doc = await models.uni.getFull({uni: _id})
   res.json(doc)
 })
 
@@ -21,7 +21,7 @@ router.get('/top', async function(req,res,next) {
     return res.sendStatus(400)
   from = parseInt(from)
   to = parseInt(to)
-  let docs = await crud.team.top(req.query)
+  let docs = await models.team.top(req.query)
   res.json(docs)
 })
 

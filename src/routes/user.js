@@ -24,7 +24,7 @@ const {
 const rankSort = {
   'games.solo': -1
 }
-import crud from '../crud'
+import models from '../models'
 // see https://github.com/kelektiv/node.bcrypt.js
 const saltRounds = 12;
 
@@ -37,11 +37,11 @@ router.get('/', async function(req, res, next) {
   let doc
   switch (project) {
     case 'full': {
-      doc = await crud.user.getFull({user: _id})
+      doc = await models.user.getFull({user: _id})
       break;
     }
     case 'small': {
-      doc = await crud.user.getSmall({user: _id})
+      doc = await models.user.getSmall({user: _id})
     }
   }
   if (!doc)
@@ -133,7 +133,7 @@ router.get('/top', async function(req,res,next) {
     return res.sendStatus(400)
   from = parseInt(from)
   to = parseInt(to)
-  let docs = await crud.user.top({from, to})
+  let docs = await models.user.top({from, to})
   res.json(docs)
 })
 
@@ -302,7 +302,7 @@ router.put('/remove-friend', async function(req, res, next) {
   let { friends } = req.query
   if (!Array.isArray(friends))
     return res.sendStatus(400)
-  await crud.user.removeFriends({ user, friends })
+  await models.user.removeFriends({ user, friends })
   res.sendStatus(200)
 })
 
