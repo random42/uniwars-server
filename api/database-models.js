@@ -1,15 +1,23 @@
 const user = {
   "_id": "",
+  "type": "student", // see types folder
   "username": "random",
+  "gender": "M",
   "email": "roberto.sero@edu.unito.it",
   "first_name": "Roberto",
   "last_name": "Sero",
-  "uni": "_id",
-  "major": "GENERAL AGRICOLTURE",
+  "uni": {
+    "_id": "",
+    "name": "University of Turin"
+  },
+  "major": {
+    "_id": "",
+    "name": "Computer Science"
+  },
   "perf": {
     "rating": 1234,
     "rd": 100, // rating deviation
-    "vol": 0.06, // volatility
+    "vol": 0.06 // volatility
   },
   "stats": [{
     "category": "Engineering",
@@ -20,30 +28,34 @@ const user = {
     "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
     "phone_number": '+393461235933',
-    "chats": ["_id"],
-    "last_questions": ["_id"], // last tot questions
-    "news": [
-      {
-        "type": "friend_request",
-        "user": "_id"
-      },{
-        "type": "team_invitation",
-        "team": "_id",
-      },{
-        "type": "solo_challenge",
-        "user": "_id"
-      }
-    ]
+    "last_questions": ["_id"],
   },
+  "news": [
+    {
+      "_id": "_id",
+      "type": "friend_request",
+      "user": "_id"
+    },{
+      "_id": "_id",
+      "type": "team_invitation",
+      "team": "_id",
+    },{
+      "_id": "_id",
+      "type": "solo_challenge",
+      "user": "_id"
+    }
+  ],
   "teams": [{
     "_id": ""
   }],
-  "games": [{
-    "type": "solo",
-    "wins": 1234,
-    "losses": 1234,
-    "draws": 43
-  }],
+  "games": [
+    {
+      "type": "solo",
+      "wins": 1234,
+      "losses": 1234,
+      "draws": 43
+    }
+  ],
   "online_time": 796,
   "friends": [{
     "_id": "",
@@ -73,12 +85,15 @@ const team = {
     "type": "team_challenge",
     "team": "_id"
   }],
-  "games": {
-    "wins": 12,
-    "losses": 19,
-    "draws": 12,
-  },
-  "chat": "_id",
+  "games": [
+    {
+      "type": "team",
+      "wins": 12,
+      "losses": 19,
+      "draws": 12,
+    }
+  ],
+  "chat": "_id"
 }
 
 const uni = {
@@ -129,7 +144,7 @@ const game = {
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1
-    "index": 0, // index of current question
+    "question_index": 0, // index of current question
     // TODO
     "answers": [{
       "question": "_id",
@@ -141,7 +156,7 @@ const game = {
   "teams": ["_ids"],
   "questions": ["_ids"],
   "result": 1, // 1 if side0 wins, 0.5 draw, 0 side1 wins
-  "status": "play", // end
+  "status": "play", // create, play, end
 }
 
 const question = {
@@ -151,7 +166,6 @@ const question = {
   "source": "https://opentdb.com/",
   "source_category": "Science: Computers",
   "category": "Computers & Mathematics",
-  "majors": [],
   "question": "The Harvard architecture for micro-controllers added which additional bus?",
   "correct_answer": "Instruction",
   "incorrect_answers": [
@@ -159,7 +173,6 @@ const question = {
     "Data",
     "Control"
   ],
-  "difficulty": "hard",
   "language": "en",
   "hit": 123,
   "miss": 333

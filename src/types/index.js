@@ -1,9 +1,9 @@
 // @flow
 
 
-export type ID = string
+export type ID = Object
+export type UserType = 'teen' | 'student' | 'worker' | 'generic'
 export type Category = string
-export type Difficulty = 'easy' | 'medium' | 'hard'
 export type GameType = 'solo' | 'squad' | 'team'
 export type Collection = 'users' | 'unis' | 'teams' | 'questions' | 'games'
 export type Perf = { rating: number, rd: number, vol: number }
