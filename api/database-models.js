@@ -25,24 +25,34 @@ const user = {
     "miss": 123
   }],
   "private": {
+    "oauth": [
+      {
+        "id": 1234,
+        "name": "asd",
+        "provider": "google"
+      }
+    ],
     "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
     "phone_number": '+393461235933',
-    "last_questions": ["_id"],
+    "last_questions": ["_id"]
   },
   "news": [
     {
       "_id": "_id",
       "type": "friend_request",
-      "user": "_id"
+      "user": "_id",
+      "created_at": 12345
     },{
       "_id": "_id",
       "type": "team_invitation",
       "team": "_id",
+      "created_at": 12345
     },{
       "_id": "_id",
       "type": "solo_challenge",
       "user": "_id"
+      "created_at": 12345
     }
   ],
   "teams": [{
@@ -57,10 +67,12 @@ const user = {
     }
   ],
   "online_time": 796,
-  "friends": [{
-    "_id": "",
-    // eventual infos of friend (like authorization to see real name)
-  }]
+  "friends": [
+    {
+      "_id": "",
+      // eventual infos of friend (like authorization to see real name)
+    }
+  ]
 }
 
 const team = {

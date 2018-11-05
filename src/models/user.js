@@ -112,6 +112,10 @@ export class User extends Model {
          */
         online_time: number
         friends: ID[] | User[]
+        /**
+         * see database models
+         */
+        private: Object
 
   static REGEX = {
     USERNAME: /^([a-z]|[A-Z])([a-z]|[A-Z]|_|\d){3,19}$/,

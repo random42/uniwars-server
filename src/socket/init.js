@@ -2,7 +2,7 @@ import { db } from '../utils/db';
 const debug = require('debug')('socket:init')
 import bcrypt from 'bcrypt';
 import models from '../models'
-let { server } = require('./index');
+const { server } = require('./index');
 require('./main')
 require('./game')
 

@@ -141,36 +141,6 @@ router.get('/top', async function(req,res,next) {
 router.get('/rank', async function(req,res,next) {
 })
 
-router.put('/login', async function(req, res, next) {
-  let body = req.body
-  let { user } = req.query
-  let doc = await db.users.findOne({
-    $or: [
-      {username: user},
-      {email: user}
-    ]
-  })
-  if (!doc) return res.sendStatus(404)
-  let auth = await bcrypt.compare(body.password,doc.private.password)
-  if (!auth) return res.status(400).send("Wrong Password")
-  // password is correct
-  // generate user access token
-  let token = monk.id().toString()
-  // hash access token
-  let hash = await bcrypt.hash(token, saltRounds)
-  let updatedDoc = await db.users.findOneAndUpdate(doc._id, {
-    $set: {
-      'private.access_token': hash,
-    },
-  })
-  res.json({user: doc, token});
-});
-
-
-// TODO
-router.put('/logout', async function(req,res,next) {
-});
-
 router.get('/picture', async function(req,res,next) {
   let _id = req.query._id;
   let size = req.query.size;
@@ -188,40 +158,6 @@ router.get('/picture', async function(req,res,next) {
   let picture = user.picture[size];
   res.redirect(picture);
 });
-
-router.post('/register', async function(req, res, next) {
-  let user = req.body
-  let { email } = user
-  if (!checkRegisterForm(user)) {
-    res.sendStatus(400);
-    return;
-  }
-  let uni = await getUniByEmail(user.email);
-  if (!uni) {
-    res.status(400).send('Invalid email domain');
-    return;
-  }
-  let existEmail = await db.users.findOne({email});
-  if (existEmail) {
-    res.status(400).send('Account already exists');
-    return;
-  }
-  let existUsername = await db.users.findOne({username: user.username});
-  if (existUsername) {
-    res.status(400).send('Username is already used.');
-    return;
-  }
-  user.uni = monk.id(uni._id)
-  user.private = {}
-  user.perf = DEFAULT_PERF
-  user.stats = []
-  user.friends = []
-  let hash = await bcrypt.hash(user.password,saltRounds);
-  user.private.password = hash;
-  delete user.password;
-  await db.users.insert(user);
-  res.sendStatus(200)
-})
 
 router.put('/picture', async function(req,res,next) {
   // header Content-Type must be application/octet-stream
