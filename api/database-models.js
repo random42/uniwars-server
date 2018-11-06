@@ -69,7 +69,8 @@ const user = {
   "online_time": 796,
   "friends": [
     {
-      "_id": "",
+      "_id": "", // friend _id
+      "start_date": 1234567 // time of friendship creation
       // eventual infos of friend (like authorization to see real name)
     }
   ]

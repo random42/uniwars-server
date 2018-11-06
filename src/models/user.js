@@ -9,6 +9,8 @@ import type Team from './team'
 import type Uni from './uni'
 import { db } from '../utils'
 import monk from 'monk'
+const CATEGORIES = require('../../assets/question_categories.json')
+const GAME_TYPES = require('../../assets/game_types.json')
 
 const SORT = {
   'perf.rating': -1
@@ -33,8 +35,6 @@ const PROJ = {
     'online_time': 1,
     'teams.name': 1,
     'teams.perf': 1,
-    'uni.name': 1,
-    'uni.country': 1,
     'rank': 1
   },
   SMALL : {
@@ -116,6 +116,7 @@ export class User extends Model {
          * see database models
          */
         private: Object
+        online: boolean
 
   static REGEX = {
     USERNAME: /^([a-z]|[A-Z])([a-z]|[A-Z]|_|\d){3,19}$/,
@@ -131,21 +132,33 @@ export class User extends Model {
     vol: 0.06
   }
 
+
+  /**
+   *  Creates a new user.
+   */
   static async create(
-    form : {
-      type: UserType,
-      username: string,
-      email: string,
-      password?: string
-    }
+    type: UserType,
+    username: string,
     ) : Promise<User> {
-    const checkRegex = (form : Object) => {
-      return User.REGEX.USERNAME.test(form.username)
-      && User.REGEX.EMAIL.test(form.email)
-      && User.REGEX.USERNAME.test(form.username)
-      && User.REGEX.USERNAME.test(form.username)
+    const obj = {
+      _id: monk.id(),
+      type,
+      username,
+      perf: USER.DEFAULT_PERF,
+      stats: CATEGORIES.map(c => {
+        return { category: c.name, hit: 0, miss: 0 }
+      }),
+      private: {},
+      news: [],
+      teams: [],
+      games: GAME_TYPES.map(g => {
+        return { type: g.name, wins: 0, draws: 0, losses: 0 }
+      }),
+      online_time: 0,
+      friends: []
     }
-    return new User({})
+    await db.users.insert(obj)
+    return new User(obj)
   }
 
   /**
@@ -210,21 +223,31 @@ export class User extends Model {
     return docs.map(i => new User(i))
   }
 
-  static async getFriends(user: ID, from: number = 0, offset: number) : Promise<User[]> {
+
+  /**
+   * Get 'offset' friends of 'user' from index 'from' by default ordered
+   * by friendship creation.
+   */
+  static async getFriends(
+    user: ID,
+    from: number = 0,
+    offset: number,
+    sort: Object = { 'start_date': 1 }
+    ) : Promise<User[]> {
     const pl = [
       {
         $match: { _id : user }
+      },
+      {
+        $unwind: 'friends'
       },
       {
         $lookup: {
           from: 'users',
           localField: 'friends._id',
           foreignField: '_id',
-          as: 'friends',
+          as: 'docs',
         }
-      },
-      {
-        $unwind: 'friends'
       },
       {
         $skip: from
@@ -233,10 +256,20 @@ export class User extends Model {
         $limit: offset
       },
       {
-        $replaceRoot: { newRoot: "$friends" }
+        $replaceRoot: {
+          newRoot: {
+            $mergeObject: [
+              "$friends",
+              "$docs"
+            ]
+          }
+        }
       },
       {
-        $project: PROJ.SMALL
+        $project: {
+          ...PROJ.SMALL,
+          'start_date': 1
+        }
       }
     ]
     const docs = await db.users.aggregate(pl)
@@ -247,14 +280,29 @@ export class User extends Model {
    * Make friend request.
    */
   static async friendRequest(from : ID, to : ID) {
-    return db.users.findOneAndUpdate(to, {
-      $addToSet: {
-        'news': {
-          type: 'friend_request',
-          user: from
+    return db.users.findOneAndUpdate({
+      // if there's no friend request pending
+        _id: to,
+        news: {
+          $elemMatch: {
+            $not: {
+              type: 'friend_request',
+              user: from
+            }
+          }
+        }
+      },
+      // update
+      {
+        $push: {
+          'news': {
+            _id: monk.id(),
+            type: 'friend_request',
+            user: from
+          }
         }
       }
-    })
+    )
   }
 
   static async respondNews(user: ID, news : ID, response : boolean) {
@@ -310,7 +358,7 @@ export class User extends Model {
   static async createFriendship(userA : ID, userB : ID) {
     const update = (userA, userB) => db.users.findOneAndUpdate(userA, {
       $addToSet: {
-        'friends': { _id: userB }
+        'friends': { _id: userB, created_at: Date.now() }
       }
     })
     return Promise.all([update(userA,userB), update(userB, userA)])

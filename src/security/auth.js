@@ -11,7 +11,7 @@ import passport from 'passport'
  * @param password
  * @param done Verify function
  */
-export async function login(
+export async function localLogin(
   user : string,
   password : string
   ) : Promise<User>{

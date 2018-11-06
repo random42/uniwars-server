@@ -4,10 +4,10 @@ import { db } from '../utils/db'
 const debug = require('debug')('http:user')
 import { fs } from 'fs'
 import bcrypt from 'bcrypt'
+import sharp from 'sharp'
 import { socket } from '../socket'
 import path from 'path'
 const project_path = __dirname.slice(0,__dirname.indexOf(path.basename(__dirname)))
-import { sharp } from 'sharp'
 import monk from 'monk'
 const baseURL = 'http://localhost:3000'
 const picSize = {
@@ -15,7 +15,6 @@ const picSize = {
   medium: 256,
   large: 500
 }
-import { MAJORS } from '../../assets/majors.json'
 const {
   DEFAULT_PERF,
   PAGE_RESULTS,

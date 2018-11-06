@@ -25,6 +25,15 @@ export async function findUser(profile : Object) : Promise<User> {
 }
 
 
+
+/**
+ * Log in if user exists.
+ */
+export async function handleAuth() {
+  // TODO
+}
+
+
 /**
  * Google
  */
