@@ -35,7 +35,7 @@ import {server as socket} from './socket'
  * Listen on provided port, on all network interfaces and connect to database
  */
 
-//db.db.then(() => {
+db.then(() => {
   console.log('Database connected');
   server.listen(port);
   console.log('Server listening on port',port)
@@ -47,11 +47,11 @@ import {server as socket} from './socket'
    cookie: false
   });
   console.log('Socket server running');
-// }).catch((err) => {
-//   console.log(err);
-//   console.log('Error connecting to database.')
-//   process.exit(1);
-// })
+}).catch((err) => {
+  console.log(err);
+  console.log('Error connecting to database.')
+  process.exit(1);
+})
 
 /**
  * Normalize a port into a number, string, or false.

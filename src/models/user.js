@@ -68,56 +68,63 @@ const LOOKUP = {
  * after fetching.
  */
 export class User extends Model {
-        _id: ID
-        /**
-         * Rank based on rating. Starts from 0.
-         */
-        rank: number
-        username: string
-        email: string
-        first_name: string
-        last_name: string
-        uni: {
-          _id: ID,
-          name: string
-        }
-        major: {
-          _id: ID,
-          name: string
-        }
-        perf: {
-          rating: number,
-          rd: number,
-          vol: number
-        }
-        stats: Array<{
-          category: Category,
-          hit: number,
-          miss: number
-        }>
-        /**
-         * Computed
-         */
-        teams: {
-          _id: ID
-        }
-        games: Array<{
-          type: GameType,
-          wins: number,
-          draws: number,
-          losses: number,
-        }>
-        /**
-         *  Milliseconds spent online (connected socket) since registered.
-         */
-        online_time: number
-        friends: ID[] | User[]
-        /**
-         * see database models
-         */
-        private: Object
-        online: boolean
+  _id: ID
+  type: UserType
+  /**
+   * Rank based on rating. Starts from 0.
+   */
+  rank: number
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+  uni: {
+    _id: ID,
+    name: string
+  }
+  major: {
+    _id: ID,
+    name: string
+  }
+  perf: {
+    rating: number,
+    rd: number,
+    vol: number
+  }
+  stats: Array<{
+    category: Category,
+    hit: number,
+    miss: number
+  }>
+  /**
+   * Computed
+   */
+  teams: Array<{
+    _id: ID
+  }>
+  games: Array<{
+    type: GameType,
+    wins: number,
+    draws: number,
+    losses: number,
+  }>
+  /**
+   *  Milliseconds spent online (connected socket) since registered.
+   */
+  online_time: number
+  friends: Array<{
+    _id: ID,
+    start_date: number
+  }>
+  /**
+   * see database models
+   */
+  private: Object
+  online: boolean
 
+  constructor(arg) {
+    super(arg)
+  }
   static REGEX = {
     USERNAME: /^([a-z]|[A-Z])([a-z]|[A-Z]|_|\d){3,19}$/,
     // space separated words
@@ -144,7 +151,7 @@ export class User extends Model {
       _id: monk.id(),
       type,
       username,
-      perf: USER.DEFAULT_PERF,
+      perf: User.DEFAULT_PERF,
       stats: CATEGORIES.map(c => {
         return { category: c.name, hit: 0, miss: 0 }
       }),
@@ -157,7 +164,7 @@ export class User extends Model {
       online_time: 0,
       friends: []
     }
-    await db.users.insert(obj)
+    await db.get('users').insert(obj)
     return new User(obj)
   }
 
@@ -192,7 +199,7 @@ export class User extends Model {
       $project: PROJ[project]
     })
     const pipeline = rank ? PL.rank(SORT, [], append) : append
-    let docs = await db.users.aggregate(pipeline)
+    let docs = await db.get('users').aggregate(pipeline)
     return docs.map(i => new User(i))
   }
 
@@ -219,7 +226,7 @@ export class User extends Model {
         $project: PROJ.SMALL
       }
     ]
-    let docs = await db.users.aggregate(PL.rank(sort, [], append))
+    let docs = await db.get('users').aggregate(PL.rank(sort, [], append))
     return docs.map(i => new User(i))
   }
 
@@ -272,7 +279,7 @@ export class User extends Model {
         }
       }
     ]
-    const docs = await db.users.aggregate(pl)
+    const docs = await db.get('users').aggregate(pl)
     return docs.map(obj => new User(obj))
   }
 
@@ -280,7 +287,7 @@ export class User extends Model {
    * Make friend request.
    */
   static async friendRequest(from : ID, to : ID) {
-    return db.users.findOneAndUpdate({
+    return db.get('users').findOneAndUpdate({
       // if there's no friend request pending
         _id: to,
         news: {
@@ -342,7 +349,7 @@ export class User extends Model {
   static async removeFriendship(userA : ID, userB : ID) {
     let ops = []
     let update = (id1 : ID, id2 : ID) => {
-      return db.users.findOneAndUpdate(id1, {
+      return db.get('users').findOneAndUpdate(id1, {
         $pull: {
           'friends': {
             _id: id2
@@ -356,7 +363,7 @@ export class User extends Model {
   }
 
   static async createFriendship(userA : ID, userB : ID) {
-    const update = (userA, userB) => db.users.findOneAndUpdate(userA, {
+    const update = (userA, userB) => db.get('users').findOneAndUpdate(userA, {
       $addToSet: {
         'friends': { _id: userB, created_at: Date.now() }
       }
@@ -365,7 +372,7 @@ export class User extends Model {
   }
 
   static async addOnlineTime(user: ID, time : number) {
-    return db.users.findOneAndUpdate(user, {
+    return db.get('users').findOneAndUpdate(user, {
       $inc: {
         'online_time': time
       }
@@ -387,7 +394,7 @@ export class User extends Model {
     if (!User.isValidUsername(text))
       return false
     const regex = new RegExp(text)
-    const doc = await db.users.findOne({
+    const doc = await db.get('users').findOne({
       username: {
         $regex: regex,
         // case insensitive

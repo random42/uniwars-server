@@ -15,7 +15,7 @@ export async function localLogin(
   user : string,
   password : string
   ) : Promise<User>{
-  const doc = await db.users.findOne({
+  const doc = await db.get('users').findOne({
     $or : [
       {
         email: user

@@ -38,6 +38,6 @@ export async function createGame(
   const typeToClass = (text) => {
     return text.slice(0,1).toUpperCase() + text.slice(1, text.length)
   }
-  const doc = await db.games.insert(obj)
+  const doc = await db.get('games').insert(obj)
   return new index[typeToClass(type)](doc)
 }

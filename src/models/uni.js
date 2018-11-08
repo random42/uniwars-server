@@ -73,9 +73,9 @@ export class Uni extends Model {
     },{
       $project: projection
     }])
-    let doc = await db.users.aggregate(pipeline)
+    let doc = await db.get('users').aggregate(pipeline)
     if (doc.length === 0) {
-      doc = await db.unis.findOne(this._id, projection)
+      doc = await db.get('unis').findOne(this._id, projection)
       return doc
     } else {
       return doc[0]
@@ -91,6 +91,6 @@ export class Uni extends Model {
         $limit: to-from
       }
     ])
-    return db.users.aggregate(pipeline)
+    return db.get('users').aggregate(pipeline)
   }
 }

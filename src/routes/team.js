@@ -22,7 +22,7 @@ router.get('/', async function(req,res,next) {
 router.delete('/', async function(req,res,next) {
   let user = req.get('user');
   let team = req.query.team;
-  let doc = await db.teams.findOne({
+  let doc = await db.get('teams').findOne({
     _id: team,
     founder: user
   });
@@ -51,7 +51,7 @@ router.post('/create', async function(req,res,next) {
   let { name, invited } = req.body
   let user = req.get('user')
   // check name
-  let exists = await db.teams.findOne({name});
+  let exists = await db.get('teams').findOne({name});
   if (exists) {
     res.status(400).send('Name already taken');
     return
@@ -66,7 +66,7 @@ router.put('/invite', async function(req,res,next) {
   let { team, invited } = req.query
   if (!team || !Array.isArray(invited))
     res.sendStatus(400)
-  let invitation = await db.users.update({
+  let invitation = await db.get('users').update({
     _id: {
       $in: invited
     },
@@ -92,7 +92,7 @@ router.put('/respond-invite', async function(req,res,next) {
   let { team, response } = req.query
   if (!team || !response)
     return res.sendStatus(400)
-  let update = await db.users.findOneAndUpdate({
+  let update = await db.get('users').findOneAndUpdate({
     _id: user,
     'private.news': {
       'type': 'team_invitation',
@@ -126,7 +126,7 @@ router.put('/challenge', async function(req,res,next) {
     areAdmins: true
   })
   if (!pass) return res.sendStatus(400)
-  await db.teams.findOneAndUpdate(enemy, {
+  await db.get('teams').findOneAndUpdate(enemy, {
     $addToSet: {
       'challenges': monk.id(team)
     }
@@ -145,7 +145,7 @@ router.put('/respond-challenge', async function(req,res,next) {
     areAdmins: true
   })
   if (!pass) return res.sendStatus(400)
-  let removeNews = await db.teams.findOneAndUpdate(team, {
+  let removeNews = await db.get('teams').findOneAndUpdate(team, {
     $pull: {
       'challenges': enemy
     }

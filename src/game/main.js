@@ -90,7 +90,7 @@ export class Game extends Model {
 
   async createQuestions() {
     // query last questions from users
-    let last_questions = await db.users.aggregate([
+    let last_questions = await db.get('users').aggregate([
       {$match: {_id: {$in: Object.keys(this.players)}}},
       {$unwind: "$private.last_questions"},
       {$group: {
@@ -101,7 +101,7 @@ export class Game extends Model {
       }}
     ])
     // query a sample of questions that don't match with users' last questions
-    let questions = await db.questions.aggregate([
+    let questions = await db.get('questions').aggregate([
       {$match: {
         _id: {$nin: last_questions.map(q => q._id)}
       }},
@@ -112,7 +112,7 @@ export class Game extends Model {
   }
 
   async fetchUsers(...fields) {
-    return db.users.find({
+    return db.get('users').find({
       _id: {
         $in: this.players.map(p => p._id)
       }
@@ -131,7 +131,7 @@ export class Game extends Model {
       player._id = monk.id(player._id)
     }
     obj.questions = obj.questions.map((q) => monk.id(q._id))
-    return db.games.insert(obj)
+    return db.get('games').insert(obj)
   }
 
   copyFields(users, ...fields) {
@@ -288,7 +288,7 @@ export class Game extends Model {
   }
   */
   async getStats() {
-    let users = await db.users.find({
+    let users = await db.get('users').find({
       _id: {
         $in: this.players.map(p => p._id)
       }
@@ -419,13 +419,13 @@ export class Game extends Model {
           ['games.' + this.type + '.' + resultField]: 1,
         },
       };
-      return db.users.findOneAndUpdate(query,update)
+      return db.get('users').findOneAndUpdate(query,update)
     })
     return Promise.all(ops)
   }
 
   async atEndUpdateGame(stats) {
-    return db.games.findOneAndUpdate(this._id,{
+    return db.get('games').findOneAndUpdate(this._id,{
       $set: {
         result: stats.result,
         status: 'ended',
@@ -440,7 +440,7 @@ export class Game extends Model {
 
   async atEndUpdateQuestions(stats) {
     let ops = stats.questions.map(q => {
-      return db.questions.findOneAndUpdate(q._id,
+      return db.get('questions').findOneAndUpdate(q._id,
         // increment hit and miss
         {$inc: {hit: q.hit,miss: q.miss}})
     })

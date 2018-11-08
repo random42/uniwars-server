@@ -1,7 +1,8 @@
 // @flow
 
+import monk from 'monk'
 
-export type ID = Object
+export type ID = typeof monk.id()
 export type UserType = 'teen' | 'student' | 'worker' | 'generic'
 export type Category = string
 export type GameType = 'solo' | 'squad' | 'team'

@@ -20,7 +20,7 @@ export class Team extends Game {
   }
 
   async init() {
-    let op = db.teams.find({
+    let op = db.get('teams').find({
       _id: {$in: this.teams},
     },
     {
