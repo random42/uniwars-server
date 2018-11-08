@@ -1,6 +1,6 @@
 import express from 'express'
 const { HTTP, PROJECTIONS } = require('../../api/api')
-import { db } from '../utils/db'
+import { DB } from '../db'
 const debug = require('debug')('http:user')
 import { fs } from 'fs'
 import bcrypt from 'bcrypt'
@@ -79,7 +79,7 @@ router.get('/search', async function(req, res, next) {
       }
     }
   ]
-  let docs = await db.get('users').aggregate(pipeline)
+  let docs = await DB.get('users').aggregate(pipeline)
   res.json(docs)
 })
 
@@ -88,7 +88,7 @@ router.delete('/',async function(req,res,next) {
   try {
     let query = {_id: req.get('user')};
     let body = req.body;
-    let doc = await db.get('users').findOne(query,'private','picture');
+    let doc = await DB.get('users').findOne(query,'private','picture');
     // check password
     let check_password = await bcrypt.compare(body.password,doc.private.password);
     if (check_password) {
@@ -115,7 +115,7 @@ router.delete('/',async function(req,res,next) {
           console.log(err);
         }
       }
-      let db_delete = await db.get('users').findOneAndDelete(query);
+      let db_delete = await DB.get('users').findOneAndDelete(query);
       res.sendStatus(200);
     } else {
       res.status(400).send('wrong password');
@@ -147,7 +147,7 @@ router.get('/picture', async function(req,res,next) {
     res.sendStatus(400)
     return
   }
-  let user = await db.get('users').findOne(_id, 'picture');
+  let user = await DB.get('users').findOne(_id, 'picture');
   if (!user) {
     return res.sendStatus(404)
   }
@@ -166,7 +166,7 @@ router.put('/picture', async function(req,res,next) {
     (sharp(picture).resize(picSize.large,picSize.large).toFile('./public/images/profile_pictures/large/'+_id+'.png')),
     (sharp(picture).resize(picSize.medium,picSize.medium).toFile('./public/images/profile_pictures/medium/'+_id+'.png')),
     (sharp(picture).resize(picSize.small,picSize.small).toFile('./public/images/profile_pictures/small/'+_id+'.png')),
-    db.get('users').findOneAndUpdate(_id,{
+    DB.get('users').findOneAndUpdate(_id,{
       $set: {
         picture: {
           small: baseURL+'/images/profile_pictures/small/'+_id+'.png',
@@ -182,7 +182,7 @@ router.put('/picture', async function(req,res,next) {
 router.put('/add-friend', async function (req, res, next) {
   let user = req.get('user')
   let { to } = req.query
-  await db.get('users').findOneAndUpdate(to, {
+  await DB.get('users').findOneAndUpdate(to, {
     $addToSet: {
       'private.news': {
         'type': 'friend_request',
@@ -198,7 +198,7 @@ router.put('/respond-friend-request', async function (req, res, next) {
   let { to, response } = req.query
   user = monk.id(user)
   to = monk.id(to)
-  let update = await db.get('users').findOneAndUpdate({
+  let update = await DB.get('users').findOneAndUpdate({
     _id: user,
     'private.news': {
       type: 'friend_request',
@@ -217,12 +217,12 @@ router.put('/respond-friend-request', async function (req, res, next) {
   if (response !== 'y') // then the request was rejected
     return res.sendStatus(200)
   let updates = [
-    db.get('users').findOneAndUpdate(user, {
+    DB.get('users').findOneAndUpdate(user, {
       $addToSet: {
         'friends': to
       }
     }),
-    db.get('users').findOneAndUpdate(to, {
+    DB.get('users').findOneAndUpdate(to, {
       $addToSet: {
         'friends': user
       }
@@ -247,7 +247,7 @@ function getUniByEmail(email) {
   if (!match || match.length !== 1)
     return
   let domain = match[0]
-  return db.get('unis').findOne({domains:domain},['_id']);
+  return DB.get('unis').findOne({domains:domain},['_id']);
 }
 
 function checkRegisterForm(user) {

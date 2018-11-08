@@ -1,5 +1,5 @@
 import { Game } from './main'
-import { db } from '../utils/db'
+import { DB } from '../db'
 import { Ratings } from '../utils/ratings'
 import { Utils } from '../utils'
 import { models } from '../models'
@@ -24,7 +24,7 @@ export class Solo extends Game {
   }
 
   async atEndUpdateRatings() {
-    let users = await db.get('users').find({_id: {$in: this.players.map(p => p._id)}},['perf']);
+    let users = await DB.get('users').find({_id: {$in: this.players.map(p => p._id)}},['perf']);
     let side0, side1
     if (users[0]._id === this.players[0]._id) {
       side0 = users[0]
@@ -43,7 +43,7 @@ export class Solo extends Game {
     debug(side0.perf)
     debug(side1.perf)
     let ops = [side0,side1].map(u => {
-      return db.get('users').findOneAndUpdate(
+      return DB.get('users').findOneAndUpdate(
         u._id,
         {
           $set: {

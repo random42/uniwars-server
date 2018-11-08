@@ -1,4 +1,4 @@
-import { db } from '../utils/db';
+import { DB } from '../db';
 const debug = require('debug')('socket:init')
 import bcrypt from 'bcrypt';
 import models from '../models'
@@ -55,7 +55,7 @@ async function authenticate(socket, data, callback) {
     let { _id, token } = data;
     if (server.connections.has(_id))
       return callback(new Error("User has connected yet"));
-    let user = await db.get('users').findOne(_id, ['username','private.access_token']);
+    let user = await DB.get('users').findOne(_id, ['username','private.access_token']);
     if (!user) return callback(new Error("User not found"));
     let right = await bcrypt.compare(token, user.private.access_token);
     if (right) {

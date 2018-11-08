@@ -5,11 +5,11 @@
   "main": "lib/server.js",
   "debug": "DEBUG='game*,http*,socket:game'",
   "scripts": {
-    "start": "yarn build && node $npm_package_main",
-    "dev": "DEBUG='game*,http*,socket:game' nodemon $npm_package_main",
+    "start": "yarn build && NODE_ENV='PROD' node $npm_package_main",
+    "dev": "NODE_ENV='DEV' DEBUG='game*,http*,socket:game' nodemon $npm_package_main",
     "build": "babel src -d lib",
     "watch": "$npm_package_scripts_build -w",
-    "test": "jest",
+    "test": "NODE_ENV='TEST' jest",
     "open-docs": "esdoc && open docs/index.html",
     "docs": "esdoc"
   },
@@ -65,6 +65,9 @@
     "testPathIgnorePatterns": [
       "<rootDir>/node_modules/",
       "<rootDir>/__tests__/config/"
-    ]
+    ],
+    "globalSetup": "<rootDir>/__tests__/config/setup.js",
+    "globalTeardown": "<rootDir>/__tests__/config/teardown.js",
+    "testEnvironment": "<rootDir>/__tests__/config/mongo-env.js"
   }
 }

@@ -6,7 +6,7 @@ import  logger  from 'morgan'
 import  cookieParser  from 'cookie-parser'
 import  bodyParser  from 'body-parser'
 import routes from './routes'
-import { db } from './utils'
+import { DB } from './db'
 import passport from 'passport'
 import security from "./security"
 import  cors  from 'cors'

@@ -1,7 +1,7 @@
 import passport from 'passport'
 
 
-import { db } from '../utils'
+import { DB } from '../db'
 import bcrypt from 'bcrypt'
 
 

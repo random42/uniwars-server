@@ -7,7 +7,7 @@ import * as PL from './pipeline'
 import type { ID, Category, GameType, Collection, UserType } from '../types'
 import type Team from './team'
 import type Uni from './uni'
-import { db } from '../utils'
+import { DB } from '../db'
 import monk from 'monk'
 const CATEGORIES = require('../../assets/question_categories.json')
 const GAME_TYPES = require('../../assets/game_types.json')
@@ -19,7 +19,7 @@ const SORT = {
 
 
 /**
- * Main sets of fields to fetch from db.
+ * Main sets of fields to fetch from DB.
  */
 const PROJ = {
   FULL : {
@@ -164,7 +164,7 @@ export class User extends Model {
       online_time: 0,
       friends: []
     }
-    await db.get('users').insert(obj)
+    await DB.get('users').insert(obj)
     return new User(obj)
   }
 
@@ -199,7 +199,7 @@ export class User extends Model {
       $project: PROJ[project]
     })
     const pipeline = rank ? PL.rank(SORT, [], append) : append
-    let docs = await db.get('users').aggregate(pipeline)
+    let docs = await DB.get('users').aggregate(pipeline)
     return docs.map(i => new User(i))
   }
 
@@ -226,7 +226,7 @@ export class User extends Model {
         $project: PROJ.SMALL
       }
     ]
-    let docs = await db.get('users').aggregate(PL.rank(sort, [], append))
+    let docs = await DB.get('users').aggregate(PL.rank(sort, [], append))
     return docs.map(i => new User(i))
   }
 
@@ -279,7 +279,7 @@ export class User extends Model {
         }
       }
     ]
-    const docs = await db.get('users').aggregate(pl)
+    const docs = await DB.get('users').aggregate(pl)
     return docs.map(obj => new User(obj))
   }
 
@@ -287,7 +287,7 @@ export class User extends Model {
    * Make friend request.
    */
   static async friendRequest(from : ID, to : ID) {
-    return db.get('users').findOneAndUpdate({
+    return DB.get('users').findOneAndUpdate({
       // if there's no friend request pending
         _id: to,
         news: {
@@ -314,7 +314,7 @@ export class User extends Model {
 
   static async respondNews(user: ID, news : ID, response : boolean) {
     // pulling news
-    const doc = await db.findOneAndUpdate(user, {
+    const doc = await DB.findOneAndUpdate(user, {
       $pull: {
         'news': {
           _id: news
@@ -349,7 +349,7 @@ export class User extends Model {
   static async removeFriendship(userA : ID, userB : ID) {
     let ops = []
     let update = (id1 : ID, id2 : ID) => {
-      return db.get('users').findOneAndUpdate(id1, {
+      return DB.get('users').findOneAndUpdate(id1, {
         $pull: {
           'friends': {
             _id: id2
@@ -363,7 +363,7 @@ export class User extends Model {
   }
 
   static async createFriendship(userA : ID, userB : ID) {
-    const update = (userA, userB) => db.get('users').findOneAndUpdate(userA, {
+    const update = (userA, userB) => DB.get('users').findOneAndUpdate(userA, {
       $addToSet: {
         'friends': { _id: userB, created_at: Date.now() }
       }
@@ -372,7 +372,7 @@ export class User extends Model {
   }
 
   static async addOnlineTime(user: ID, time : number) {
-    return db.get('users').findOneAndUpdate(user, {
+    return DB.get('users').findOneAndUpdate(user, {
       $inc: {
         'online_time': time
       }
@@ -394,7 +394,7 @@ export class User extends Model {
     if (!User.isValidUsername(text))
       return false
     const regex = new RegExp(text)
-    const doc = await db.get('users').findOne({
+    const doc = await DB.get('users').findOne({
       username: {
         $regex: regex,
         // case insensitive
@@ -405,7 +405,7 @@ export class User extends Model {
   }
 
   static async areFriends(userA : ID, userB : ID) : Promise<boolean> {
-    const doc = await db.findOne({
+    const doc = await DB.findOne({
       _id: userA,
       friends: { _id: userB }
     })

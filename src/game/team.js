@@ -1,6 +1,6 @@
 const debug = require('debug')('game:team')
 import { Game } from './main';
-import { db } from '../utils/db';
+import { DB } from '../db';
 import { Ratings } from '../utils/ratings';
 import { Utils } from '../utils';
 
@@ -20,7 +20,7 @@ export class Team extends Game {
   }
 
   async init() {
-    let op = db.get('teams').find({
+    let op = DB.get('teams').find({
       _id: {$in: this.teams},
     },
     {

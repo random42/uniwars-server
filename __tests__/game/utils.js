@@ -1,16 +1,16 @@
 import { Game, Solo, Squad, Team, createGame } from '../../src/game'
 import monk from 'monk'
-import {db} from '../config'
+import { DB } from '../../src/db'
 
 jest.setTimeout(10000)
 
 afterAll(async () => {
-  //await db.clearCollections('games')
-  db.close()
+  //await DB.clearCollections('games')
+  DB.close()
 })
 
 beforeAll(async () => {
-  await db.clearCollections('games')
+  await DB.clearCollections('games')
 })
 
 const ID = () => monk.id().toString()

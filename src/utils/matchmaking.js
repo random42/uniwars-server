@@ -1,4 +1,3 @@
-import { db } from './db';
 import monk from 'monk';
 const debug = require('debug')('mm')
 import { Game } from '../game'

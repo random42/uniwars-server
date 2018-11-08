@@ -1,5 +1,4 @@
 import { User, Uni, Major, Pipeline, Model } from '../../src/models'
-import { ObjectID } from 'mongodb'
 import monk from 'monk'
 import _ from 'lodash'
 const USERS = require('../../data/users.json')

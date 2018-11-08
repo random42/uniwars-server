@@ -2,7 +2,7 @@
 import passport from 'passport'
 import express from 'express'
 const { HTTP, PROJECTIONS } = require('../../api/api')
-import { db } from '../utils'
+import { DB } from '../db'
 const debug = require('debug')('http:auth')
 import { socket } from '../socket'
 import { sharp } from 'sharp'

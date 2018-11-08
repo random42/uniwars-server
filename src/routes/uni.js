@@ -1,6 +1,6 @@
 import express from 'express'
 export const router = express.Router()
-import { db } from '../utils/db'
+import { DB } from '../db'
 import monk from 'monk'
 import { MAJORS } from '../../assets/majors.json'
 const debug = require('debug')('http:uni')

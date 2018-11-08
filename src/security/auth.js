@@ -1,7 +1,7 @@
 // @flow
 
 import { User } from '../models'
-import { db } from '../utils'
+import { DB } from '../db'
 import bcrypt from 'bcrypt'
 import passport from 'passport'
 
@@ -15,7 +15,7 @@ export async function localLogin(
   user : string,
   password : string
   ) : Promise<User>{
-  const doc = await db.get('users').findOne({
+  const doc = await DB.get('users').findOne({
     $or : [
       {
         email: user

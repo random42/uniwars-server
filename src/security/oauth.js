@@ -3,7 +3,7 @@
 import passport from 'passport'
 const debug = require('debug')('security:oauth')
 const OAUTH = require('../../secret/oauth.json')
-import { db } from '../utils'
+import { DB } from '../db'
 import { User } from '../models'
 import {OAuth2Strategy as GoogleStrategy} from 'passport-google-oauth'
 
@@ -13,7 +13,7 @@ import {OAuth2Strategy as GoogleStrategy} from 'passport-google-oauth'
  * Finds user given the external profile
  */
 export async function findUser(profile : Object) : Promise<User> {
-  const doc = await db.get('users').findOne({
+  const doc = await DB.get('users').findOne({
     "private.oauth": {
       $elemMatch: {
         id: profile.id,

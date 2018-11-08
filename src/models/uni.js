@@ -1,7 +1,7 @@
 
 const debug = require('debug')('models:uni')
 import { Model } from './model'
-import { db } from '../utils/db'
+import { DB } from '../db'
 import type { ID } from '../types'
 import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api');
@@ -73,9 +73,9 @@ export class Uni extends Model {
     },{
       $project: projection
     }])
-    let doc = await db.get('users').aggregate(pipeline)
+    let doc = await DB.get('users').aggregate(pipeline)
     if (doc.length === 0) {
-      doc = await db.get('unis').findOne(this._id, projection)
+      doc = await DB.get('unis').findOne(this._id, projection)
       return doc
     } else {
       return doc[0]
@@ -91,6 +91,6 @@ export class Uni extends Model {
         $limit: to-from
       }
     ])
-    return db.get('users').aggregate(pipeline)
+    return DB.get('users').aggregate(pipeline)
   }
 }

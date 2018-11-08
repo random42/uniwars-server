@@ -3,7 +3,7 @@
 const debug = require('debug')('models:question')
 import { Model } from './model'
 import type { ID, Category } from '../types'
-import { db } from '../utils/db'
+import { DB } from '../db'
 const { PROJECTIONS } = require('../../api/api');
 import { utils } from '../utils'
 

@@ -7,7 +7,7 @@
 import "@babel/polyfill"
 
 import app from './app'
-import {db} from './utils'
+import { DB } from './db'
 const debug = require('debug')('uniwars:server')
 import http from 'http'
 
@@ -35,7 +35,7 @@ import {server as socket} from './socket'
  * Listen on provided port, on all network interfaces and connect to database
  */
 
-db.then(() => {
+DB.then(() => {
   console.log('Database connected');
   server.listen(port);
   console.log('Server listening on port',port)

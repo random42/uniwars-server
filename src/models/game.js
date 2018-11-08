@@ -1,6 +1,6 @@
 
 const debug = require('debug')('models:game')
-import { db } from '../utils/db'
+import { DB } from '../db'
 import { _ } from 'lodash/core'
 import monk from 'monk'
 import type { ID, GameType } from '../types'
@@ -28,7 +28,7 @@ export class Game {
         }
       }
     ]
-    let doc = await db.get('games').aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1)
       return Promise.reject("No game found.")
     doc = doc[0]
@@ -62,7 +62,7 @@ export class Game {
         }
       }
     ]
-    let doc = await db.get('games').aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1)
     return doc[0].questions
   }
@@ -81,7 +81,7 @@ export class Game {
         }
       }
     ]
-    let doc = await db.get('games').aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1) return
     doc = doc[0]
     if (index >= doc.questions.length) return
@@ -114,7 +114,7 @@ export class Game {
         }
       }
     ]
-    let doc = await db.get('games').aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1) return undefined
     doc = doc[0]
     _.forEach(doc.users_docs, (item, index, arr) => {
@@ -141,7 +141,7 @@ export class Game {
     pushes the answer and update the question index of the player
   */
   static async setAnswer(game : string, user : string, question : string, answer : string) {
-    return db.get('games').findOneAndUpdate({
+    return DB.get('games').findOneAndUpdate({
       _id: game,
       // to specify the user to update
       players:  { $elemMatch: {_id: monk.id(user)} }
@@ -168,7 +168,7 @@ export class Game {
   */
   static async endGame(game : string) {
     let fetch = await Promise.all([
-      db.get('games').findOne(game),
+      DB.get('games').findOne(game),
       Game.getQuestions(game)
     ])
     game = fetch[0]
@@ -188,6 +188,6 @@ export class Game {
     if (side0 > side1) game.result = 1
     else if (side0 === side1) game.result = 0.5
     else game.result = 0
-    return db.get('games').findOneAndUpdate(game._id, game)
+    return DB.get('games').findOneAndUpdate(game._id, game)
   }
 }

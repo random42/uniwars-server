@@ -1,4 +1,4 @@
-import { db } from '../utils/db';
+import { DB } from '../db';
 import monk from 'monk';
 import { Model, Question, User, Team } from '../models'
 //import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
@@ -81,7 +81,7 @@ export class Game extends Model {
         delete this.joined;
         delete this.joinTimeout;
         // delete game from RAM,
-        // from now on all read and write is done in db
+        // from now on all read and write is done in DB
         Maps.starting.delete(this._id)
         this.start();
       }
@@ -90,7 +90,7 @@ export class Game extends Model {
 
   async createQuestions() {
     // query last questions from users
-    let last_questions = await db.get('users').aggregate([
+    let last_questions = await DB.get('users').aggregate([
       {$match: {_id: {$in: Object.keys(this.players)}}},
       {$unwind: "$private.last_questions"},
       {$group: {
@@ -101,7 +101,7 @@ export class Game extends Model {
       }}
     ])
     // query a sample of questions that don't match with users' last questions
-    let questions = await db.get('questions').aggregate([
+    let questions = await DB.get('questions').aggregate([
       {$match: {
         _id: {$nin: last_questions.map(q => q._id)}
       }},
@@ -112,7 +112,7 @@ export class Game extends Model {
   }
 
   async fetchUsers(...fields) {
-    return db.get('users').find({
+    return DB.get('users').find({
       _id: {
         $in: this.players.map(p => p._id)
       }
@@ -131,7 +131,7 @@ export class Game extends Model {
       player._id = monk.id(player._id)
     }
     obj.questions = obj.questions.map((q) => monk.id(q._id))
-    return db.get('games').insert(obj)
+    return DB.get('games').insert(obj)
   }
 
   copyFields(users, ...fields) {
@@ -160,7 +160,7 @@ export class Game extends Model {
       ...this,
       questions: []
     }});
-    // pushing into the db
+    // pushing into the DB
     await this.insertInDb()
     this.stringify()
     // set timeout for emitting first question
@@ -288,7 +288,7 @@ export class Game extends Model {
   }
   */
   async getStats() {
-    let users = await db.get('users').find({
+    let users = await DB.get('users').find({
       _id: {
         $in: this.players.map(p => p._id)
       }
@@ -419,13 +419,13 @@ export class Game extends Model {
           ['games.' + this.type + '.' + resultField]: 1,
         },
       };
-      return db.get('users').findOneAndUpdate(query,update)
+      return DB.get('users').findOneAndUpdate(query,update)
     })
     return Promise.all(ops)
   }
 
   async atEndUpdateGame(stats) {
-    return db.get('games').findOneAndUpdate(this._id,{
+    return DB.get('games').findOneAndUpdate(this._id,{
       $set: {
         result: stats.result,
         status: 'ended',
@@ -440,7 +440,7 @@ export class Game extends Model {
 
   async atEndUpdateQuestions(stats) {
     let ops = stats.questions.map(q => {
-      return db.get('questions').findOneAndUpdate(q._id,
+      return DB.get('questions').findOneAndUpdate(q._id,
         // increment hit and miss
         {$inc: {hit: q.hit,miss: q.miss}})
     })

@@ -1,4 +1,4 @@
-import { db } from '../utils';
+import { DB } from '../db';
 import monk from 'monk';
 import bcrypt from 'bcrypt';
 const {server} = require('./index');

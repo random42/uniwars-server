@@ -1,5 +1,5 @@
 const debug = require('debug')('models:team')
-import { db } from '../utils/db'
+import { DB } from '../db'
 import { Model } from './model'
 import type { ID } from '../types'
 import monk from 'monk'
@@ -38,7 +38,7 @@ export class Team extends Model {
         }
       },
     ]
-    let docs = await db.get('teams').aggregate(pipeline)
+    let docs = await DB.get('teams').aggregate(pipeline)
     if (docs.length !== 1) return
     else return docs[0]
   }
@@ -53,7 +53,7 @@ export class Team extends Model {
     users.push({_id: monk.id(founder), admin: true})
     const team_id = monk.id()
     const chat_id = monk.id()
-    let team = db.get('teams').insert({
+    let team = DB.get('teams').insert({
       _id: team_id,
       name,
       users,
@@ -67,7 +67,7 @@ export class Team extends Model {
       chat: chat_id,
       challenges: []
     })
-    let chat = db.chats.insert({
+    let chat = DB.chats.insert({
       _id: chat_id,
       collection: "teams",
       type: "group",
@@ -75,7 +75,7 @@ export class Team extends Model {
       messages: [],
       participants: users
     })
-    let updateUsers = db.get('users').update({
+    let updateUsers = DB.get('users').update({
       _id: { $in: users.map(u => u._id) }
     },{
       $addToSet: {
@@ -87,11 +87,11 @@ export class Team extends Model {
   }
 
   static async delete({team}) {
-    let doc = await db.get('teams').findOne(team)
+    let doc = await DB.get('teams').findOne(team)
     if (!doc) return
     return Promise.all([
       // remove team from users
-      db.get('users').update(
+      DB.get('users').update(
         { _id: {
             $in: doc.users.map(u => u._id)
         }},
@@ -102,13 +102,13 @@ export class Team extends Model {
         }, { multi: true }
       ),
       // elimina il team
-      db.get('teams').findOneAndDelete(team)
+      DB.get('teams').findOneAndDelete(team)
     ])
   }
 
   static async addMember({team, user}) {
     let updates = [
-      db.get('teams').findOneAndUpdate(team,{
+      DB.get('teams').findOneAndUpdate(team,{
         $push: {
           users: {
             _id: monk.id(user),
@@ -116,7 +116,7 @@ export class Team extends Model {
           }
         }
       }),
-      db.get('users').findOneAndUpdate(user,{
+      DB.get('users').findOneAndUpdate(user,{
         $addToSet: {
           teams: monk.id(team)
         }
@@ -127,14 +127,14 @@ export class Team extends Model {
 
   static async removeMember({team, user}) {
     let updates = [
-      db.get('teams').findOneAndUpdate(team,{
+      DB.get('teams').findOneAndUpdate(team,{
         $pull: {
           users: {
             _id: monk.id(user)
           }
         }
       }),
-      db.get('users').findOneAndUpdate(user,{
+      DB.get('users').findOneAndUpdate(user,{
         $pull: {
           teams: monk.id(team)
         }
@@ -144,7 +144,7 @@ export class Team extends Model {
   }
 
   static async makeAdmin({team, user}) {
-    return db.get('teams').findOneAndUpdate({
+    return DB.get('teams').findOneAndUpdate({
       _id: team,
       users: { _id: user }
     },{
@@ -168,6 +168,6 @@ export class Team extends Model {
         'rank': 1,
       }
     }])
-    return db.get('teams').aggregate(pipeline)
+    return DB.get('teams').aggregate(pipeline)
   }
 }
