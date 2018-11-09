@@ -9,14 +9,10 @@ let [ A, B ] = DATA.USERS
 
 describe('local', () => {
   test('constructor', async () => {
-    const m = new User(A)
-    expect(_.isMatch(m, A)).toBeTruthy()
-    const id = A._id
-    expect(typeof (new User(id)._id)).toMatch('object')
   })
 })
 
-describe.skip('db', () => {
+describe('db', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users')
@@ -36,7 +32,7 @@ describe.skip('db', () => {
   })
 
   test('friendship', async () => {
-    //await User.createFriendship()
+    await User.createFriendship()
     expect(0).toBe(0)
   })
 })

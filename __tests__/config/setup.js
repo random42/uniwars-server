@@ -6,7 +6,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const mongod = new MongoMemoryServer({
   instance: {
-    port: 57120,
+    port: 27017,
     ip: '127.0.0.1',
     dbName: 'jest'
   },

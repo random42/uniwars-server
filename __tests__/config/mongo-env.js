@@ -8,7 +8,7 @@ const dbConfigPath = path.join(__dirname, 'dbConfig.json');
 
 class MongoEnvironment extends NodeEnvironment {
   constructor(config) {
-    super(config);
+    super(config)
   }
 
   async setup() {

@@ -6,6 +6,15 @@
 
 import "@babel/polyfill"
 
+import { User, Model } from './models'
+const obj =  {
+  _id: 'string',
+  username: 'asdas',
+  online_time: 123
+}
+const u = new User(obj)
+console.log(u)
+
 import app from './app'
 import { DB } from './db'
 const debug = require('debug')('uniwars:server')

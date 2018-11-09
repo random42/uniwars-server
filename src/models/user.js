@@ -68,14 +68,14 @@ const LOOKUP = {
  * after fetching.
  */
 export class User extends Model {
-  _id: ID
+  _id: ID;
   type: UserType
   /**
    * Rank based on rating. Starts from 0.
    */
   rank: number
   username: string
-  email: string
+  email: string;
   first_name: string
   last_name: string
   uni: {
@@ -122,7 +122,7 @@ export class User extends Model {
   private: Object
   online: boolean
 
-  constructor(arg) {
+  constructor(arg : any) {
     super(arg)
   }
   static REGEX = {

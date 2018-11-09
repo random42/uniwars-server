@@ -1,6 +1,6 @@
-import { Game, Solo, Squad, Team, createGame } from '../../src/game'
+import { Game, Solo, Squad, Team, createGame } from '../../build_flow/game'
 import monk from 'monk'
-import { DB } from '../../src/db'
+import { DB } from '../../build_flow/db'
 
 jest.setTimeout(10000)
 
