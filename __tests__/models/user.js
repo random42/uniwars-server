@@ -6,17 +6,15 @@ import { DATA } from '../config'
 // two random users
 let [ A, B ] = DATA.USERS
 
-
 describe('local', () => {
   test('constructor', async () => {
     const m = new User(A)
     expect(_.isMatch(m, A)).toBeTruthy()
     const id = A._id
-    expect(typeof (new User(id)._id)).toMatch('object')
   })
 })
 
-describe.skip('db', () => {
+describe('db', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users')
@@ -25,7 +23,6 @@ describe.skip('db', () => {
 
   afterAll(async () => {
     await DB.clearCollections('users')
-    await DB.close()
   })
 
   test('addOnlineTime', async () => {
