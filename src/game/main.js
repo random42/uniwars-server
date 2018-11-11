@@ -1,50 +1,41 @@
-import db from '../utils/db';
+import { DB } from '../db';
 import monk from 'monk';
+import { Model, Question, User, Team } from '../models'
+//import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
 import { game as namespace } from '../socket';
-import mm from '../utils/matchmaking';
-import Rating from '../utils/ratings';
-import Utils from '../utils';
-import Maps from './cache';
+import { mm } from '../utils';
+import { Rating } from '../utils'
+import { Maps } from './cache';
 import _ from 'lodash/core'
-import crud from '../crud'
 const debug = require('debug')('game:main')
-const {
+import {
   MAX_QUESTIONS_RECORD,
   GAME_QUESTIONS,
   GAME_JOIN_TIMEOUT,
   GAME_START_TIMEOUT,
   GAME_ANSWER_TIMEOUT
-} = require('../utils/constants')
+} from '../constants'
 
 
-class Game {
+export class Game extends Model {
 
-  // creates players array and _id or copies argument if _id is present
-  constructor({_id, side0, side1, type }) {
-    // if _id is present the game was fetched from database
-    if (_id) {
-      let game = arguments[0]
-      for (let i in game) {
-        this[i] = game[i];
-      }
-      this.stringify();
-      return;
-    }
-    // else a new game is created from the other params
-    this._id = monk.id().toString();
-    this.status = null;
-    this.players = [];
-    this.type = type;
-    // next line assures that side0 is [0,length/2] and side1...
-    for (let id of side0.concat(side1)) {
-      this.players.push({
-        _id: id,
-        side: side0.indexOf(id) >= 0 ? 0 : 1,
-        index: 0, // current question index
-        answers: []
-      })
-    }
-  }
+  // _id: ID
+  // status: GameStatus
+  // created_at: number
+  // ended_at: number
+  // type: GameType
+  // players: Array<{
+  //   _id: ID,
+  //   side: 0 | 1,
+  //   index: number,
+  //   answers: Array<{
+  //     question: ID,
+  //     answer: string
+  //   }>,
+  //   perf: Perf
+  // }>
+  // questions: ID[] | Question[]
+  // result: GameResult
 
   // return undefined if at least one player is not connected
   // else return this
@@ -52,21 +43,21 @@ class Game {
     // checks all players are connected, if not...
     // pushes all connected players back into the matchmaker
     let conns = this.connected();
-    if (conns.length < this.players.length) {
-      mm[this.type].push(conns);
-      debug(this._id, 'Not all players are connected');
-      return;
-    }
+    // if (conns.length < this.players.length) {
+    //   mm[this.type].push(conns);
+    //   //debug(this._id, 'Not all players are connected')
+    //   return
+    // }
     // keep the game in memory
-    Maps.starting.set(this._id,this);
-    this.status = 'create';
+    Maps.starting.set(this._id, this)
+    this.status = 'create'
     // array of players who emitted 'join' message
-    this.joined = [];
+    this.joined = []
     // creating game room
     for (let p of this.players) {
       // player connection has been checked before
       // namespace.connections.has(p._id) &&
-      namespace.connections.get(p._id).join(this._id);
+      namespace.connections.get(p._id).join(this._id)
     }
     // emitting new_game message
     this.emit('new_game', {_id: this._id, type: this.type});
@@ -76,13 +67,13 @@ class Game {
   }
 
   // starts game if all players joined
-  join(user_id) {
+  join(user) {
     if (this.status !== 'create' || // wrong status
-      !this.isPlayer(user_id) || // wrong player
+      !this.isPlayer(user) || // wrong player
       // player has joined yet
-      this.joined.indexOf(user_id) >= 0) return
+      this.joined.indexOf(user) >= 0) return
     else {
-      let length = this.joined.push(user_id);
+      let length = this.joined.push(user);
       // if all players have joined
       if (length === this.players.length) {
         // start game
@@ -90,7 +81,7 @@ class Game {
         delete this.joined;
         delete this.joinTimeout;
         // delete game from RAM,
-        // from now on all read and write is done in db
+        // from now on all read and write is done in DB
         Maps.starting.delete(this._id)
         this.start();
       }
@@ -99,7 +90,7 @@ class Game {
 
   async createQuestions() {
     // query last questions from users
-    let last_questions = await db.users.aggregate([
+    let last_questions = await DB.get('users').aggregate([
       {$match: {_id: {$in: Object.keys(this.players)}}},
       {$unwind: "$private.last_questions"},
       {$group: {
@@ -110,7 +101,7 @@ class Game {
       }}
     ])
     // query a sample of questions that don't match with users' last questions
-    let questions = await db.questions.aggregate([
+    let questions = await DB.get('questions').aggregate([
       {$match: {
         _id: {$nin: last_questions.map(q => q._id)}
       }},
@@ -121,7 +112,7 @@ class Game {
   }
 
   async fetchUsers(...fields) {
-    return db.users.find({
+    return DB.get('users').find({
       _id: {
         $in: this.players.map(p => p._id)
       }
@@ -140,7 +131,7 @@ class Game {
       player._id = monk.id(player._id)
     }
     obj.questions = obj.questions.map((q) => monk.id(q._id))
-    return db.games.insert(obj)
+    return DB.get('games').insert(obj)
   }
 
   copyFields(users, ...fields) {
@@ -169,7 +160,7 @@ class Game {
       ...this,
       questions: []
     }});
-    // pushing into the db
+    // pushing into the DB
     await this.insertInDb()
     this.stringify()
     // set timeout for emitting first question
@@ -230,7 +221,7 @@ class Game {
     player.index++
     player.answers.push({question, answer})
     // update database
-    await crud.game.setAnswer({game: this._id, user, question, answer})
+    await models.game.setAnswer({game: this._id, user, question, answer})
   }
 
   sendQuestion(user) {
@@ -263,7 +254,7 @@ class Game {
   }
 
   isPlayer(_id) {
-    return Utils.findIndexById(this.players,_id) > -1
+    return _.find(this.players, {_id}) !== undefined
   }
 
   isOver() {
@@ -297,7 +288,7 @@ class Game {
   }
   */
   async getStats() {
-    let users = await db.users.find({
+    let users = await DB.get('users').find({
       _id: {
         $in: this.players.map(p => p._id)
       }
@@ -308,7 +299,7 @@ class Game {
     side1_points = 0
     // getting sides' points, adding user
     stats.players = this.players.map((p) => {
-      let u = Utils.findObjectById(users, p._id)
+      let u = _.find(users, {_id: p._id})
       let points = p.answers.filter((ans) => {
         let question = _.find(this.questions, {_id: ans.question})
         return ans.answer === question.correct_answer
@@ -428,13 +419,13 @@ class Game {
           ['games.' + this.type + '.' + resultField]: 1,
         },
       };
-      return db.users.findOneAndUpdate(query,update)
+      return DB.get('users').findOneAndUpdate(query,update)
     })
     return Promise.all(ops)
   }
 
   async atEndUpdateGame(stats) {
-    return db.games.findOneAndUpdate(this._id,{
+    return DB.get('games').findOneAndUpdate(this._id,{
       $set: {
         result: stats.result,
         status: 'ended',
@@ -449,7 +440,7 @@ class Game {
 
   async atEndUpdateQuestions(stats) {
     let ops = stats.questions.map(q => {
-      return db.questions.findOneAndUpdate(q._id,
+      return DB.get('questions').findOneAndUpdate(q._id,
         // increment hit and miss
         {$inc: {hit: q.hit,miss: q.miss}})
     })
@@ -465,8 +456,3 @@ class Game {
   }
 
 }
-
-
-
-
-export default Game

@@ -1,20 +1,20 @@
 import express from 'express';
-const router = express.Router();
-import db from '../utils/db'
+export const router = express.Router()
+import { DB } from '../db'
 import monk from 'monk'
-import crud from '../crud'
+import { models } from '../models'
 const debug = require('debug')('http:team')
 const {
   MAX_TEAM_MEMBERS
-} = require('../utils/constants')
-import majors from '../../assets/majors.json';
+} = require('../constants')
+import { majors } from '../../assets/majors.json';
 const MIN_PLAYERS = 5
 
 
 router.get('/', async function(req,res,next) {
   let { _id, project } = req.query
   if (!_id) return res.sendStatus(400)
-  let doc = await crud.team.fetchWithUsers({_id})
+  let doc = await models.team.fetchWithUsers({_id})
   if (!doc) return res.sendStatus(404)
   res.json(doc)
 })
@@ -22,13 +22,13 @@ router.get('/', async function(req,res,next) {
 router.delete('/', async function(req,res,next) {
   let user = req.get('user');
   let team = req.query.team;
-  let doc = await db.teams.findOne({
+  let doc = await DB.get('teams').findOne({
     _id: team,
     founder: user
   });
   if (!doc) // team non esistente o utente non founder
     return res.sendStatus(400)
-  let ops = await crud.team.delete({ team })
+  let ops = await models.team.delete({ team })
   if (ops) res.sendStatus(200)
   else res.sendStatus(400)
 })
@@ -39,7 +39,7 @@ router.get('/top', async function(req,res,next) {
     return res.sendStatus(400)
   from = parseInt(from)
   to = parseInt(to)
-  let docs = await crud.team.top(req.query)
+  let docs = await models.team.top(req.query)
   res.json(docs)
 })
 
@@ -51,13 +51,13 @@ router.post('/create', async function(req,res,next) {
   let { name, invited } = req.body
   let user = req.get('user')
   // check name
-  let exists = await db.teams.findOne({name});
+  let exists = await DB.get('teams').findOne({name});
   if (exists) {
     res.status(400).send('Name already taken');
     return
   }
   // inserts team
-  let doc = await crud.team.create({name, founder: user, users: invited})
+  let doc = await models.team.create({name, founder: user, users: invited})
   res.json(doc)
 })
 
@@ -66,7 +66,7 @@ router.put('/invite', async function(req,res,next) {
   let { team, invited } = req.query
   if (!team || !Array.isArray(invited))
     res.sendStatus(400)
-  let invitation = await db.users.update({
+  let invitation = await DB.get('users').update({
     _id: {
       $in: invited
     },
@@ -92,7 +92,7 @@ router.put('/respond-invite', async function(req,res,next) {
   let { team, response } = req.query
   if (!team || !response)
     return res.sendStatus(400)
-  let update = await db.users.findOneAndUpdate({
+  let update = await DB.get('users').findOneAndUpdate({
     _id: user,
     'private.news': {
       'type': 'team_invitation',
@@ -111,7 +111,7 @@ router.put('/respond-invite', async function(req,res,next) {
   if (response !== 'y')
     return res.sendStatus(200)
   else {
-    await crud.team.addMember({team, user})
+    await models.team.addMember({team, user})
     res.sendStatus(200)
   }
 })
@@ -126,7 +126,7 @@ router.put('/challenge', async function(req,res,next) {
     areAdmins: true
   })
   if (!pass) return res.sendStatus(400)
-  await db.teams.findOneAndUpdate(enemy, {
+  await DB.get('teams').findOneAndUpdate(enemy, {
     $addToSet: {
       'challenges': monk.id(team)
     }
@@ -145,7 +145,7 @@ router.put('/respond-challenge', async function(req,res,next) {
     areAdmins: true
   })
   if (!pass) return res.sendStatus(400)
-  let removeNews = await db.teams.findOneAndUpdate(team, {
+  let removeNews = await DB.get('teams').findOneAndUpdate(team, {
     $pull: {
       'challenges': enemy
     }
@@ -162,7 +162,7 @@ const check = async ( {
   areNotInTeam,
   areAdmins,
   }) => {
-  const doc = typeof(team) === 'string' ? await db.findOne(team) : team
+  const doc = typeof(team) === 'string' ? await DB.findOne(team) : team
   if (!doc) return false
   if (areInTeam) {
     for (let u of users) {
@@ -184,7 +184,3 @@ const check = async ( {
   }
   return true
 }
-
-
-
-export default router;

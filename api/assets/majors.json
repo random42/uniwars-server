@@ -1,0 +1,872 @@
+[
+  {
+    "FOD1P": 1100,
+    "major": "GENERAL AGRICULTURE",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1101,
+    "major": "AGRICULTURE PRODUCTION AND MANAGEMENT",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1102,
+    "major": "AGRICULTURAL ECONOMICS",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1103,
+    "major": "ANIMAL SCIENCES",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1104,
+    "major": "FOOD SCIENCE",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1105,
+    "major": "PLANT SCIENCE AND AGRONOMY",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1106,
+    "major": "SOIL SCIENCE",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1199,
+    "major": "MISCELLANEOUS AGRICULTURE",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1302,
+    "major": "FORESTRY",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 1303,
+    "major": "NATURAL RESOURCES MANAGEMENT",
+    "major_category": "Agriculture & Natural Resources"
+  },
+  {
+    "FOD1P": 6000,
+    "major": "FINE ARTS",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6001,
+    "major": "DRAMA AND THEATER ARTS",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6002,
+    "major": "MUSIC",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6003,
+    "major": "VISUAL AND PERFORMING ARTS",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6004,
+    "major": "COMMERCIAL ART AND GRAPHIC DESIGN",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6005,
+    "major": "FILM VIDEO AND PHOTOGRAPHIC ARTS",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6007,
+    "major": "STUDIO ARTS",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 6099,
+    "major": "MISCELLANEOUS FINE ARTS",
+    "major_category": "Arts"
+  },
+  {
+    "FOD1P": 1301,
+    "major": "ENVIRONMENTAL SCIENCE",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3600,
+    "major": "BIOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3601,
+    "major": "BIOCHEMICAL SCIENCES",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3602,
+    "major": "BOTANY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3603,
+    "major": "MOLECULAR BIOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3604,
+    "major": "ECOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3605,
+    "major": "GENETICS",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3606,
+    "major": "MICROBIOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3607,
+    "major": "PHARMACOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3608,
+    "major": "PHYSIOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3609,
+    "major": "ZOOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3611,
+    "major": "NEUROSCIENCE",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 3699,
+    "major": "MISCELLANEOUS BIOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 4006,
+    "major": "COGNITIVE SCIENCE AND BIOPSYCHOLOGY",
+    "major_category": "Biology & Life Science"
+  },
+  {
+    "FOD1P": 6200,
+    "major": "GENERAL BUSINESS",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6201,
+    "major": "ACCOUNTING",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6202,
+    "major": "ACTUARIAL SCIENCE",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6203,
+    "major": "BUSINESS MANAGEMENT AND ADMINISTRATION",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6204,
+    "major": "OPERATIONS LOGISTICS AND E-COMMERCE",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6205,
+    "major": "BUSINESS ECONOMICS",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6206,
+    "major": "MARKETING AND MARKETING RESEARCH",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6207,
+    "major": "FINANCE",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6209,
+    "major": "HUMAN RESOURCES AND PERSONNEL MANAGEMENT",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6210,
+    "major": "INTERNATIONAL BUSINESS",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6211,
+    "major": "HOSPITALITY MANAGEMENT",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6212,
+    "major": "MANAGEMENT INFORMATION SYSTEMS AND STATISTICS",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 6299,
+    "major": "MISCELLANEOUS BUSINESS & MEDICAL ADMINISTRATION",
+    "major_category": "Business"
+  },
+  {
+    "FOD1P": 1901,
+    "major": "COMMUNICATIONS",
+    "major_category": "Communications & Journalism"
+  },
+  {
+    "FOD1P": 1902,
+    "major": "JOURNALISM",
+    "major_category": "Communications & Journalism"
+  },
+  {
+    "FOD1P": 1903,
+    "major": "MASS MEDIA",
+    "major_category": "Communications & Journalism"
+  },
+  {
+    "FOD1P": 1904,
+    "major": "ADVERTISING AND PUBLIC RELATIONS",
+    "major_category": "Communications & Journalism"
+  },
+  {
+    "FOD1P": 2001,
+    "major": "COMMUNICATION TECHNOLOGIES",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2100,
+    "major": "COMPUTER AND INFORMATION SYSTEMS",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2101,
+    "major": "COMPUTER PROGRAMMING AND DATA PROCESSING",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2102,
+    "major": "COMPUTER SCIENCE",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2105,
+    "major": "INFORMATION SCIENCES",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2106,
+    "major": "COMPUTER ADMINISTRATION MANAGEMENT AND SECURITY",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2107,
+    "major": "COMPUTER NETWORKING AND TELECOMMUNICATIONS",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 3700,
+    "major": "MATHEMATICS",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 3701,
+    "major": "APPLIED MATHEMATICS",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 3702,
+    "major": "STATISTICS AND DECISION SCIENCE",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 4005,
+    "major": "MATHEMATICS AND COMPUTER SCIENCE",
+    "major_category": "Computers & Mathematics"
+  },
+  {
+    "FOD1P": 2300,
+    "major": "GENERAL EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2301,
+    "major": "EDUCATIONAL ADMINISTRATION AND SUPERVISION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2303,
+    "major": "SCHOOL STUDENT COUNSELING",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2304,
+    "major": "ELEMENTARY EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2305,
+    "major": "MATHEMATICS TEACHER EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2306,
+    "major": "PHYSICAL AND HEALTH EDUCATION TEACHING",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2307,
+    "major": "EARLY CHILDHOOD EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2308,
+    "major": "SCIENCE AND COMPUTER TEACHER EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2309,
+    "major": "SECONDARY TEACHER EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2310,
+    "major": "SPECIAL NEEDS EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2311,
+    "major": "SOCIAL SCIENCE OR HISTORY TEACHER EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2312,
+    "major": "TEACHER EDUCATION: MULTIPLE LEVELS",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2313,
+    "major": "LANGUAGE AND DRAMA EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2314,
+    "major": "ART AND MUSIC EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 2399,
+    "major": "MISCELLANEOUS EDUCATION",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 3501,
+    "major": "LIBRARY SCIENCE",
+    "major_category": "Education"
+  },
+  {
+    "FOD1P": 1401,
+    "major": "ARCHITECTURE",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2400,
+    "major": "GENERAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2401,
+    "major": "AEROSPACE ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2402,
+    "major": "BIOLOGICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2403,
+    "major": "ARCHITECTURAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2404,
+    "major": "BIOMEDICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2405,
+    "major": "CHEMICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2406,
+    "major": "CIVIL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2407,
+    "major": "COMPUTER ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2408,
+    "major": "ELECTRICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2409,
+    "major": "ENGINEERING MECHANICS PHYSICS AND SCIENCE",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2410,
+    "major": "ENVIRONMENTAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2411,
+    "major": "GEOLOGICAL AND GEOPHYSICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2412,
+    "major": "INDUSTRIAL AND MANUFACTURING ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2413,
+    "major": "MATERIALS ENGINEERING AND MATERIALS SCIENCE",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2414,
+    "major": "MECHANICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2415,
+    "major": "METALLURGICAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2416,
+    "major": "MINING AND MINERAL ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2417,
+    "major": "NAVAL ARCHITECTURE AND MARINE ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2418,
+    "major": "NUCLEAR ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2419,
+    "major": "PETROLEUM ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2499,
+    "major": "MISCELLANEOUS ENGINEERING",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2500,
+    "major": "ENGINEERING TECHNOLOGIES",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2501,
+    "major": "ENGINEERING AND INDUSTRIAL MANAGEMENT",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2502,
+    "major": "ELECTRICAL ENGINEERING TECHNOLOGY",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2503,
+    "major": "INDUSTRIAL PRODUCTION TECHNOLOGIES",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2504,
+    "major": "MECHANICAL ENGINEERING RELATED TECHNOLOGIES",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 2599,
+    "major": "MISCELLANEOUS ENGINEERING TECHNOLOGIES",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 5008,
+    "major": "MATERIALS SCIENCE",
+    "major_category": "Engineering"
+  },
+  {
+    "FOD1P": 4002,
+    "major": "NUTRITION SCIENCES",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6100,
+    "major": "GENERAL MEDICAL AND HEALTH SERVICES",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6102,
+    "major": "COMMUNICATION DISORDERS SCIENCES AND SERVICES",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6103,
+    "major": "HEALTH AND MEDICAL ADMINISTRATIVE SERVICES",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6104,
+    "major": "MEDICAL ASSISTING SERVICES",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6105,
+    "major": "MEDICAL TECHNOLOGIES TECHNICIANS",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6106,
+    "major": "HEALTH AND MEDICAL PREPARATORY PROGRAMS",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6107,
+    "major": "NURSING",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6108,
+    "major": "PHARMACY PHARMACEUTICAL SCIENCES AND ADMINISTRATION",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6109,
+    "major": "TREATMENT THERAPY PROFESSIONS",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6110,
+    "major": "COMMUNITY AND PUBLIC HEALTH",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 6199,
+    "major": "MISCELLANEOUS HEALTH MEDICAL PROFESSIONS",
+    "major_category": "Health"
+  },
+  {
+    "FOD1P": 1501,
+    "major": "AREA ETHNIC AND CIVILIZATION STUDIES",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 2601,
+    "major": "LINGUISTICS AND COMPARATIVE LANGUAGE AND LITERATURE",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 2602,
+    "major": "FRENCH GERMAN LATIN AND OTHER COMMON FOREIGN LANGUAGE STUDIES",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 2603,
+    "major": "OTHER FOREIGN LANGUAGES",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 3301,
+    "major": "ENGLISH LANGUAGE AND LITERATURE",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 3302,
+    "major": "COMPOSITION AND RHETORIC",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 3401,
+    "major": "LIBERAL ARTS",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 3402,
+    "major": "HUMANITIES",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 4001,
+    "major": "INTERCULTURAL AND INTERNATIONAL STUDIES",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 4801,
+    "major": "PHILOSOPHY AND RELIGIOUS STUDIES",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 4901,
+    "major": "THEOLOGY AND RELIGIOUS VOCATIONS",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 5502,
+    "major": "ANTHROPOLOGY AND ARCHEOLOGY",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 6006,
+    "major": "ART HISTORY AND CRITICISM",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 6402,
+    "major": "HISTORY",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 6403,
+    "major": "UNITED STATES HISTORY",
+    "major_category": "Humanities & Liberal Arts"
+  },
+  {
+    "FOD1P": 2201,
+    "major": "COSMETOLOGY SERVICES AND CULINARY ARTS",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 2901,
+    "major": "FAMILY AND CONSUMER SCIENCES",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 3801,
+    "major": "MILITARY TECHNOLOGIES",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 4101,
+    "major": "PHYSICAL FITNESS PARKS RECREATION AND LEISURE",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 5601,
+    "major": "CONSTRUCTION SERVICES",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 5701,
+    "major": "ELECTRICAL, MECHANICAL, AND PRECISION TECHNOLOGIES AND PRODUCTION",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 5901,
+    "major": "TRANSPORTATION SCIENCES AND TECHNOLOGIES",
+    "major_category": "Industrial Arts & Consumer Services"
+  },
+  {
+    "FOD1P": 4000,
+    "major": "MULTI/INTERDISCIPLINARY STUDIES",
+    "major_category": "Interdisciplinary"
+  },
+  {
+    "FOD1P": 3201,
+    "major": "COURT REPORTING",
+    "major_category": "Law & Public Policy"
+  },
+  {
+    "FOD1P": 3202,
+    "major": "PRE-LAW AND LEGAL STUDIES",
+    "major_category": "Law & Public Policy"
+  },
+  {
+    "FOD1P": 5301,
+    "major": "CRIMINAL JUSTICE AND FIRE PROTECTION",
+    "major_category": "Law & Public Policy"
+  },
+  {
+    "FOD1P": 5401,
+    "major": "PUBLIC ADMINISTRATION",
+    "major_category": "Law & Public Policy"
+  },
+  {
+    "FOD1P": 5402,
+    "major": "PUBLIC POLICY",
+    "major_category": "Law & Public Policy"
+  },
+  {
+    "FOD1P": "bbbb",
+    "major": "N/A (less than bachelor's degree)",
+    "major_category": "NA"
+  },
+  {
+    "FOD1P": 5000,
+    "major": "PHYSICAL SCIENCES",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5001,
+    "major": "ASTRONOMY AND ASTROPHYSICS",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5002,
+    "major": "ATMOSPHERIC SCIENCES AND METEOROLOGY",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5003,
+    "major": "CHEMISTRY",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5004,
+    "major": "GEOLOGY AND EARTH SCIENCE",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5005,
+    "major": "GEOSCIENCES",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5006,
+    "major": "OCEANOGRAPHY",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5007,
+    "major": "PHYSICS",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5098,
+    "major": "MULTI-DISCIPLINARY OR GENERAL SCIENCE",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5102,
+    "major": "NUCLEAR, INDUSTRIAL RADIOLOGY, AND BIOLOGICAL TECHNOLOGIES",
+    "major_category": "Physical Sciences"
+  },
+  {
+    "FOD1P": 5200,
+    "major": "PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5201,
+    "major": "EDUCATIONAL PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5202,
+    "major": "CLINICAL PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5203,
+    "major": "COUNSELING PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5205,
+    "major": "INDUSTRIAL AND ORGANIZATIONAL PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5206,
+    "major": "SOCIAL PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5299,
+    "major": "MISCELLANEOUS PSYCHOLOGY",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5403,
+    "major": "HUMAN SERVICES AND COMMUNITY ORGANIZATION",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 5404,
+    "major": "SOCIAL WORK",
+    "major_category": "Psychology & Social Work"
+  },
+  {
+    "FOD1P": 4007,
+    "major": "INTERDISCIPLINARY SOCIAL SCIENCES",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5500,
+    "major": "GENERAL SOCIAL SCIENCES",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5501,
+    "major": "ECONOMICS",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5503,
+    "major": "CRIMINOLOGY",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5504,
+    "major": "GEOGRAPHY",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5505,
+    "major": "INTERNATIONAL RELATIONS",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5506,
+    "major": "POLITICAL SCIENCE AND GOVERNMENT",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5507,
+    "major": "SOCIOLOGY",
+    "major_category": "Social Science"
+  },
+  {
+    "FOD1P": 5599,
+    "major": "MISCELLANEOUS SOCIAL SCIENCES",
+    "major_category": "Social Science"
+  }
+]

@@ -1,27 +1,26 @@
 const debug = require('debug')('game:team')
-import Game from './main';
-import db from '../utils/db';
-import Ratings from '../utils/ratings';
-import Utils from '../utils';
+import { Game } from './main';
+import { DB } from '../db';
+import { Ratings } from '../utils/ratings';
+import { Utils } from '../utils';
 
-class Team extends Game {
+export class Team extends Game {
   constructor(arg) {
-    super(arg);
-    this.teams = arg.teams;
+    super(arg)
+    this.teams = arg.teams
   }
 
   async answer() {
     try {
-      await super.answer(ans);
-
-      this.isOver() && this.end();
+      await super.answer(ans)
+      this.isOver() && this.end()
     } catch(err) {
       debug(err);
     }
   }
 
   async init() {
-    let op = db.teams.find({
+    let op = DB.get('teams').find({
       _id: {$in: this.teams},
     },
     {
@@ -37,6 +36,3 @@ class Team extends Game {
   async updateRatings() {
   }
 }
-
-
-export default Team;

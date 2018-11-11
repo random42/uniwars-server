@@ -1,14 +1,13 @@
-import db from '../utils/db';
+import { DB } from '../db';
 const debug = require('debug')('socket:init')
 import bcrypt from 'bcrypt';
-import crud from '../crud'
-let { server } = require('./index');
-require('./main');
-require('./chat');
-require('./game');
+import models from '../models'
+const { server } = require('./index');
+require('./main')
+require('./game')
 
 // authenticate sockets
-import auth from './auth'
+import { auth } from './auth'
 auth(server, {
   authenticate,
   postAuthenticate,
@@ -30,7 +29,7 @@ function postAuthenticate(socket, data) {
   let id = socket.id
   socket.authTime = Date.now()
   socket.on('disconnect', () => {
-    crud.user.addOnlineTime({user, time: Date.now() - socket.authTime})
+    models.user.addOnlineTime({user, time: Date.now() - socket.authTime})
     .catch(err => debug(err.message))
   })
   // server and main nsp map
@@ -56,7 +55,7 @@ async function authenticate(socket, data, callback) {
     let { _id, token } = data;
     if (server.connections.has(_id))
       return callback(new Error("User has connected yet"));
-    let user = await db.users.findOne(_id, ['username','private.access_token']);
+    let user = await DB.get('users').findOne(_id, ['username','private.access_token']);
     if (!user) return callback(new Error("User not found"));
     let right = await bcrypt.compare(token, user.private.access_token);
     if (right) {

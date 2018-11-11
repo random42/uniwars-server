@@ -2,6 +2,7 @@ node_modules
 .DS_Store
 public
 data
-lib
+build_babel
+build_flow
 docs
 secret

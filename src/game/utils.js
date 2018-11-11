@@ -1,34 +1,43 @@
-import db from '../utils/db';
-import monk from 'monk';
-const debug = require('debug')('game:utils')
-import crud from '../crud'
+// @flow
 
-const classes = {
-  'solo': require('./solo'),
-  'squad': require('./squad'),
-  'team': require('./team'),
-}
+import type { ID, GameType } from '../types'
+import index from './index'
+import monk from 'monk'
+import { DB } from '../db'
 
-export default const utils = {
-  /**
-   * Creates a game.
-   *
-   * @param {Object} game
-   * @param {string[]} game.side0 Users' _ids of first team
-   * @param {string[]} game.side1 Second team
-   * @param {string[]} game.teams _ids of teams (if it is a team game)
-   * @param {string} game.type Game type
-   * @return {Game} Game initialized with the right class
-   */
-  create({side0, side1, teams, type}) {
-    debug('creation', arguments[0]);
-    return new classes[type](arguments[0]).create();
-  },
-
-  // fetch game and initialize it with right class
-  async fetch(_id) {
-    let game = await crud.Game.fetchWithQuestions({game: _id})
-    if (!game) return Promise.reject("Game does not exist!")
-    return new classes[game.type](game)
+/**
+ * Creates and insert game in database.
+ *
+ * 'players.perf' field will be set after game start
+ * @return instance of game type class (Solo for type 'solo'...)
+ */
+export async function createGame(
+    side0 : ID[],
+    side1 : ID[],
+    type : GameType,
+    options? : {
+      teams?: ID[],
+    } = {}) : any {
+  let obj : Object = {
+    _id: monk.id().toString(),
+    created_at: Date.now(),
+    type
   }
+  obj.players = side0.concat(side1).map((id, index) => {
+    return {
+      _id: monk.id(id),
+      side: side0.indexOf(id) >= 0 ? 0 : 1,
+      index: 0,
+      answers: []
+    }
+  })
+  if (options.teams) {
+    obj.teams = options.teams.map(id => monk.id(id))
+  }
+  // makes first letter uppercase
+  const typeToClass = (text) => {
+    return text.slice(0,1).toUpperCase() + text.slice(1, text.length)
+  }
+  const doc = await DB.get('games').insert(obj)
+  return new index[typeToClass(type)](doc)
 }

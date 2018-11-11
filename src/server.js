@@ -6,8 +6,17 @@
 
 import "@babel/polyfill"
 
+import { User, Model } from './models'
+const obj =  {
+  _id: 'string',
+  username: 'asdas',
+  online_time: 123
+}
+const u = new User(obj)
+console.log(u)
+
 import app from './app'
-import db from './utils/db'
+import { DB } from './db'
 const debug = require('debug')('uniwars:server')
 import http from 'http'
 
@@ -29,19 +38,19 @@ const server = http.createServer(app);
  * Create server socket
  */
 
-import {server as io} from './socket'
+import {server as socket} from './socket'
 
 /**
  * Listen on provided port, on all network interfaces and connect to database
  */
 
-db.db.then(() => {
+DB.then(() => {
   console.log('Database connected');
   server.listen(port);
   console.log('Server listening on port',port)
   server.on('error', onError);
   server.on('listening', onListening);
-  io.attach(server, {
+  socket.attach(server, {
    pingInterval: 10000,
    pingTimeout: 5000,
    cookie: false
@@ -112,5 +121,3 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
-
-export default server

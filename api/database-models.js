@@ -1,63 +1,79 @@
 const user = {
-  "_id": {
-      "$oid": "5abbd98270534c2bf947416c"
-  },
+  "_id": "",
+  "type": "student", // see types folder
   "username": "random",
+  "gender": "M",
   "email": "roberto.sero@edu.unito.it",
   "first_name": "Roberto",
   "last_name": "Sero",
   "uni": {
-      "$oid": "5a3dac7dfaaa577114d0cfaf"
+    "_id": "",
+    "name": "University of Turin"
   },
-  "major": "GENERAL AGRICOLTURE",
+  "major": {
+    "_id": "",
+    "name": "Computer Science"
+  },
   "perf": {
     "rating": 1234,
     "rd": 100, // rating deviation
-    "vol": 0.06, // volatility
+    "vol": 0.06 // volatility
   },
   "stats": [{
     "category": "Engineering",
     "hit": 3425,
     "miss": 123
   }],
-  "picture": {
-    "small": "",
-    "medium": "",
-    "large": "",
-  },
   "private": {
+    "oauth": [
+      {
+        "id": 1234,
+        "name": "asd",
+        "provider": "google"
+      }
+    ],
     "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
-    "phone_number": '+393461625500',
-    "chats": ["_id"],
-    "last_questions": ["_id"], // last tot questions
-    "friend_requests": ["users_ids"],
-    "news": [
-      {
-        "type": "friend_request"
-        "user": "_id"
-      },{
-        "type": "team_invitation",
-        "team": "_id",
-        "user": "_id"
-      },{
-        "type": "solo_challenge",
-        "user": "_id"
-      }
-    ]
+    "phone_number": '+393461235933',
+    "last_questions": ["_id"]
   },
-  "teams": ["_ids"],
-  "games": {
-    "solo": {
-      "wins": 123,
-      "losses": 123,
-      "draws": 44
-    },
-    "squad": {},
-    "team": {}
-  },
+  "news": [
+    {
+      "_id": "_id",
+      "type": "friend_request",
+      "user": "_id",
+      "created_at": 12345
+    },{
+      "_id": "_id",
+      "type": "team_invitation",
+      "team": "_id",
+      "created_at": 12345
+    },{
+      "_id": "_id",
+      "type": "solo_challenge",
+      "user": "_id"
+      "created_at": 12345
+    }
+  ],
+  "teams": [{
+    "_id": ""
+  }],
+  "games": [
+    {
+      "type": "solo",
+      "wins": 1234,
+      "losses": 1234,
+      "draws": 43
+    }
+  ],
   "online_time": 796,
-  "friends": ["_ids"]
+  "friends": [
+    {
+      "_id": "", // friend _id
+      "start_date": 1234567 // time of friendship creation
+      // eventual infos of friend (like authorization to see real name)
+    }
+  ]
 }
 
 const team = {
@@ -65,11 +81,6 @@ const team = {
       "$oid": "5abbd98270534c2bf947416c"
   },
   "name": "MyTeam",
-  "picture": {
-    "small": "",
-    "medium": "",
-    "large": ""
-  },
   // TODO
   "users": [
     {
@@ -83,13 +94,19 @@ const team = {
     "rd": 100, // rating deviation
     "vol": 0.06, // volatility
   },
-  "challenges": ["team_id"],
-  "games": {
-    "wins": 12,
-    "losses": 19,
-    "draws": 12,
-  },
-  "chat": "_id",
+  "news": [{
+    "type": "team_challenge",
+    "team": "_id"
+  }],
+  "games": [
+    {
+      "type": "team",
+      "wins": 12,
+      "losses": 19,
+      "draws": 12,
+    }
+  ],
+  "chat": "_id"
 }
 
 const uni = {
@@ -136,23 +153,23 @@ const game = {
   },
   "created_at": Date.now(),
   "ended_at": Date.now(),
-  "type": "solo", // solo, squad
+  "type": "solo", // solo, squad, team
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1
-    "index": 0, // index of current question
+    "question_index": 0, // index of current question
     // TODO
     "answers": [{
       "question": "_id",
       "answer": ""
     }],
-    "perf": {} // to have an improvement function of users
+    "perf": {} // user perf, useful to have an improvement function of users
   }],
   // if it is a team game
   "teams": ["_ids"],
   "questions": ["_ids"],
   "result": 1, // 1 if side0 wins, 0.5 draw, 0 side1 wins
-  "status": "play", // end
+  "status": "play", // create, play, end
 }
 
 const question = {
@@ -162,7 +179,6 @@ const question = {
   "source": "https://opentdb.com/",
   "source_category": "Science: Computers",
   "category": "Computers & Mathematics",
-  "majors": [],
   "question": "The Harvard architecture for micro-controllers added which additional bus?",
   "correct_answer": "Instruction",
   "incorrect_answers": [
@@ -170,7 +186,6 @@ const question = {
     "Data",
     "Control"
   ],
-  "difficulty": "hard",
   "language": "en",
   "hit": 123,
   "miss": 333

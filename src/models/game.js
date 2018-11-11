@@ -1,25 +1,20 @@
-// @flow
-const debug = require('debug')('crud:game')
-import db from '../utils/db'
-import _ from 'lodash/core'
+
+const debug = require('debug')('models:game')
+import { DB } from '../db'
+import { _ } from 'lodash/core'
 import monk from 'monk'
+import type { ID, GameType } from '../types'
 const { PROJECTIONS } = require('../../api/api')
-import utils from '../utils'
+import { utils } from '../utils'
 const NO_PROJ = {projection: {_id: 1}}
 
-
-/**
- *
- */
-class Game {
+export class Game {
 
   /**
-   * async fetchWithQuestions - description
    *
-   * @param  {Object} game description
-   * @return {Object} Game with questions objects
+   *
    */
-  static async fetchWithQuestions(game) {
+  static async fetchWithQuestions(game : ID) : Promise<Game> {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -33,7 +28,7 @@ class Game {
         }
       }
     ]
-    let doc = await db.games.aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1)
       return Promise.reject("No game found.")
     doc = doc[0]
@@ -48,7 +43,7 @@ class Game {
     return new Game(doc)
   }
 
-  static async getQuestions({game}) {
+  static async getQuestions(game : string) : Array<Question> {
     const pipeline = [
       {
         $match: {_id: monk.id(game)}
@@ -67,12 +62,12 @@ class Game {
         }
       }
     ]
-    let doc = await db.games.aggregate(pipeline)
-    if (doc.length !== 1) return
+    let doc = await DB.get('games').aggregate(pipeline)
+    if (doc.length !== 1)
     return doc[0].questions
   }
 
-  static async getQuestion({game, index}) {
+  static async getQuestion(game : string, index : number) {
     const pipeline = [
       {
         $match: { _id: monk.id(game) }
@@ -86,7 +81,7 @@ class Game {
         }
       }
     ]
-    let doc = await db.games.aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1) return
     doc = doc[0]
     if (index >= doc.questions.length) return
@@ -97,7 +92,7 @@ class Game {
     game with users' usernames and picture,
     as well as teams' names, rating and picture
   */
-  static async joinUsersAndTeams({game}) {
+  static async joinUsersAndTeams(game : string) {
     const pipeline = [
       {
         $match: { _id: monk.id(game) }
@@ -119,7 +114,7 @@ class Game {
         }
       }
     ]
-    let doc = await db.games.aggregate(pipeline)
+    let doc = await DB.get('games').aggregate(pipeline)
     if (doc.length !== 1) return undefined
     doc = doc[0]
     _.forEach(doc.users_docs, (item, index, arr) => {
@@ -145,8 +140,8 @@ class Game {
   /**
     pushes the answer and update the question index of the player
   */
-  static async setAnswer({game, user, question, answer}) {
-    return db.games.findOneAndUpdate({
+  static async setAnswer(game : string, user : string, question : string, answer : string) {
+    return DB.get('games').findOneAndUpdate({
       _id: game,
       // to specify the user to update
       players:  { $elemMatch: {_id: monk.id(user)} }
@@ -171,10 +166,10 @@ class Game {
     removes 'index' field from players
     returns updated game
   */
-  static async endGame({game}) {
+  static async endGame(game : string) {
     let fetch = await Promise.all([
-      db.games.findOne(game),
-      this.getQuestions({game})
+      DB.get('games').findOne(game),
+      Game.getQuestions(game)
     ])
     game = fetch[0]
     let questions = fetch[1]
@@ -193,8 +188,6 @@ class Game {
     if (side0 > side1) game.result = 1
     else if (side0 === side1) game.result = 0.5
     else game.result = 0
-    return db.games.findOneAndUpdate(game._id, game)
+    return DB.get('games').findOneAndUpdate(game._id, game)
   }
 }
-
-export default Game

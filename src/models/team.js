@@ -1,13 +1,15 @@
-const debug = require('debug')('crud:team')
-import db from '../utils/db'
+const debug = require('debug')('models:team')
+import { DB } from '../db'
+import { Model } from './model'
+import type { ID } from '../types'
 import monk from 'monk'
-import _ from 'lodash/core'
+import { _ } from 'lodash/core'
 const { PROJECTIONS } = require('../../api/api');
-import utils from '../utils'
+import { utils } from '../utils'
 
-const { DEFAULT_PERF } = require('../utils/constants')
+const { DEFAULT_PERF } = require('../constants')
 
-class Team {
+export class Team extends Model {
 
   static async fetchWithUsers(query) {
     let pipeline = [
@@ -36,7 +38,7 @@ class Team {
         }
       },
     ]
-    let docs = await db.teams.aggregate(pipeline)
+    let docs = await DB.get('teams').aggregate(pipeline)
     if (docs.length !== 1) return
     else return docs[0]
   }
@@ -51,7 +53,7 @@ class Team {
     users.push({_id: monk.id(founder), admin: true})
     const team_id = monk.id()
     const chat_id = monk.id()
-    let team = db.teams.insert({
+    let team = DB.get('teams').insert({
       _id: team_id,
       name,
       users,
@@ -65,7 +67,7 @@ class Team {
       chat: chat_id,
       challenges: []
     })
-    let chat = db.chats.insert({
+    let chat = DB.chats.insert({
       _id: chat_id,
       collection: "teams",
       type: "group",
@@ -73,7 +75,7 @@ class Team {
       messages: [],
       participants: users
     })
-    let updateUsers = db.users.update({
+    let updateUsers = DB.get('users').update({
       _id: { $in: users.map(u => u._id) }
     },{
       $addToSet: {
@@ -85,11 +87,11 @@ class Team {
   }
 
   static async delete({team}) {
-    let doc = await db.teams.findOne(team)
+    let doc = await DB.get('teams').findOne(team)
     if (!doc) return
     return Promise.all([
       // remove team from users
-      db.users.update(
+      DB.get('users').update(
         { _id: {
             $in: doc.users.map(u => u._id)
         }},
@@ -100,13 +102,13 @@ class Team {
         }, { multi: true }
       ),
       // elimina il team
-      db.teams.findOneAndDelete(team)
+      DB.get('teams').findOneAndDelete(team)
     ])
   }
 
   static async addMember({team, user}) {
     let updates = [
-      db.teams.findOneAndUpdate(team,{
+      DB.get('teams').findOneAndUpdate(team,{
         $push: {
           users: {
             _id: monk.id(user),
@@ -114,7 +116,7 @@ class Team {
           }
         }
       }),
-      db.users.findOneAndUpdate(user,{
+      DB.get('users').findOneAndUpdate(user,{
         $addToSet: {
           teams: monk.id(team)
         }
@@ -125,14 +127,14 @@ class Team {
 
   static async removeMember({team, user}) {
     let updates = [
-      db.teams.findOneAndUpdate(team,{
+      DB.get('teams').findOneAndUpdate(team,{
         $pull: {
           users: {
             _id: monk.id(user)
           }
         }
       }),
-      db.users.findOneAndUpdate(user,{
+      DB.get('users').findOneAndUpdate(user,{
         $pull: {
           teams: monk.id(team)
         }
@@ -142,7 +144,7 @@ class Team {
   }
 
   static async makeAdmin({team, user}) {
-    return db.teams.findOneAndUpdate({
+    return DB.get('teams').findOneAndUpdate({
       _id: team,
       users: { _id: user }
     },{
@@ -166,8 +168,6 @@ class Team {
         'rank': 1,
       }
     }])
-    return db.teams.aggregate(pipeline)
+    return DB.get('teams').aggregate(pipeline)
   }
 }
-
-export default Team

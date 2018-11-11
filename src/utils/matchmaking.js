@@ -1,12 +1,11 @@
-import db from './db';
 import monk from 'monk';
-import gameUtils from '../game/utils';
 const debug = require('debug')('mm')
+import { Game } from '../game'
 
 // 1v1
 class Solo {
   constructor() {
-    this.queue = [];
+    this.queue = []
   }
 
   push(users) {
@@ -33,7 +32,7 @@ class Solo {
     const side0 = [players[0]]
     const side1 = [players[1]]
     debug('Matching',players);
-    gameUtils.create({side0,side1,type: 'solo'});
+    Game.create(side0, side1, 'solo');
   }
 }
 
@@ -54,7 +53,7 @@ class Squad {
       length = this.queue;
     }
     // match instantly
-    if (length === 10) this.match();
+    if (length === 10) this.match()
   }
 
   pull(user) {
@@ -66,12 +65,12 @@ class Squad {
     const side0 = players.slice(0,5);
     const side1 = players.slice(5,10);
     debug('Matching',side0,side1);
-    gameUtils.create({side0,side1,type: 'squad'})
+    Game.create(side0, side1, 'squad')
   }
 }
 
 
-export default {
+export const mm = {
   "solo": new Solo(),
   "squad": new Squad(),
 }

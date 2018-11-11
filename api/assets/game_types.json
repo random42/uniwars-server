@@ -1,0 +1,14 @@
+[
+  {
+    "name": "solo",
+    "team_size": 1
+  },
+  {
+    "name": "squad",
+    "team_size": 5
+  },
+  {
+    "name": "team",
+    "team_size": 5
+  }
+]
