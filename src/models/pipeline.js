@@ -17,8 +17,8 @@ const RANK = [
     }
   },
   {
-    $project: {
-      'doc.rank': '$rank'
+    $addFields: {
+      'doc.rank': '$rank',
     }
   },
   {

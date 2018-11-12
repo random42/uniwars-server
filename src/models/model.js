@@ -2,6 +2,10 @@
 import monk from 'monk'
 import type { ID } from '../types'
 
+/**
+ * Public members (properties) of subclasses are computed properties.
+ * Default properties are in api/database-models.js
+ */
 export class Model {
 
   _id: ID

@@ -6,9 +6,6 @@
 // // two random users
 // let [ A, B ] = DATA.USERS
 //
-// afterAll(async () => {
-//   await DB.close()
-// })
 //
 // describe('local', () => {
 //   test('constructor', () => {

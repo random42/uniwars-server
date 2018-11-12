@@ -4,10 +4,10 @@ const debug = require('debug')('models:user')
 import _ from 'lodash/core'
 import { Model } from './model'
 import * as PL from './pipeline'
-import type { ID, Category, GameType, Collection, UserType } from '../types'
+import type { ID, UserNewsType, Category, GameType, Collection, UserType } from '../types'
 import type Team from './team'
 import type Uni from './uni'
-import { DB } from '../db'
+import { DB, dbOptions } from '../db'
 import monk from 'monk'
 const CATEGORIES = require('../../assets/question_categories.json')
 const GAME_TYPES = require('../../assets/game_types.json')
@@ -63,70 +63,18 @@ const LOOKUP = {
 
 
 
-/**
- * These are computed and database properties that this class can have
- * after fetching.
- */
 export class User extends Model {
-  _id: ID;
-  type: UserType
   /**
    * Rank based on rating. Starts from 0.
    */
   rank: number
-  username: string
-  email: string;
-  first_name: string
-  last_name: string
-  uni: {
-    _id: ID,
-    name: string
-  }
-  major: {
-    _id: ID,
-    name: string
-  }
-  perf: {
-    rating: number,
-    rd: number,
-    vol: number
-  }
-  stats: Array<{
-    category: Category,
-    hit: number,
-    miss: number
-  }>
-  /**
-   * Computed
-   */
-  teams: Array<{
-    _id: ID
-  }>
-  games: Array<{
-    type: GameType,
-    wins: number,
-    draws: number,
-    losses: number,
-  }>
-  /**
-   *  Milliseconds spent online (connected socket) since registered.
-   */
-  online_time: number
-  friends: Array<{
-    _id: ID,
-    start_date: number
-  }>
-  /**
-   * see database models
-   */
-  private: Object
   online: boolean
 
   constructor(arg : any) {
     super(arg)
   }
   static REGEX = {
-    USERNAME: /^([a-z]|[A-Z])([a-z]|[A-Z]|_|\d){3,19}$/,
+    USERNAME: /^([a-z])([a-z]|_|\d){3,19}$/i,
     // space separated words
     WORDS : /^[a-z]+(\s+[a-z]+)*$/i,
     EMAIL: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
@@ -152,15 +100,11 @@ export class User extends Model {
       type,
       username,
       perf: User.DEFAULT_PERF,
-      stats: CATEGORIES.map(c => {
-        return { category: c.name, hit: 0, miss: 0 }
-      }),
+      stats: {},
       private: {},
       news: [],
       teams: [],
-      games: GAME_TYPES.map(g => {
-        return { type: g.name, wins: 0, draws: 0, losses: 0 }
-      }),
+      games: {},
       online_time: 0,
       friends: []
     }
@@ -184,11 +128,9 @@ export class User extends Model {
     rank : boolean = false
     ) : Promise<User[]> {
     // pipeline
-    let append = [
-      {
-        $match: match
-      }
-    ]
+    let append = []
+    if (match)
+      append.push({$match: match})
     for (let field of lookup) {
       // lookup external documents
       append.push({
@@ -246,15 +188,7 @@ export class User extends Model {
         $match: { _id : user }
       },
       {
-        $unwind: 'friends'
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'friends._id',
-          foreignField: '_id',
-          as: 'docs',
-        }
+        $unwind: "$friends"
       },
       {
         $skip: from
@@ -263,19 +197,38 @@ export class User extends Model {
         $limit: offset
       },
       {
-        $replaceRoot: {
-          newRoot: {
-            $mergeObject: [
-              "$friends",
-              "$docs"
-            ]
-          }
+        $lookup: {
+          from: 'users',
+          let: {
+            id: "$friends._id",
+            date: "$friends.start_date"
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", "$$id"]
+                }
+              }
+            },
+            {
+              $project: {
+                ...PROJ.SMALL,
+                friendship: {
+                  start_date: "$$date",
+                }
+              }
+            }
+          ],
+          as: 'docs',
         }
       },
       {
-        $project: {
-          ...PROJ.SMALL,
-          'start_date': 1
+        $unwind: "$docs"
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$docs'
         }
       }
     ]
@@ -284,15 +237,16 @@ export class User extends Model {
   }
 
   /**
-   * Make friend request.
+   * Make friend request. Return news object
    */
-  static async friendRequest(from : ID, to : ID) {
-    return DB.get('users').findOneAndUpdate({
+  static async friendRequest(from : ID, to : ID) : Object {
+    const news = User.makeNewsObject('friend_request', {user: from})
+    await DB.get('users').findOneAndUpdate({
       // if there's no friend request pending
         _id: to,
         news: {
-          $elemMatch: {
-            $not: {
+          $not: {
+            $elemMatch: {
               type: 'friend_request',
               user: from
             }
@@ -302,35 +256,41 @@ export class User extends Model {
       // update
       {
         $push: {
-          'news': {
-            _id: monk.id(),
-            type: 'friend_request',
-            user: from
-          }
+          'news': news
         }
       }
     )
+    return news
+  }
+
+  static makeNewsObject(type : UserNewsType, otherFields: Object = {}) : Object {
+    return {
+      _id: monk.id(),
+      type,
+      created_at: Date.now(),
+      ...otherFields
+    }
   }
 
   static async respondNews(user: ID, news : ID, response : boolean) {
     // pulling news
-    const doc = await DB.findOneAndUpdate(user, {
+    const doc = await DB.get('users').findOneAndUpdate(user, {
       $pull: {
         'news': {
           _id: news
         }
       }
-    })
-    const newsObj = _.find(doc.news, { _id: news })
+    }, dbOptions(['RETURN_ORIGINAL']))
+    const newsObj = _.find(doc.news, (o) => o._id.equals(news))
     if (response)
-      User.handleNews(user, newsObj)
+      return User.handleNews(user, newsObj)
   }
 
   /**
    * @private
    * Handles positive response to news.
    */
-  static handleNews(user : ID, news : Object) {
+  static async handleNews(user : ID, news : Object) {
     switch(news.type) {
       case 'friend_request': {
         return User.createFriendship(user, news.user)
@@ -365,7 +325,7 @@ export class User extends Model {
   static async createFriendship(userA : ID, userB : ID) {
     const update = (userA, userB) => DB.get('users').findOneAndUpdate(userA, {
       $addToSet: {
-        'friends': { _id: userB, created_at: Date.now() }
+        'friends': { _id: userB, start_date: Date.now() }
       }
     })
     return Promise.all([update(userA,userB), update(userB, userA)])
@@ -401,15 +361,20 @@ export class User extends Model {
         $options: 'i'
       }
     })
-    return doc ? true : false
+    return doc ? false : true
   }
 
   static async areFriends(userA : ID, userB : ID) : Promise<boolean> {
-    const doc = await DB.findOne({
+    const doc = await DB.get('users').findOne({
       _id: userA,
-      friends: { _id: userB }
+      friends: {
+        $elemMatch: {
+          _id: userB
+        }
+      }
     })
     return doc ? true : false
   }
+
 
 }

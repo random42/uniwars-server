@@ -1,26 +1,19 @@
 // @flow
+import _ from 'lodash'
 
-const USERS = require('../../data/users.json')
-const secret = require('../../secret/db.json')
-const env = process.env.NODE_ENV
-const uri = secret[env].uri
-export const DB = require('monk')(uri)
+import * as utils from './utils'
+import * as OPTIONS from './options'
 
-if (env === 'TEST') {
-  DB.putSomeUsers = (num) => {
-    return DB.get('users').insert(USERS.slice(0, num))
-  }
-  DB.clearDatabase = () => {
-    return Promise.all([
-      DB.get('users').remove({}),
-      DB.get('teams').remove({}),
-      DB.get('games').remove({})
-    ])
-  }
-  DB.clearCollections = (...names) => {
-    return Promise.all(names.map((n) => DB.get(n).remove({})))
-  }
-  DB.getUsers = (from, to) => {
-    return USERS.slice(from, to)
-  }
+/**
+ * Takes some predefined options' strings and returns an options object
+ * to be passed to MongoDB crud functions.
+ *
+ * @param options Constants names (which can be found in options file)
+ * @param mergeWith Object with additional options to merge.
+ * @return MongoDB options object.
+ */
+export function dbOptions(options : string[], mergeWith: Object = {}) : Object {
+  const objects : Object[] = options.map(o => OPTIONS[o])
+  return _.merge({}, ...objects, mergeWith)
 }
+export { DB } from './db'

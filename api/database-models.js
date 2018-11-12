@@ -19,19 +19,20 @@ const user = {
     "rd": 100, // rating deviation
     "vol": 0.06 // volatility
   },
-  "stats": [{
-    "category": "Engineering",
-    "hit": 3425,
-    "miss": 123
-  }],
+  "stats": {
+    "SUBJECT": {
+      "hit": 3425,
+      "miss": 123
+    }
+  },
   "private": {
-    "oauth": [
-      {
+    "oauth": {
+      "PROVIDER": {
         "id": 1234,
         "name": "asd",
         "provider": "google"
       }
-    ],
+    },
     "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
     "phone_number": '+393461235933',
@@ -55,17 +56,13 @@ const user = {
       "created_at": 12345
     }
   ],
-  "teams": [{
-    "_id": ""
-  }],
-  "games": [
-    {
-      "type": "solo",
+  "games": {
+    "GAME_TYPE": {
       "wins": 1234,
       "losses": 1234,
       "draws": 43
     }
-  ],
+  },
   "online_time": 796,
   "friends": [
     {
@@ -85,10 +82,10 @@ const team = {
   "users": [
     {
       "_id": "",
+      "founder": false,
       "admin": true
     }
   ],
-  "founder": "_id",
   "perf": {
     "rating": 1234,
     "rd": 100, // rating deviation
@@ -98,14 +95,13 @@ const team = {
     "type": "team_challenge",
     "team": "_id"
   }],
-  "games": [
-    {
-      "type": "team",
-      "wins": 12,
-      "losses": 19,
-      "draws": 12,
+  "games": {
+    "GAME_TYPE": {
+      "wins": 1234,
+      "losses": 1234,
+      "draws": 43
     }
-  ],
+  },
   "chat": "_id"
 }
 
@@ -124,27 +120,6 @@ const uni = {
   ],
   "country": "Italy",
   "chat": "_id"
-}
-
-const chat = {
-  "_id": {
-      "$oid": "5abbd98270534c2bf947416c"
-  },
-  "collection": "unis", // teams, users
-  "type": "group",    // group, duo
-  "name": "bellaaa", // only for groups
-  "messages": [{
-    "_id": "34u893489374893",
-    "text": "Ciaoo",
-    "user": "_id", // taken from participants array
-    "created_at": 12309234892,
-  }],
-  "participants": [
-    {
-      "_id": "",
-      "admin": true
-    }
-  ],
 }
 
 const game = {
@@ -178,7 +153,7 @@ const question = {
   },
   "source": "https://opentdb.com/",
   "source_category": "Science: Computers",
-  "category": "Computers & Mathematics",
+  "subject": "Computers & Mathematics",
   "question": "The Harvard architecture for micro-controllers added which additional bus?",
   "correct_answer": "Instruction",
   "incorrect_answers": [
