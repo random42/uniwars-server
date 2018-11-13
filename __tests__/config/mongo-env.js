@@ -1,28 +1,23 @@
-const NodeEnvironment = require('jest-environment-node');
-
-const path = require('path');
-
-const fs = require('fs');
-
-const dbConfigPath = path.join(__dirname, 'dbConfig.json');
+const NodeEnvironment = require('jest-environment-node')
 
 class MongoEnvironment extends NodeEnvironment {
   constructor(config) {
-    super(config)
-  }
+   super(config)
+ }
 
-  async setup() {
-    await super.setup();
-  }
+ async setup() {
+   await super.setup()
+   console.log('setup')
+ }
 
-  async teardown() {
+ async teardown() {
+   console.log('teardown')
+   await super.teardown()
+ }
 
-    await super.teardown();
-  }
-
-  runScript(script) {
-    return super.runScript(script);
-  }
+ runScript(script) {
+   return super.runScript(script)
+ }
 }
 
 module.exports = MongoEnvironment

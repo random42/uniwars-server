@@ -7,10 +7,10 @@ export let server = require('socket.io')({
 })
 
 // authenticated sockets indexed by user_id
-server.connections = new Map();
+server.connections = new Map()
 
-export let main = server.of('/');
-main.connections = server.connections;
+export let main = server.of('/')
+main.connections = server.connections
 export let game = server.of('/game')
 game.connections = new Map()
 

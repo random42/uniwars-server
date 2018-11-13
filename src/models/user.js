@@ -12,56 +12,6 @@ import monk from 'monk'
 const CATEGORIES = require('../../assets/question_categories.json')
 const GAME_TYPES = require('../../assets/game_types.json')
 
-const SORT = {
-  'perf.rating': -1
-}
-
-
-
-/**
- * Main sets of fields to fetch from DB.
- */
-const PROJ = {
-  FULL : {
-    'username' : 1,
-    'first_name' : 1,
-    'last_name' : 1,
-    'uni': 1,
-    'major': 1,
-    'perf': 1,
-    'stats': 1,
-    'teams': 1,
-    'games': 1,
-    'online_time': 1,
-    'teams.name': 1,
-    'teams.perf': 1,
-    'rank': 1
-  },
-  SMALL : {
-    'username' : 1,
-    'rank': 1,
-    'uni' : 1,
-    'major' : 1,
-    'perf' : 1,
-  }
-}
-
-/**
- * Keys are documents' fields that contain _id or array of _ids
- * of documents from other collections
- */
-const LOOKUP = {
-  'teams' : {
-    lookup : {
-      from: 'teams',
-      localField: 'teams',
-      foreignField: '_id',
-      as: 'teams',
-    }
-  }
-}
-
-
 
 export class User extends Model {
   /**
@@ -70,9 +20,6 @@ export class User extends Model {
   rank: number
   online: boolean
 
-  constructor(arg : any) {
-    super(arg)
-  }
   static REGEX = {
     USERNAME: /^([a-z])([a-z]|_|\d){3,19}$/i,
     // space separated words
@@ -87,7 +34,65 @@ export class User extends Model {
     vol: 0.06
   }
 
-
+  static SORT = {
+    'perf.rating': -1
+  }
+  /**
+   * Main sets of fields to fetch from DB.
+   */
+  static PROJ = {
+    FULL : {
+      rank: true,
+      lookup: [
+        {
+          $lookup: {
+            from : "teams",
+            let: {
+              id: "$_id"
+            },
+            pipeline: [
+              // match teams user is in
+              {
+                $match: {
+                  $expr: {
+                    $eq : ["$users._id","$$id"]
+                  }
+                }
+              },
+            ],
+            as: "teams"
+          }
+        }
+      ],
+      sort: {
+        'perf.rating': -1
+      },
+      project: {
+        'username' : 1,
+        'first_name' : 1,
+        'last_name' : 1,
+        'uni': 1,
+        'major': 1,
+        'perf': 1,
+        'stats': 1,
+        'games': 1,
+        'online_time': 1,
+        'rank': 1,
+        'teams.name': 1,
+        'teams.perf': 1,
+      }
+    },
+    SMALL : {
+      rank: false,
+      project: {
+        'username' : 1,
+        'rank': 1,
+        'uni' : 1,
+        'major' : 1,
+        'perf' : 1,
+      }
+    }
+  }
   /**
    *  Creates a new user.
    */
@@ -116,31 +121,23 @@ export class User extends Model {
    * Fetch users with flexible options.
    *
    * @param match $match pipeline stage
-   * @param lookup Fields that contain Mongo Id to lookup
-   * from another collection. (uni/teams)
-   * @param project Type of projection
-   * @param rank Attach 'rank' field
+   * @param projection What data to fetch, one of User.PROJ keys
    */
   static async fetch(
     match : Object,
-    lookup : $Keys<(typeof LOOKUP)>[] = [],
-    project: $Keys<(typeof PROJ)> = 'SMALL',
-    rank : boolean = false
+    projection: $Keys<(typeof User.PROJ)> = 'SMALL',
     ) : Promise<User[]> {
+    const { rank, lookup, project, sort } = User.PROJ[projection]
     // pipeline
     let append = []
-    if (match)
-      append.push({$match: match})
-    for (let field of lookup) {
-      // lookup external documents
-      append.push({
-        $lookup: LOOKUP[field].lookup
-      })
+    append.push({$match: match})
+    if (lookup) {
+      append = append.concat(lookup)
     }
     append.push({
-      $project: PROJ[project]
+      $project: project
     })
-    const pipeline = rank ? PL.rank(SORT, [], append) : append
+    const pipeline = rank ? PL.rank(User.SORT, [], append) : append
     let docs = await DB.get('users').aggregate(pipeline)
     return docs.map(i => new User(i))
   }
@@ -156,7 +153,7 @@ export class User extends Model {
   static async top(
     from : number = 0,
     offset : number,
-    sort : Object = SORT
+    sort : Object = User.SORT
     ) : Promise<User[]> {
     // adding $skip and $limit stages after $sort
     let append = [
@@ -165,7 +162,7 @@ export class User extends Model {
       },{
         $limit: offset
       },{
-        $project: PROJ.SMALL
+        $project: User.PROJ.SMALL
       }
     ]
     let docs = await DB.get('users').aggregate(PL.rank(sort, [], append))
@@ -213,7 +210,7 @@ export class User extends Model {
             },
             {
               $project: {
-                ...PROJ.SMALL,
+                ...User.PROJ.SMALL,
                 friendship: {
                   start_date: "$$date",
                 }

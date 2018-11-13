@@ -34,7 +34,7 @@ const RANK = [
  * @return Pipeline array
  */
 export function rank(
-  sort : Object = { 'perf.rating': -1 },
+  sort : Object,
   prepend? : Object[] = [],
   append? : Object[] = []) : Object[] {
   let pl = RANK

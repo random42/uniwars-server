@@ -12,7 +12,7 @@
 //   })
 // })
 //
-// describe('db', () => {
+// describe('crud', () => {
 //
 //   beforeEach(async () => {
 //     await DB.clearCollections('users')

@@ -1,7 +1,10 @@
+// @flow
+
 const debug = require('debug')('models:team')
 import { DB } from '../db'
 import { Model } from './model'
 import type { ID } from '../types'
+import * as PL from './pipeline'
 import monk from 'monk'
 import { _ } from 'lodash/core'
 const { PROJECTIONS } = require('../../api/api');
@@ -9,34 +12,30 @@ import { utils } from '../utils'
 
 const { DEFAULT_PERF } = require('../constants')
 
+
 export class Team extends Model {
 
-  static async fetchWithUsers(query) {
+  rank: number
+
+  static PROJ = {
+    FULL : {
+      name: 1,
+      users: 1,
+      perf: 1,
+      games: 1
+    },
+    SMALL : {
+      name: 1,
+      users: 1,
+      perf: 1
+    }
+  }
+
+  static async fetch() {
     let pipeline = [
       {
         $match: query,
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'users',
-          foreignField: '_id',
-          as: 'users'
-        }
-      },
-      {
-        $project: {
-          'name': 1,
-          'picture': 1,
-          'perf': 1,
-          'games': 1,
-          'founder': 1,
-          'users._id': 1,
-          'users.username': 1,
-          'users.picture': 1,
-          'users.perf': 1,
-        }
-      },
+      }
     ]
     let docs = await DB.get('teams').aggregate(pipeline)
     if (docs.length !== 1) return

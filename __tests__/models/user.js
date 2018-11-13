@@ -1,3 +1,5 @@
+// @test-environment env
+
 import { User, Uni, Major, Pipeline, Model } from '../../build_flow/models'
 import { DB } from '../../build_flow/db'
 import _ from 'lodash'
@@ -11,12 +13,11 @@ let [ A, B ] = DATA.USERS
 describe('local', () => {
   test('constructor', async () => {
     const m = new User(A)
-    expect(_.isMatch(m, A)).toBeTruthy()
-    const id = A._id
+    expect(m).toEqual(A)
   })
 })
 
-describe('db', () => {
+describe('crud', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users')
