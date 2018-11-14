@@ -4,7 +4,7 @@ import { User, Uni, Major, Pipeline, Model } from '../../build_flow/models'
 import { DB } from '../../build_flow/db'
 import _ from 'lodash'
 import monk from 'monk'
-import { DATA } from '../config'
+import DATA from '../../data'
 
 const DEFAULT_USERS = 10
 // two random users
@@ -17,7 +17,7 @@ describe('local', () => {
   })
 })
 
-describe('crud', () => {
+describe.skip('crud', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users')
@@ -56,7 +56,7 @@ describe('crud', () => {
   })
 
   test('fetch', async () => {
-    const docs = await User.fetch({}, [], 'SMALL', true)
+    let docs = await User.fetch({}, 'FULL')
     expect(docs.length).toBe(DEFAULT_USERS)
     _.forEach(docs, (item, index, arr) => {
       // check rating sort

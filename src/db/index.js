@@ -1,6 +1,6 @@
 // @flow
-import _ from 'lodash'
 
+import _ from 'lodash'
 import * as utils from './utils'
 import * as OPTIONS from './options'
 
@@ -8,7 +8,7 @@ import * as OPTIONS from './options'
  * Takes some predefined options' strings and returns an options object
  * to be passed to MongoDB crud functions.
  *
- * @param options Constants names (which can be found in options file)
+ * @param options Constants names (which can be found in db/options file)
  * @param mergeWith Object with additional options to merge.
  * @return MongoDB options object.
  */

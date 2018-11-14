@@ -74,9 +74,7 @@ const user = {
 }
 
 const team = {
-  "_id": {
-      "$oid": "5abbd98270534c2bf947416c"
-  },
+  "_id": "5abbd98270534c2bf947416c",
   "name": "MyTeam",
   // TODO
   "users": [

@@ -3,12 +3,10 @@
 const debug = require('debug')('models:team')
 import { DB } from '../db'
 import { Model } from './model'
-import type { ID } from '../types'
+import type { ID, Collection } from '../types'
 import * as PL from './pipeline'
 import monk from 'monk'
 import { _ } from 'lodash/core'
-const { PROJECTIONS } = require('../../api/api');
-import { utils } from '../utils'
 
 const { DEFAULT_PERF } = require('../constants')
 
@@ -17,17 +15,44 @@ export class Team extends Model {
 
   rank: number
 
-  static PROJ = {
+  static COLLECTION : Collection = "teams"
+
+  static FETCH = {
     FULL : {
-      name: 1,
-      users: 1,
-      perf: 1,
-      games: 1
+      rank: true,
+      lookup: [
+        {
+          $lookup: {
+            from: "users",
+            let: {
+              users: "$users",
+            },
+            pipeline: [
+              {
+                $match: {
+                  _id: {
+                    $in: "$$users._id"
+                  }
+                }
+              }
+            ],
+            as: "users_docs"
+          }
+        }
+      ],
+      project: {
+        name: 1,
+        users: 1,
+        perf: 1,
+        games: 1
+      }
     },
     SMALL : {
-      name: 1,
-      users: 1,
-      perf: 1
+      project: {
+        name: 1,
+        users: 1,
+        perf: 1
+      }
     }
   }
 
