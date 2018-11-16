@@ -25,6 +25,7 @@ const user = {
       "miss": 123
     }
   },
+  "password": ".mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
   "private": {
     "oauth": {
       "PROVIDER": {
@@ -33,7 +34,6 @@ const user = {
         "provider": "google"
       }
     },
-    "password": "$2a$12$DlPqzAkaq3r1PRAxHEDwI.mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
     "access_token": null,
     "phone_number": '+393461235933',
     "last_questions": ["_id"]

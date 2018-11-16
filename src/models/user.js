@@ -2,6 +2,7 @@
 
 const debug = require('debug')('models:user')
 import _ from 'lodash/core'
+import { crypto } from '../security'
 import { Model } from './model'
 import * as PL from './pipeline'
 import type { ID, UserNewsType, Category, GameType, Collection, UserType } from '../types'
@@ -94,6 +95,8 @@ export class User extends Model {
     vol: 0.06
   }
 
+  static PASSWORD_SALT : number = 10
+
 
   /**
    * See {@link Model.top}
@@ -113,24 +116,25 @@ export class User extends Model {
    *  Creates a new user.
    */
   static async create(
-    type: UserType,
-    username: string,
+    data : {
+      type: UserType,
+      username: string,
+      email? : string,
+      password? : string
+    }
     ) : Promise<User> {
-    const obj = {
+    let obj = {
       _id: monk.id(),
-      type,
-      username,
+      ...data,
       perf: User.DEFAULT_PERF,
       stats: {},
-      private: {},
       news: [],
-      teams: [],
       games: {},
       online_time: 0,
       friends: []
     }
-    await DB.get('users').insert(obj)
-    return new User(obj)
+    const doc = await DB.get('users').insert(obj)
+    return new User(doc)
   }
 
   /**
@@ -140,8 +144,7 @@ export class User extends Model {
   static async getFriends(
     user: ID,
     from: number = 0,
-    offset: number,
-    sort: Object = { 'start_date': 1 }
+    offset: number
     ) : Promise<User[]> {
     const pl = [
       {
@@ -190,6 +193,11 @@ export class User extends Model {
         $replaceRoot: {
           newRoot: '$docs'
         }
+      },
+      {
+        $sort: {
+          'friendship.start_date' : 1
+        }
       }
     ]
     const docs = await DB.get('users').aggregate(pl)
@@ -202,13 +210,11 @@ export class User extends Model {
     const news = User.makeNewsObject('friend_request', {user: from})
     await DB.get('users').findOneAndUpdate({
       // if there's no friend request pending
-        _id: to,
-        news: {
-          $not: {
-            $elemMatch: {
-              type: 'friend_request',
-              user: from
-            }
+      _id: to,
+      news: {
+        $not: {
+            type: 'friend_request',
+            user: from
           }
         }
       },
@@ -217,7 +223,8 @@ export class User extends Model {
         $push: {
           'news': news
         }
-      }
+      },
+      dbOptions(['NO_PROJ'])
     )
     return news
   }

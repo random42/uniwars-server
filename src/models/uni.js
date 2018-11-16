@@ -1,4 +1,4 @@
-
+// @flow
 const debug = require('debug')('models:uni')
 import { Model } from './model'
 import { DB } from '../db'
@@ -52,14 +52,6 @@ const RANK_PIPELINE = [
 ]
 
 export class Uni extends Model {
-
-  _id: ID;
-  web_pages: string[];
-  name: string;
-  alpha_two_code: string;
-  domains: string[];
-  country: string;
-  chat: ID;
 
   async fetch(projection : Object) {
     projection = projection || {

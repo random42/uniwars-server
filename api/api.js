@@ -510,35 +510,5 @@ const SOCKET = {
   }
 }
 
-const PROJECTIONS = {
-  UNI: {
-    FULL: {
-      FIELDS: ['web_pages','name','country'],
-      COMPUTED: ['rank','users_count','rating']
-    }
-  },
-  TEAM: {
-    FULL: {
-      FIELDS: ['name','picture','users','perf'],
-      COMPUTED: ['users','rank']
-    },
-    SMALL: {
-      FIELDS: ['name','picture','perf']
-    }
-  },
-  CHAT: {
-    INFOS: {
-      FIELDS: ['-messages']
-    }
-  },
-  GAME: {
-
-  },
-  QUESTION: {
-    IN_GAME: {
-      FIELDS: ['-source','-source_category']
-    }
-  }
-}
 
 module.exports = {HTTP,SOCKET,PROJECTIONS}

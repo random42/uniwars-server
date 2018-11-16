@@ -8,7 +8,7 @@ import  bodyParser  from 'body-parser'
 import routes from './routes'
 import { DB } from './db'
 import passport from 'passport'
-import security from "./security"
+import security from './security'
 import  cors  from 'cors'
 require('./socket/init')
 
@@ -60,10 +60,10 @@ app.use((req, res, next) => {
 
 
 // routes
-app.use('/user',routes.user);
-app.use('/uni',routes.uni);
-app.use('/team', routes.team);
-app.use('/auth', routes.auth);
+app.use('/user', security.authorizeUserMiddleware, routes.user)
+app.use('/uni', security.authorizeUserMiddleware, routes.uni)
+app.use('/team', security.authorizeUserMiddleware, routes.team)
+app.use('/auth', routes.auth)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

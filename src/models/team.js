@@ -56,15 +56,8 @@ export class Team extends Model {
     }
   }
 
-  static async fetch() {
-    let pipeline = [
-      {
-        $match: query,
-      }
-    ]
-    let docs = await DB.get('teams').aggregate(pipeline)
-    if (docs.length !== 1) return
-    else return docs[0]
+  static async fetch(...args) {
+    return Model.fetch(...args, Team)
   }
 
   /*

@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "_id": {
+    "type": ["string", "object"],
+    "description": "MongoDB ObjectID",
+    "minLength": 24,
+    "maxLength": 24
+  },
+  "words": {
+    "$comment": "String of words separated by spaces",
+    "type": "string",
+    "pattern": "^[a-zA-Z]+(\\s+[a-zA-Z]+)*$"
+  },
+  "news": {
+    "type": "object",
+    "properties": {
+      "_id": {
+        "$ref": "#/definitions/_id"
+      },
+      "created_at": {
+        "type": "integer"
+      },
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "game_type": {
+    "enum": ["solo","squad","team"]
+  },
+  "performance": {
+    "type": "object",
+    "properties": {
+      "rating": {
+        "type": "number"
+      },
+      "rd": {
+        "type": "number"
+      },
+      "vol": {
+        "type": "number"
+      }
+    }
+  },
+  "game_result": {
+    "enum": [0, 0.5, 1]
+  },
+  "collection": {
+    "enum": ["users", "unis", "majors", "teams", "games", "questions"]
+  },
+  "subject": {
+    "enum": ["Mathematics", "Literature"]
+  },
+  "hash": {
+    "type": "string"
+  },
+  "game_stats": {
+    "type": "object",
+    "propertyNames": {
+      "$ref": "#/game_type"
+    },
+    "additionalProperties": {
+      "type": "object",
+      "properties": {
+        "wins": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "losses": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "draws": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "oauth_provider": {
+    "enum": ["google"]
+  }
+}

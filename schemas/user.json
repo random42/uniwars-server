@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "user",
+  "type": "object",
+  "definitions": {
+    "news": {
+      "allOf": [
+        { "$ref": "common.json#/news" },
+        {
+          "properties": {
+            "type": {
+              "enum": ["friend_request","solo_challenge","team_invitation"]
+            }
+          }
+        }
+      ]
+    },
+    "_id_name": {
+      "type": "object",
+      "properties": {
+        "_id": { "$ref": "common.json#/_id"},
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "properties": {
+    "_id": {
+      "$ref": "#/definitions/_id"
+    },
+    "type": {
+      "enum": ["generic", "teen", "student", "worker"]
+    },
+    "gender": {
+      "enum": ["male", "female"]
+    },
+    "username": {
+      "type": "string",
+      "pattern": "^([a-zA-Z])([a-zA-Z]|_|\\d){3,19}$"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "first_name": {
+      "$ref": "common.json#/words"
+    },
+    "middle_name": {
+      "$ref": "common.json#/words"
+    },
+    "last_name": {
+      "$ref": "common.json#/words"
+    },
+    "uni": {
+      "$ref": "#/definitions/_id_name"
+    },
+    "major": {
+      "$ref": "#/definitions/_id_name"
+    },
+    "perf": {
+      "$ref": "common.json#/performance"
+    },
+    "stats": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "common.json#/subject"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "hit": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "miss": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "password": {
+      "$ref": "common.json#/hash"
+    },
+    "games": {
+      "$ref": "common.json#/game_stats"
+    },
+    "online_time": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "friends": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "$ref": "common.json#/_id"
+          },
+          "start_date": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "news": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/news"
+      }
+    },
+    "private": {
+      "type": "object",
+      "properties": {
+        "oauth": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "common.json#/oauth_provider"
+          },
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "access_token": {
+          "oneOf": [
+            { "$ref": "common.json#/hash" },
+            { "type": "null" }
+          ]
+        },
+        "phone_number": {
+          "type": "string"
+        },
+        "last_questions": {
+          "type": "array",
+          "items": {
+            "$ref": "common.json#/_id"
+          }
+        }
+      }
+    }
+  }
+}
