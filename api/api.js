@@ -3,8 +3,16 @@ const HTTP = [
     method: 'get',
     url: '/user',
     query: {
-      _id: 'string',
-      project: '',
+      type: 'object',
+      properties: {
+        _id: {
+          type: 'string',
+          $ref: ''
+        },
+        project: {
+
+        }
+      }
     },
     response: {
       200: ["User"],
@@ -511,4 +519,4 @@ const SOCKET = {
 }
 
 
-module.exports = {HTTP,SOCKET,PROJECTIONS}
+module.exports = { HTTP, SOCKET }

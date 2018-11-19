@@ -4,6 +4,7 @@
   "type": "object",
   "definitions": {
     "news": {
+      "$id": "#news",
       "allOf": [
         { "$ref": "common.json#/news" },
         {
@@ -16,6 +17,7 @@
       ]
     },
     "_id_name": {
+      "$id": "#_id_name",
       "type": "object",
       "properties": {
         "_id": { "$ref": "common.json#/_id"},
@@ -53,10 +55,10 @@
       "$ref": "common.json#/words"
     },
     "uni": {
-      "$ref": "#/definitions/_id_name"
+      "$ref": "#_id_name"
     },
     "major": {
-      "$ref": "#/definitions/_id_name"
+      "$ref": "#_id_name"
     },
     "perf": {
       "$ref": "common.json#/performance"
@@ -107,7 +109,7 @@
     "news": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/news"
+        "$ref": "#news"
       }
     },
     "private": {

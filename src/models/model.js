@@ -61,16 +61,16 @@ export class Model {
 
   /**
    * Fetch custom sorted documents choosing index of first one and quantity.
-   * @param from Index (ranking) of first user. Starts from 0
-   * @param offset Number of documents to fetch
+   * @param skip Index (ranking) of first user. Starts from 0
+   * @param limit Number of documents to fetch
    * @param sort Type of sort, key of _class.SORT
    * @param projection Fields to fetch, key of _class.FETCH
    * @param _class Model class to fetch from
    * @return Documents with rank field.
    */
   static async top(
-    from : number,
-    offset : number,
+    skip : number,
+    limit : number,
     sort : string,
     projection : string,
     _class: any
@@ -80,9 +80,9 @@ export class Model {
     // adding $skip and $limit stages after $sort
     let append = [
       {
-        $skip: from
+        $skip: skip
       },{
-        $limit: offset
+        $limit: limit
       },
       ...lookup,
       {

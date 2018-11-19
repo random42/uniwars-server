@@ -1,129 +1,13 @@
 import express from 'express'
-const { HTTP, PROJECTIONS } = require('../../api/api')
-import { DB } from '../db'
-const debug = require('debug')('http:user')
-import { fs } from 'fs'
-import bcrypt from 'bcrypt'
-import sharp from 'sharp'
-import { socket } from '../socket'
-import path from 'path'
-const project_path = __dirname.slice(0,__dirname.indexOf(path.basename(__dirname)))
-import monk from 'monk'
-const baseURL = 'http://localhost:3000'
-const picSize = {
-  small: 100,
-  medium: 256,
-  large: 500
-}
-const {
-  DEFAULT_PERF,
-  PAGE_RESULTS,
-  USERNAME_LENGTH
-} = require('../constants')
-const rankSort = {
-  'games.solo': -1
-}
-import models from '../models'
-// see https://github.com/kelektiv/node.bcrypt.js
-const saltRounds = 12;
-
 export const router = express.Router()
+import { user as C } from '../controllers'
 
-router.get('/', async function(req, res, next) {
-  const { _id, project } = req.query
-  if (!_id || !project || HTTP.USER.GET_USER.params.project.indexOf(project) < 0)
-    return res.sendStatus(400)
-  let doc
-  switch (project) {
-    case 'full': {
-      doc = await models.user.getFull({user: _id})
-      break;
-    }
-    case 'small': {
-      doc = await models.user.getSmall({user: _id})
-    }
-  }
-  if (!doc)
-    return res.sendStatus(404)
-  doc.online = socket.server.connections.has(_id)
-  res.json(doc)
-})
+router.get('/', C.getUser)
 
-router.get('/search', async function(req, res, next) {
-  let { text, page } = req.query
-  if (!text || !page || isNaN(page) || text.length > USERNAME_LENGTH.MAX)
-    return res.sendStatus(400)
-  page = parseInt(page)
-  let regex = new RegExp(text);
-  let pipeline = [
-    {
-      $match: {
-        username: {
-          $regex: regex,
-          // case insensitive
-          $options: 'i',
-        }
-      }
-    },
-    // match text in username and full_name
-    {
-      $skip: page * PAGE_RESULTS
-    },
-    {
-      $limit: PAGE_RESULTS
-    },
-    {
-      $project: {
-        username: 1,
-        picture: 1,
-      }
-    }
-  ]
-  let docs = await DB.get('users').aggregate(pipeline)
-  res.json(docs)
-})
+router.get('/search', C.search)
 
 // TODO
 router.delete('/',async function(req,res,next) {
-  try {
-    let query = {_id: req.get('user')};
-    let body = req.body;
-    let doc = await DB.get('users').findOne(query,'private','picture');
-    // check password
-    let check_password = await bcrypt.compare(body.password,doc.private.password);
-    if (check_password) {
-      // delete profile picture
-      if (doc.picture && doc.picture.small.indexOf(baseURL) > 0) {
-        let pic_path = project_path + 'public/images/profile_pictures/';
-        let operations = []
-        for (let size in picSize) {
-          operations.push(
-            new Promise((res,rej) => {
-              fs.unlink(pic_path + size + '/' + query._id + '.png',(err) => {
-                if (err) {
-                  console.log(err)
-                  rej()
-                }
-                else res()
-              });
-            })
-          )
-        }
-        try {
-          await Promise.all(operations);
-        } catch (err) {
-          console.log(err);
-        }
-      }
-      let db_delete = await DB.get('users').findOneAndDelete(query);
-      res.sendStatus(200);
-    } else {
-      res.status(400).send('wrong password');
-    }
-  } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
-  }
 })
 
 router.get('/top', async function(req,res,next) {

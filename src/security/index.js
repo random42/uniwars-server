@@ -1,8 +1,5 @@
-export {
-  genAndStoreToken,
-  checkToken,
-  authorizeUserMiddleware } from './access'
 export { localLogin } from './auth'
 export * as crypto from './crypto'
+export { genToken, checkToken } from './access'
 
 export default module.exports

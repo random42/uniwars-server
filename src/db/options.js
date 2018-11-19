@@ -3,7 +3,7 @@ export const RETURN_ORIGINAL = {
 }
 
 export const NO_PROJ = {
-  projection: {
+  fields: {
     _id: 1
   }
 }

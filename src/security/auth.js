@@ -17,14 +17,16 @@ export async function localLogin(
   const doc = await DB.get('users').findOne({
     $or : [
       {
-        email: user
-      },{
         username: user
+      },{
+        email: user
       }
     ]
   })
-  if (!doc || !doc.password) return Promise.reject("Invalid user")
+  if (!doc || !doc.password)
+    return Promise.reject(new Error("Invalid user"))
   const right : boolean = await crypto.compare(password, doc.password)
-  if (!right) return Promise.reject("Invalid password")
+  if (!right)
+    return Promise.reject(new Error("Invalid password"))
   return new User(doc)
 }

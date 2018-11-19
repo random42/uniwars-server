@@ -1,6 +1,5 @@
 import { DB } from '../db';
 import monk from 'monk';
-import bcrypt from 'bcrypt';
 const {server} = require('./index');
 const debug = require('debug')('socket:game')
 import { Maps } from '../game';

@@ -7,6 +7,7 @@ import  cookieParser  from 'cookie-parser'
 import  bodyParser  from 'body-parser'
 import routes from './routes'
 import { DB } from './db'
+import { checkAuth } from './middlewares'
 import passport from 'passport'
 import security from './security'
 import  cors  from 'cors'
@@ -60,9 +61,9 @@ app.use((req, res, next) => {
 
 
 // routes
-app.use('/user', security.authorizeUserMiddleware, routes.user)
-app.use('/uni', security.authorizeUserMiddleware, routes.uni)
-app.use('/team', security.authorizeUserMiddleware, routes.team)
+app.use('/user', checkAuth, routes.user)
+app.use('/uni', checkAuth, routes.uni)
+app.use('/team', checkAuth, routes.team)
 app.use('/auth', routes.auth)
 
 // catch 404 and forward to error handler

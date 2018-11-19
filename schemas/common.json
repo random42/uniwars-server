@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schema": "http://json-schema.org/draft-07/schema#",
   "_id": {
     "type": ["string", "object"],
     "description": "MongoDB ObjectID",
@@ -12,10 +12,11 @@
     "pattern": "^[a-zA-Z]+(\\s+[a-zA-Z]+)*$"
   },
   "news": {
+    "$id": "#news",
     "type": "object",
     "properties": {
       "_id": {
-        "$ref": "#/definitions/_id"
+        "$ref": "#/_id"
       },
       "created_at": {
         "type": "integer"

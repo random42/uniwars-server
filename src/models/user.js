@@ -123,9 +123,13 @@ export class User extends Model {
       password? : string
     }
     ) : Promise<User> {
+    let form = {...data}
+    if (form.password) {
+      form.password = await crypto.hash(form.password, User.PASSWORD_SALT)
+    }
     let obj = {
       _id: monk.id(),
-      ...data,
+      ...form,
       perf: User.DEFAULT_PERF,
       stats: {},
       news: [],
@@ -201,7 +205,7 @@ export class User extends Model {
       }
     ]
     const docs = await DB.get('users').aggregate(pl)
-    return docs.map(obj => new User(obj))
+    return docs
   }
   /**
    * Make friend request. Return news object
@@ -342,5 +346,30 @@ export class User extends Model {
     return doc ? true : false
   }
 
-
+  static async search(text : string, skip: number, limit : number) : Promise<User[]> {
+    let regex = new RegExp(text)
+    let pipeline = [
+      {
+        $match: {
+          username: {
+            $regex: regex,
+            // case insensitive
+            $options: 'i',
+          }
+        }
+      },
+      // match text in username and full_name
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      },
+      {
+        $project: User.FETCH.SMALL.project
+      }
+    ]
+    const docs = await DB.get('users').aggregate(pipeline)
+    return docs
+  }
 }

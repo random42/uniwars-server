@@ -1,7 +1,6 @@
 import express from 'express';
 export const router = express.Router();
 import { DB } from '../db';
-import bcrypt from 'bcrypt';
 import monk from 'monk';
 
 router.put('/stuff', async (req,res,next) => {
