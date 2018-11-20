@@ -28,9 +28,7 @@
     }
   },
   "properties": {
-    "_id": {
-      "$ref": "#/definitions/_id"
-    },
+    "_id": {"$ref": "common.json#/_id"},
     "type": {
       "enum": ["generic", "teen", "student", "worker"]
     },

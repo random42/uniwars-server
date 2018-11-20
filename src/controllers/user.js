@@ -21,9 +21,49 @@ export async function getUser(req, res, next) {
 
 export async function search(req, res, next) {
   let { text, page } = req.query
-  if (!(User.REGEX.USERNAME.test(text)) || isNaN(page))
+  if (isNaN(page))
     return res.sendStatus(400)
   page = parseInt(page)
   const docs = await User.search(text, page * PAGE_RESULTS, PAGE_RESULTS)
   res.json(docs)
+}
+
+export async function deleteUser(req, res, next) {
+  res.sendStatus(200)
+}
+
+export async function top(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function getPicture(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function updatePicture(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function addFriend(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function respondNews(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function removeFriend(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function blockUser(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function unblockUser(req, res, next) {
+res.sendStatus(200)
+}
+
+export async function challengeUser(req, res, next) {
+
 }

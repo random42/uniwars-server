@@ -1,7 +1,7 @@
 {
-  "schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "_id": {
-    "type": ["string", "object"],
+    "type": "string",
     "description": "MongoDB ObjectID",
     "minLength": 24,
     "maxLength": 24
@@ -80,5 +80,13 @@
   },
   "oauth_provider": {
     "enum": ["google"]
+  },
+  "username": {
+    "type": "string",
+    "pattern": "^([a-zA-Z])([a-zA-Z]|_|\\d){3,19}$"
+  },
+  "password": {
+    "type": "string",
+    "pattern": "^([a-zA-Z0-9@*#]{8,15})$"
   }
 }

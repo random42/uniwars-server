@@ -7,7 +7,7 @@ import  cookieParser  from 'cookie-parser'
 import  bodyParser  from 'body-parser'
 import routes from './routes'
 import { DB } from './db'
-import { checkAuth } from './middlewares'
+import { checkAuth, checkSchema } from './middlewares'
 import passport from 'passport'
 import security from './security'
 import  cors  from 'cors'
@@ -34,18 +34,18 @@ app.use(bodyParser.raw({type: 'application/octet-stream'}));
 app.use(cookieParser())
 app.use(passport.initialize())
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(checkSchema)
 
 
-
-passport.serializeUser(function(user, done) {
-  debug('serialize', user)
-  done(null, user.id)
-});
-
-passport.deserializeUser(function(id, done) {
-  debug('deserialize', id)
-  done(null, id)
-});
+// passport.serializeUser(function(user, done) {
+//   debug('serialize', user)
+//   done(null, user.id)
+// });
+//
+// passport.deserializeUser(function(id, done) {
+//   debug('deserialize', id)
+//   done(null, id)
+// });
 
 // async handler
 app.use((req, res, next) => {

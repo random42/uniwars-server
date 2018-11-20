@@ -242,7 +242,7 @@ export class User extends Model {
     }
   }
 
-  static async respondNews(user: ID, news : ID, response : boolean) {
+  static async respondNews(user: ID, news : ID, response : string) {
     // pulling news
     const doc = await DB.get('users').findOneAndUpdate(user, {
       $pull: {
@@ -252,7 +252,7 @@ export class User extends Model {
       }
     }, dbOptions(['RETURN_ORIGINAL']))
     const newsObj = _.find(doc.news, (o) => o._id.equals(news))
-    if (response)
+    if (response === 'y')
       return User.handleNews(user, newsObj)
   }
 
