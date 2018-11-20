@@ -4,6 +4,7 @@ import  path  from 'path'
 import  favicon  from 'serve-favicon'
 import  logger  from 'morgan'
 import  cookieParser  from 'cookie-parser'
+import queryParser from 'express-query-int'
 import  bodyParser  from 'body-parser'
 import routes from './routes'
 import { DB } from './db'
@@ -34,6 +35,7 @@ app.use(bodyParser.raw({type: 'application/octet-stream'}));
 app.use(cookieParser())
 app.use(passport.initialize())
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(queryParser())
 app.use(checkSchema)
 
 

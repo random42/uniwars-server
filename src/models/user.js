@@ -252,7 +252,7 @@ export class User extends Model {
       }
     }, dbOptions(['RETURN_ORIGINAL']))
     const newsObj = _.find(doc.news, (o) => o._id.equals(news))
-    if (response === 'y')
+    if (newsObj && response === 'y')
       return User.handleNews(user, newsObj)
   }
 

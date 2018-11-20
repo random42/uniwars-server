@@ -26,6 +26,7 @@
     "cors": "^2.8.4",
     "debug": "~2.6.9",
     "express": "~4.15.5",
+    "express-query-int": "^3.0.0",
     "express-validator": "^5.3.0",
     "glicko2": "^0.8.4",
     "jsonwebtoken": "^8.4.0",

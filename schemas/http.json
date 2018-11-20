@@ -159,7 +159,9 @@
 			"url": "/user",
 			"body": {
 				"$schema": "http://json-schema.org/draft-07/schema#",
-				"password": {"$ref": "common.json#/password"}
+				"properties": {
+					"username": {"$ref": "common.json#/username"}
+				}
 			},
 			"response": {
 				"200": true,
@@ -168,7 +170,7 @@
 				}
 			},
 			"title": "Delete account",
-			"description": "Deletes profile picture from file system too."
+			"description": "Asks for username as a captcha."
 		},
 		{
 			"method": "put",
