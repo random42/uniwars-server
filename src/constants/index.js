@@ -1,8 +1,16 @@
 /*
   Timeouts are measured in milliseconds
 */
-export const MAX_QUESTIONS_RECORD = 300 // number of last questions that will not appear again to a user
-export const GAME_QUESTIONS = 5 // questions per game
+
+/**
+ * Number of last questions that will not appear again to a user
+ */
+export const MAX_QUESTIONS_RECORD = 300
+
+/**
+ * questions per game
+ */
+export const GAME_QUESTIONS = 5
 export const GAME_JOIN_TIMEOUT = 1000 // period of time in which all clients must join or refuse the created game
 export const GAME_START_TIMEOUT = 3000 // period of time between game start and first question submit
 export const GAME_ANSWER_TIMEOUT = 10000 // period of time to answer a question

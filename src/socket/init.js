@@ -1,6 +1,6 @@
 import { DB } from '../db';
 const debug = require('debug')('socket:init')
-import models from '../models'
+import {User} from '../models'
 const { server } = require('./index');
 require('./main')
 require('./game')
@@ -14,10 +14,19 @@ auth(server, {
 })
 
 for (let nsp in server.nsps) {
-  let n = server.nsps[nsp];
+  let n = server.nsps[nsp]
+  n.emitToUser = (user, event, ...message) => {
+    user = user.toString()
+    if (n.connections.has(user)) {
+      const socket = n.connections.get(user)
+      socket.emit(event, ...message)
+      return true
+    } else
+      return false
+  }
   n.on('disconnect', (socket) => {
     if (socket.auth) {
-      let user = socket.user_id
+      const user = socket.user_id
       n.connections.delete(user)
     }
   })
@@ -28,7 +37,7 @@ function postAuthenticate(socket, data) {
   let id = socket.id
   socket.authTime = Date.now()
   socket.on('disconnect', () => {
-    models.user.addOnlineTime({user, time: Date.now() - socket.authTime})
+    User.addOnlineTime({user, time: Date.now() - socket.authTime})
     .catch(err => debug(err.message))
   })
   // server and main nsp map
@@ -58,7 +67,7 @@ async function authenticate(socket, data, callback) {
     if (!user) return callback(new Error("User not found"));
     let right = true
     if (right) {
-      return callback(null);
+      return callback(null)
     }
     return callback(new Error("Wrong token"));
   } catch(err) {

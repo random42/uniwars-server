@@ -1,5 +1,3 @@
-// @flow
-import { ID } from '../types'
 import socketIO from 'socket.io'
 const debug = require('debug')('socket:index')
 
@@ -17,9 +15,8 @@ main.connections = server.connections
 export let game = server.of('/game')
 game.connections = new Map()
 
-export const isUserOnline = (user : ID) => {
+export function isOnline(user) {
   return server.connections.has(user.toString())
 }
-
 
 export default module.exports

@@ -141,6 +141,67 @@ export class User extends Model {
     return new User(doc)
   }
 
+  static async search(text : string, skip: number, limit : number) : Promise<User[]> {
+    let regex = new RegExp(text)
+    let pipeline = [
+      {
+        $match: {
+          username: {
+            $regex: regex,
+            // case insensitive
+            $options: 'i',
+          }
+        }
+      },
+      // match text in username and full_name
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      },
+      {
+        $project: User.FETCH.SMALL.project
+      }
+    ]
+    const docs = await DB.get('users').aggregate(pipeline)
+    return docs
+  }
+
+  static async block(user: ID, blocked: ID, scopes: Object) {
+    const update = await DB.get("users").findOneAndUpdate({
+      _id: user,
+      blocked_users: {
+        _id: blocked
+      }
+    },{
+      'blocked_users.$': {
+        _id: blocked,
+        ...scopes
+      }
+    })
+    if (!update) {
+      await DB.get("users").findOneAndUpdate(user, {
+        $push: {
+          "blocked_users": {
+            _id: blocked,
+            ...scopes
+          }
+        }
+      })
+    }
+  }
+
+  static async unblock(user: ID, blocked: ID) {
+    await DB.get('users').findOneAndUpdate(user, {
+      $pull: {
+        "blocked_users": {
+          _id: blocked
+        }
+      }
+    })
+  }
+
   /**
    * Get 'offset' friends of 'user' from index 'from' by default ordered
    * by friendship creation.
@@ -210,7 +271,7 @@ export class User extends Model {
   /**
    * Make friend request. Return news object
    */
-  static async friendRequest(from : ID, to : ID) : Object {
+  static async friendRequest(from : ID, to : ID) : Promise<Object> {
     const news = User.makeNewsObject('friend_request', {user: from})
     await DB.get('users').findOneAndUpdate({
       // if there's no friend request pending
@@ -233,6 +294,26 @@ export class User extends Model {
     return news
   }
 
+  static async challenge(from: ID, to: ID) : Promise<Object> {
+    const news = User.makeNewsObject("solo_challenge", {user: from})
+    const update = await DB.get('users').findOneAndUpdate({
+      _id: to,
+      news: {
+        $elemMatch: {
+          $not: {
+            type: "solo_challenge",
+            user: from
+          }
+        }
+      }
+    }, {
+      $push: {
+        news: news
+      }
+    })
+    return news
+  }
+
   static makeNewsObject(type : UserNewsType, otherFields: Object = {}) : Object {
     return {
       _id: monk.id(),
@@ -242,7 +323,7 @@ export class User extends Model {
     }
   }
 
-  static async respondNews(user: ID, news : ID, response : string) {
+  static async pullNews(user: ID, news : ID, response : string) : Promise<Object> {
     // pulling news
     const doc = await DB.get('users').findOneAndUpdate(user, {
       $pull: {
@@ -250,28 +331,9 @@ export class User extends Model {
           _id: news
         }
       }
-    }, dbOptions(['RETURN_ORIGINAL']))
+    }, dbOptions(['RETURN_ORIGINAL'], {fields: {news: 1}}))
     const newsObj = _.find(doc.news, (o) => o._id.equals(news))
-    if (newsObj && response === 'y')
-      return User.handleNews(user, newsObj)
-  }
-
-  /**
-   * @private
-   * Handles positive response to news.
-   */
-  static async handleNews(user : ID, news : Object) {
-    switch(news.type) {
-      case 'friend_request': {
-        return User.createFriendship(user, news.user)
-      }
-      case "solo_challenge": {
-        // TODO
-      }
-      case "team_invitation": {
-        // TODO
-      }
-    }
+    return newsObj
   }
 
   /**
@@ -294,7 +356,7 @@ export class User extends Model {
 
   static async createFriendship(userA : ID, userB : ID) {
     const update = (userA, userB) => DB.get('users').findOneAndUpdate(userA, {
-      $addToSet: {
+      $push: {
         'friends': { _id: userB, start_date: Date.now() }
       }
     })
@@ -346,30 +408,14 @@ export class User extends Model {
     return doc ? true : false
   }
 
-  static async search(text : string, skip: number, limit : number) : Promise<User[]> {
-    let regex = new RegExp(text)
-    let pipeline = [
-      {
-        $match: {
-          username: {
-            $regex: regex,
-            // case insensitive
-            $options: 'i',
-          }
-        }
-      },
-      // match text in username and full_name
-      {
-        $skip: skip
-      },
-      {
-        $limit: limit
-      },
-      {
-        $project: User.FETCH.SMALL.project
+  static async isBlocked(user: ID, blocked: ID, scopes : Object) Promise<boolean> {
+    const doc = await DB.get('users').findOne({
+      _id: user,
+      blocked_users: {
+        _id: blocked,
+        ...scopes
       }
-    ]
-    const docs = await DB.get('users').aggregate(pipeline)
-    return docs
+    }, {projection: {_id: 1}})
+    return doc ? true : false
   }
 }

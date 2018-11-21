@@ -70,6 +70,15 @@ const user = {
       "start_date": 1234567 // time of friendship creation
       // eventual infos of friend (like authorization to see real name)
     }
+  ],
+  "blocked_users": [
+    {
+      "_id": "",
+      // true if that behavior is blocked
+      "challenge": true,
+      "chat": true,
+      "friendship": true
+    }
   ]
 }
 

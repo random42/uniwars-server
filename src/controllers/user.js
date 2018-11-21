@@ -9,13 +9,46 @@ import {
 import { User } from '../models'
 
 
+/**
+ * Sends a socket message with the news.
+ *
+ * @param  {ID} user User that receives the news
+ * @param  {Object} news News object
+ */
+export async function handleNewsCreation(user, news) {
+  socket.main.emitToUser(user, 'news', news)
+}
+
+
+/**
+ * Handle consequence of response to the news
+ *
+ * @param  {ID} user User affected by news
+ * @param  {type} news  News object
+ * @param  {type} response
+ */
+export async function handleNewsResponse(user, news, response) {
+  if (response === 'n')
+    return
+  // response === 'y'
+  switch (news.type) {
+    case "solo_challenge": {
+      break
+    }
+    case "friend_request": {
+      await User.createFriendship(user, news.user)
+      break
+    }
+  }
+}
+
 export async function getUser(req, res, next) {
   const { _id, project } = req.query
   const docs = User.fetch({ _id }, project)
   if (docs.length !== 1)
     res.sendStatus(400)
   let doc = docs[0]
-  doc.online = socket.isUserOnline(_id)
+  doc.online = socket.isOnline(_id)
   res.json(doc)
 }
 
@@ -58,34 +91,57 @@ export async function updatePicture(req, res, next) {
 
 export async function addFriend(req, res, next) {
   const { who } = req.body
-  const friends = await User.areFriends(req.user, who)
-  if (!friends) {
-    await User.friendRequest(req.user, who)
-    res.sendStatus(200)
+  const [ friends, blocked ] = await Promise.all([
+    User.areFriends(req.user, who),
+    User.isBlocked(who, req.user, { friendship: true })
+  ])
+  if (friends || blocked) {
+    res.sendStatus(400)
   }
   else {
-    res.sendStatus(400)
+    const news = await User.friendRequest(req.user, who)
+    await handleNewsCreation(who, news)
+    res.sendStatus(200)
   }
 }
 
 export async function respondNews(req, res, next) {
   const { news, response } = req.body
-  await User.respondNews(req.user, news, response)
+  // retrieving news object
+  const obj = await User.pullNews(req.user, news, response)
+  await handleNewsResponse(req.user, obj, response)
   res.sendStatus(200)
 }
 
 export async function removeFriend(req, res, next) {
-res.sendStatus(200)
+  const { who } = req.body
+  await User.removeFriendship(req.user, who)
+  res.sendStatus(200)
 }
 
 export async function blockUser(req, res, next) {
-res.sendStatus(200)
+  const { who, scopes } = req.body
+  await User.block(req.user, who, scopes)
+  res.sendStatus(200)
 }
 
 export async function unblockUser(req, res, next) {
-res.sendStatus(200)
+  const { who } = req.body
+  await User.unblock(req.user, who)
+  res.sendStatus(200)
 }
 
 export async function challengeUser(req, res, next) {
-
+  const { who } = req.body
+  const blocked = await User.isBlocked(who, req.user, { challenge : true })
+  if (blocked) {
+    return res.sendStatus(400)
+  }
+  else {
+    const news = await User.challenge(req.user, who)
+    await handleNewsCreation(who, news)
+    res.sendStatus(200)
+  }
 }
+
+export default module.exports

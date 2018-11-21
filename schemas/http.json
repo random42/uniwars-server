@@ -296,7 +296,7 @@
 							"challenge": {
 								"type": "boolean"
 							},
-							"friend": {
+							"friendship": {
 								"type": "boolean"
 							},
 							"chat": {
