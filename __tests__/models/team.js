@@ -6,13 +6,17 @@ import DATA from '../../data'
 
 let [ A, B, C, D, E ] = DATA.USERS
 
+const TEAM = {
+  name: 'asd'
+}
+
 
 describe('local', () => {
   test('constructor', () => {
   })
 })
 
-describe.skip('crud', () => {
+describe('crud', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users', 'teams')
@@ -23,7 +27,7 @@ describe.skip('crud', () => {
     await DB.clearCollections('users', 'teams')
   })
 
-  test('function', async () => {
-    expect(0).not.toBe(1)
+  test('creation', async () => {
+    const
   })
 })

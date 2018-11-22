@@ -4,11 +4,10 @@ const debug = require('debug')('models:user')
 import _ from 'lodash/core'
 import { crypto } from '../security'
 import { Model } from './model'
-import * as PL from './pipeline'
 import type { ID, UserNewsType, Category, GameType, Collection, UserType } from '../types'
 import type {Team} from './team'
 import type {Uni} from './uni'
-import { DB, dbOptions } from '../db'
+import { DB, dbOptions, Pipeline } from '../db'
 import monk from 'monk'
 const CATEGORIES = require('../../assets/question_categories.json')
 const GAME_TYPES = require('../../assets/game_types.json')
@@ -56,6 +55,7 @@ export class User extends Model {
       sort: User.SORT.RATING,
       project: {
         'username' : 1,
+        'online': 1,
         'first_name' : 1,
         'last_name' : 1,
         'uni': 1,
@@ -72,6 +72,7 @@ export class User extends Model {
     SMALL : {
       rank: false,
       project: {
+        'online': 1,
         'username' : 1,
         'rank': 1,
         'uni' : 1,
@@ -135,7 +136,8 @@ export class User extends Model {
       news: [],
       games: {},
       online_time: 0,
-      friends: []
+      friends: [],
+      online: false
     }
     const doc = await DB.get('users').insert(obj)
     return new User(doc)
@@ -272,58 +274,57 @@ export class User extends Model {
    * Make friend request. Return news object
    */
   static async friendRequest(from : ID, to : ID) : Promise<Object> {
-    const news = User.makeNewsObject('friend_request', {user: from})
-    await DB.get('users').findOneAndUpdate({
-      // if there's no friend request pending
+    const news = {
+      _id: monk.id(),
+      type: "friend_request",
+      user: from,
+      created_at: Date.now()
+    }
+    const query = {
+    // if there's no friend request pending
       _id: to,
       news: {
         $not: {
-            type: 'friend_request',
-            user: from
-          }
+          type: 'friend_request',
+          user: from
         }
-      },
-      // update
-      {
-        $push: {
-          'news': news
-        }
-      },
-      dbOptions(['NO_PROJ'])
-    )
-    return news
+      }
+    }
+    return User.addNews(news, query)
   }
 
-  static async challenge(from: ID, to: ID) : Promise<Object> {
-    const news = User.makeNewsObject("solo_challenge", {user: from})
-    const update = await DB.get('users').findOneAndUpdate({
+
+  static async addNews(...args) : Promise<Object> {
+   return Model.addNews(...args, User)
+  }
+
+  /**
+   * User A challenges
+   */
+  static async challenge(from: ID, to: ID, gameType: string) : Promise<Object> {
+    const news = {
+      _id: monk.id(),
+      type: "challenge",
+      user: from,
+      game_type: gameType,
+      created_at: Date.now()
+    }
+    const query = {
       _id: to,
       news: {
         $elemMatch: {
           $not: {
-            type: "solo_challenge",
+            type: "challenge",
+            game_type: gameType,
             user: from
           }
         }
       }
-    }, {
-      $push: {
-        news: news
-      }
-    })
-    return news
-  }
-
-  static makeNewsObject(type : UserNewsType, otherFields: Object = {}) : Object {
-    return {
-      _id: monk.id(),
-      type,
-      created_at: Date.now(),
-      ...otherFields
     }
+    return User.addNews(news, query)
   }
 
-  static async pullNews(user: ID, news : ID, response : string) : Promise<Object> {
+  static async pullNews(user: ID, news : ID) : Promise<Object> {
     // pulling news
     const doc = await DB.get('users').findOneAndUpdate(user, {
       $pull: {
@@ -331,7 +332,10 @@ export class User extends Model {
           _id: news
         }
       }
-    }, dbOptions(['RETURN_ORIGINAL'], {fields: {news: 1}}))
+    }, {
+      projection: {news: 1},
+      returnOriginal: true
+    }))
     const newsObj = _.find(doc.news, (o) => o._id.equals(news))
     return newsObj
   }

@@ -1,5 +1,6 @@
 const user = {
   "_id": "",
+  "online": true,
   "type": "student", // see types folder
   "username": "random",
   "gender": "M",
@@ -51,7 +52,8 @@ const user = {
       "created_at": 12345
     },{
       "_id": "_id",
-      "type": "solo_challenge",
+      "type": "challenge",
+      "game_type": "solo",
       "user": "_id"
       "created_at": 12345
     }
@@ -89,7 +91,7 @@ const team = {
   "users": [
     {
       "_id": "",
-      "founder": false,
+      "founder": true,
       "admin": true
     }
   ],
@@ -99,8 +101,11 @@ const team = {
     "vol": 0.06, // volatility
   },
   "news": [{
-    "type": "team_challenge",
-    "team": "_id"
+    "_id": "",
+    "type": "challenge",
+    "game_type": "team",
+    "team": "_id",
+    "created_at": Date.now()
   }],
   "games": {
     "GAME_TYPE": {

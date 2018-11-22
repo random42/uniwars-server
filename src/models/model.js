@@ -1,8 +1,7 @@
 // @flow
 import monk from 'monk'
-import { DB } from '../db'
+import { DB, Pipeline } from '../db'
 import type { ID, Collection } from '../types'
-import * as PL from './pipeline'
 
 /**
  * Public members (properties) of subclasses are computed properties.
@@ -54,7 +53,7 @@ export class Model {
     append.push({
       $project: project
     })
-    const pipeline = rank ? PL.rank(sort, [], append) : append
+    const pipeline = rank ? Pipeline.rank(sort, [], append) : append
     let docs = await DB.get('users').aggregate(pipeline)
     return docs.map(i => new _class(i))
   }
@@ -75,7 +74,7 @@ export class Model {
     projection : string,
     _class: any
     ) : Promise<Model[]> {
-    const { lookup, project } = _class.FETCH[projection]
+    let { lookup, project } = _class.FETCH[projection]
     lookup = lookup ? lookup : []
     // adding $skip and $limit stages after $sort
     let append = [
@@ -89,9 +88,32 @@ export class Model {
         $project: project
       }
     ]
-    const docs = await DB.get(_class.COLLECTION).aggregate(PL.rank(_class.SORT[sort], [], append))
+    const docs = await DB.get(_class.COLLECTION).aggregate(Pipeline.rank(_class.SORT[sort], [], append))
     return docs.map(i => new _class(i))
   }
+
+  /**
+   * Add a news object.
+   *
+   * @param news
+   * @param query MongoDB query object
+   * @param collection
+   *
+   * @return updated document
+   */
+  static async addNews(
+    news: Object,
+    query: Object | string,
+    _class: any
+    ) : Promise<Object> {
+    const update = await DB.get(_class.COLLECTION).findOneAndUpdate(query, {
+      $push: {
+        news
+      }
+    })
+    return update
+  }
+
 
 
   loadObject(obj: Object) {

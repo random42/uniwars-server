@@ -41,3 +41,5 @@ export function rank(
   pl[0].$sort = sort
   return prepend.concat(pl).concat(append)
 }
+
+export default module.exports
