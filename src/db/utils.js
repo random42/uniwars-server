@@ -1,8 +1,8 @@
 // @flow
 
 import { DB } from './db'
-import { DATA } from '../../__tests__/config'
-import type { ID } from '../types'
+import DATA from '../../data'
+import type { ID, Collection } from '../types'
 
 export function putSomeUsers(num : number) {
   return DB.get('users').insert(DATA.USERS.slice(0, num))
@@ -18,8 +18,8 @@ export function clearCollections(...names : string[]) {
   return Promise.all(names.map((n) => DB.get(n).remove({})))
 }
 
-export async function logUser(id : ID, fields : Object) {
-  const doc = await DB.get('users').findOne(id, { projection: fields })
+export async function logDoc(id : ID, collection: Collection, fields : Object) {
+  const doc = await DB.get(collection).findOne(id, { fields })
   console.log(doc)
 }
 

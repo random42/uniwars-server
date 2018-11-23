@@ -2,10 +2,9 @@
 import monk from 'monk'
 import { DB, Pipeline } from '../db'
 import type { ID, Collection } from '../types'
+import _ from 'lodash'
 
 /**
- * Public members (properties) of subclasses are computed properties.
- * Default properties are in api/database-models.js
  *
  * @param arg Most of the times is a document object to load. Otherwise
  * it can be an ObjectID or an _id string (that will be converted to ObjectID)
@@ -105,7 +104,7 @@ export class Model {
     news: Object,
     query: Object | string,
     _class: any
-    ) : Promise<Object> {
+    ) : Promise<Model> {
     const update = await DB.get(_class.COLLECTION).findOneAndUpdate(query, {
       $push: {
         news
@@ -114,7 +113,36 @@ export class Model {
     return update
   }
 
+  static async pullNews(
+    query: Object | string,
+    news : ID,
+    _class: any
+    ) : Promise<Object> {
+    const doc = await DB.get(_class.COLLECTION).findOneAndUpdate(query, {
+      $pull: {
+        'news': {
+          _id: news
+        }
+      }
+    }, {
+      projection: {news: 1},
+      returnOriginal: true
+    })
+    const newsObj = _.find(doc.news, (o) => o._id.equals(news))
+    return newsObj
+  }
 
+  static async fetchNews(
+    query: Object | string,
+    news : ID,
+    _class: any
+    ) : Promise<Object> {
+    const doc = await DB.get(_class.COLLECTION).findOne(query, {
+      fields: {news: 1}
+    })
+    const newsObj = _.find(doc.news, (o) => o._id.equals(news))
+    return newsObj
+  }
 
   loadObject(obj: Object) {
     Object.assign(this, obj)

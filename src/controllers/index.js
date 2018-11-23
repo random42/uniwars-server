@@ -1,2 +1,2 @@
-export * as auth from './auth'
-export * as user from './user'
+export {AuthCtrl} from './auth'
+export {UserCtrl} from './user'

@@ -285,21 +285,22 @@ export class User extends Model {
       _id: to,
       news: {
         $not: {
-          type: 'friend_request',
-          user: from
+          $elemMatch: {
+            type: 'friend_request',
+            user: from
+          }
         }
       }
     }
-    return User.addNews(news, query)
-  }
-
-
-  static async addNews(...args) : Promise<Object> {
-   return Model.addNews(...args, User)
+    const doc = await Model.addNews(news, query, User)
+    return doc ? news : null
   }
 
   /**
-   * User A challenges
+   * User A challenges user B. Adds news to B if there
+   * isn't already a challenge from A of same gameType
+   *
+   * @return News object for success, null otherwise
    */
   static async challenge(from: ID, to: ID, gameType: string) : Promise<Object> {
     const news = {
@@ -312,8 +313,8 @@ export class User extends Model {
     const query = {
       _id: to,
       news: {
-        $elemMatch: {
-          $not: {
+        $not: {
+          $elemMatch: {
             type: "challenge",
             game_type: gameType,
             user: from
@@ -321,23 +322,8 @@ export class User extends Model {
         }
       }
     }
-    return User.addNews(news, query)
-  }
-
-  static async pullNews(user: ID, news : ID) : Promise<Object> {
-    // pulling news
-    const doc = await DB.get('users').findOneAndUpdate(user, {
-      $pull: {
-        'news': {
-          _id: news
-        }
-      }
-    }, {
-      projection: {news: 1},
-      returnOriginal: true
-    }))
-    const newsObj = _.find(doc.news, (o) => o._id.equals(news))
-    return newsObj
+    const doc = await Model.addNews(news, query, User)
+    return doc ? news : null
   }
 
   /**
@@ -412,7 +398,7 @@ export class User extends Model {
     return doc ? true : false
   }
 
-  static async isBlocked(user: ID, blocked: ID, scopes : Object) Promise<boolean> {
+  static async isBlocked(user: ID, blocked: ID, scopes : Object) : Promise<boolean> {
     const doc = await DB.get('users').findOne({
       _id: user,
       blocked_users: {
@@ -421,5 +407,13 @@ export class User extends Model {
       }
     }, {projection: {_id: 1}})
     return doc ? true : false
+  }
+
+  static async setOnline(user: ID, online: boolean) {
+    return DB.get('users').findOneAndUpdate(user, {
+      $set: {
+        online
+      }
+    })
   }
 }

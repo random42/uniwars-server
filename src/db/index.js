@@ -3,7 +3,7 @@
 import _ from 'lodash'
 import * as utils from './utils'
 import * as OPTIONS from './options'
-export * as Pipeline from './pipeline'
+export { Pipeline } from './pipeline'
 
 /**
  * Takes some predefined options' strings and returns an options object

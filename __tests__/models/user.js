@@ -1,6 +1,6 @@
 // @test-environment env
 
-import { User, Uni, Major, Pipeline, Model } from '../../build_flow/models'
+import { User, Uni, Major, Model } from '../../build_flow/models'
 import { DB } from '../../build_flow/db'
 import _ from 'lodash'
 import monk from 'monk'
@@ -17,7 +17,7 @@ describe('local', () => {
   })
 })
 
-describe.skip('crud', () => {
+describe('crud', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users')
@@ -47,12 +47,11 @@ describe.skip('crud', () => {
     await User.removeFriendship(A._id, B._id)
     friendship = await User.areFriends(A._id, B._id)
     expect(friendship).toBe(false)
-  })
-
-  test('news', async () => {
-    const news = await User.friendRequest(A._id, B._id)
-    await User.respondNews(B._id, news._id, true)
-    expect(await User.areFriends(A._id, B._id)).toBe(true)
+    const request = await User.friendRequest(A._id, B._id)
+    const news2 = await User.friendRequest(A._id, B._id)
+    expect(news2).toBe(null)
+    const news = await Model.pullNews(B._id, request._id, User)
+    expect(news).toEqual(request)
   })
 
   test('fetch', async () => {
@@ -88,5 +87,13 @@ describe.skip('crud', () => {
     expect(
       await User.isFreeUsername('qwertyuiop')
     ).toBe(true)
+  })
+
+  test('challenge', async () => {
+    const challenge = await User.challenge(A._id, B._id, 'solo')
+    const sec = await User.challenge(A._id, B._id, 'solo')
+    expect(sec).toBe(null)
+    const news = await Model.pullNews(B._id, challenge._id, User)
+    expect(challenge).toEqual(news)
   })
 })

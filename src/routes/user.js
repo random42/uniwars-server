@@ -1,6 +1,6 @@
 import express from 'express'
 export const router = express.Router()
-import { user as C } from '../controllers'
+import { UserCtrl as C } from '../controllers'
 
 router.get('/', C.getUser)
 

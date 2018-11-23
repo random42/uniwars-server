@@ -5,7 +5,7 @@ const chance = require('chance')()
 /**
  * Takes users and outputs teams docs.
  */
-export default function createTeams(users, usersPerTeam) {
+export function createTeams(users, usersPerTeam) {
   users = users.slice(0, users.length - (users.length % usersPerTeam))
   const numTeams = users.length / usersPerTeam
   const names = chance.unique(chance.word, numTeams)

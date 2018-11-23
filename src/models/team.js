@@ -110,42 +110,45 @@ export class Team extends Model {
     }, {projection: {_id: 1}})
   }
 
+  /**
+   * This should use $[] arrayFilters update operator but it does not work
+   */
   static async makeAdmins(team : ID, users : ID[]) {
-    return DB.get('teams').findOneAndUpdate({
-      _id: team
-    },{
-      $set: {
-        'users.$[targets].admin': true
-      }
-    }, {
-      projection: {_id: 1},
-      arrayFilters: [
-        {
-          "targets": {
-            _id: {
-              $in: users
-            }
-          }
-        }
-      ]
+    let obj = await DB.get('teams').findOne(team)
+    users.forEach(u => {
+      let d = _.find(obj.users, (o) => o._id.equals(u))
+      if (d)
+        d.admin = true
     })
+    return DB.get('teams').findOneAndUpdate(team, obj)
+  }
+
+  static async removeAdmins(team : ID, users : ID[]) {
+    let obj = await DB.get('teams').findOne(team)
+    users.forEach(u => {
+      let d = _.find(obj.users, (o) => o._id.equals(u))
+      if (d)
+        delete d.admin
+    })
+    return DB.get('teams').findOneAndUpdate(team, obj)
   }
 
   /**
    * Team A challenges team B.
-   * If there's already a challenge from A then
+   * If there's already a challenge from A of same game type then
    * nothing will change. Else add news to B.
    *
-   * @return News object
+   * @return News object for success, null otherwise
    */
   static async challenge(from: ID, to: ID, gameType: string) : Promise<Object> {
     // get team B making sure there's no similar challenge
     const query = {
       _id: to,
       news: {
-        $elemMatch: {
-          $not: {
+        $not: {
+          $elemMatch: {
             type: "challenge",
+            game_type: gameType,
             team: from
           }
         }
@@ -159,7 +162,7 @@ export class Team extends Model {
       created_at: Date.now()
     }
     const doc = await Model.addNews(news, query, Team)
-    return news
+    return doc ? news : null
   }
 
   static async top(...args) {
@@ -179,12 +182,21 @@ export class Team extends Model {
     return doc ? true : false
   }
 
-  static async areAdmin(team: ID, users: ID[]) : Promise<boolean> {
-    const array = users.map(u => { return {_id: u, admin: true} })
+  static async areAdmins(team: ID, users: ID[]) : Promise<boolean> {
     const doc = await DB.get('teams').findOne({
       _id: team,
       users: {
-        $all: array
+        $all: users.map(a => { return { $elemMatch: {_id: a, admin: true}}})
+      }
+    }, { fields : { _id: 1 }})
+    return doc ? true : false
+  }
+
+  static async areMembers(team: ID, users: ID[]) : Promise<boolean> {
+    const doc = await DB.get('teams').findOne({
+      _id: team,
+      'users._id': {
+        $all: users
       }
     }, { fields : { _id: 1 }})
     return doc ? true : false
@@ -194,8 +206,10 @@ export class Team extends Model {
     const doc = await DB.get('teams').findOne({
       _id: team,
       users: {
-        _id: user,
-        founder: true
+        $elemMatch: {
+          _id: user,
+          founder: true
+        }
       }
     }, { fields : { _id: 1 }})
     return doc ? true : false
@@ -229,4 +243,5 @@ export class Team extends Model {
     ])
     return docs
   }
+
 }

@@ -1,5 +1,5 @@
 import express from 'express'
-import { auth as C } from '../controllers'
+import { AuthCtrl as C } from '../controllers'
 export const router = express.Router()
 router.post('/register', C.register)
 router.post('/login', C.login)
