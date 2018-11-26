@@ -1,19 +1,15 @@
 import { DB } from '../db';
 import monk from 'monk';
-const {server} = require('./index');
+import { server, game as nsp } from './index'
 const debug = require('debug')('socket:game')
 import { Maps } from '../game';
 import _ from 'lodash/core';
 import { mm, utils } from '../utils';
-let nsp = server.of('/game');
-nsp.postAuthenticate = postAuthenticate
-
-
 
 // game namespace post authenticate fn
-async function postAuthenticate(socket) {
+export default async function(socket: Socket, data: Object) {
   //socket.setMaxListeners(20);
-  const user = socket.user_id;
+  const user = socket.user._id.toString()
   // middleware
   socket.use((packet,next) => {
     let [ event, ...message ] = packet

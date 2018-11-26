@@ -6,8 +6,8 @@ const COMMON = require('../../schemas/common.json')
 const HTTP = require('../../schemas/http.json')
 let ROUTES = new Map()
 for (let i in HTTP) {
-  for (let r of HTTP[i]) {
-    ROUTES.set(r.url, r)
+  for (let route of HTTP[i]) {
+    ROUTES.set(route.url, route)
   }
 }
 
