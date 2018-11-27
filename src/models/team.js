@@ -13,32 +13,51 @@ export class Team extends Model {
 
   static COLLECTION : Collection = "teams"
 
-  static FETCH = {
+  static SORT = {
+    RATING: {
+      'perf.rating' : -1
+    }
+  }
+
+  static QUERY = {
     FULL : {
-      rank: true,
-      lookup: [
+      prepend: [
+        {
+          $sort: Team.SORT.RATING
+        },
+        ...Pipeline.rank('rank')
+      ],
+      append: [
+        {
+          $addFields: {
+            "roles": "$users"
+          }
+        },
         {
           $lookup: {
             from: "users",
             let: {
-              users: "$users",
+              users: "$roles",
             },
             pipeline: [
               {
                 $match: {
-                  _id: {
-                    $in: "$$users._id"
+                  $expr: {
+                    $in: ["$_id","$$users._id"]
                   }
                 }
               }
             ],
-            as: "users_docs"
+            as: "users"
           }
-        }
+        },
       ],
       project: {
         name: 1,
-        users: 1,
+        roles: 1,
+        'users.username': 1,
+        'users.uni': 1,
+        'users.major': 1,
         perf: 1,
         games: 1
       }
@@ -46,7 +65,6 @@ export class Team extends Model {
     SMALL : {
       project: {
         name: 1,
-        users: 1,
         perf: 1
       }
     }

@@ -1,47 +1,38 @@
 // @flow
 
-const RANK = [
-  {
-    $sort: {}
-  },
-  {
-    $group: {
-      _id: null,
-      doc: { $push: "$$ROOT" }
-    }
-  },
-  {
-    $unwind: {
-      path: '$doc',
-      includeArrayIndex: 'rank'
-    }
-  },
-  {
-    $addFields: {
-      'doc.rank': '$rank',
-    }
-  },
-  {
-    $replaceRoot: { newRoot: '$doc' }
-  }
-]
+import _ from 'lodash'
 
 export class Pipeline {
-  /**
-   * @param sort Object with sorting fields as keys and values 1 for
-   * @param prepend Stages before sorting (note that sorting will not be indexed
-   * if it's not the first stage)
-   * @param append Stages after sorting
-   * @return Pipeline array
-   */
-  static rank(
-    sort : Object,
-    prepend? : Object[] = [],
-    append? : Object[] = []
-    ) : Object[] {
-    let pl = RANK
-    pl[0].$sort = sort
-    return prepend.concat(pl).concat(append)
-  }
 
+  static RANK = [
+    {
+      $group: {
+        _id: null,
+        DOC__: { $push: "$$ROOT" }
+      }
+    },
+    {
+      $unwind: {
+        path: '$DOC__',
+        includeArrayIndex: 'DOC__.rank'
+      }
+    },
+    {
+      $replaceRoot: { newRoot: '$DOC__' }
+    }
+  ]
+
+
+  /**
+   * Returns a pipeline that attach a custom named field containing
+   * their index to the documents.
+   *
+   * @param field Field path in which the rank will be.
+   */
+  static rank(field : string = 'rank') : Object[] {
+    const d = 'DOC__'
+    let pl = _.cloneDeep(Pipeline.RANK)
+    pl[1].$unwind.includeArrayIndex = d + "." + field
+    return pl
+  }
 }

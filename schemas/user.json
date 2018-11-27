@@ -113,6 +113,9 @@
     "private": {
       "type": "object",
       "properties": {
+        "expo_push_token": {
+          "type": "string"
+        },
         "oauth": {
           "type": "object",
           "propertyNames": {

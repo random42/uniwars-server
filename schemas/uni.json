@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "user",
+  "type": "object",
+  "properties": {
+    "_id": {"$ref": "common.json#/_id"},
+    "web_pages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "alpha_two_code": {
+      "type": "string",
+      "maxLength": 2,
+      "minLength": 2
+    },
+    "state_province": {
+      "type": "string"
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "hostname"
+      }
+    },
+    "country": {
+      "type": "string"
+    },
+    "chat": {
+      "type": "string"
+    }
+  }
+}

@@ -28,6 +28,7 @@ const user = {
   },
   "password": ".mmx.R751qGKf90YY.QgvEE1AAYp/Kdi",
   "private": {
+    "expo_push_token": "",
     "oauth": {
       "PROVIDER": {
         "id": 1234,

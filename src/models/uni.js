@@ -6,83 +6,127 @@ import type { ID } from '../types'
 import monk from 'monk'
 const { PROJECTIONS } = require('../../api/api');
 import { utils } from '../utils'
-const RANK_PIPELINE = [
-  {
-    $group: {
-      _id: "$uni",
-      rating: { $avg: "$perf.rating" },
-      users_count: { $sum: 1 }
-    }
-  },
-  {
-    $sort: {
-      rating: -1
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      uni: { $push: "$$ROOT" }
-    }
-  },
-  {
-    $unwind: {
-      path: '$uni',
-      includeArrayIndex: "rank"
-    }
-  },
-  {
-    $lookup: {
-      from: 'unis',
-      localField: 'uni._id',
-      foreignField: '_id',
-      as: 'doc'
-    }
-  },
-  {
-    $project: {
-      'doc.rank': '$rank',
-      'doc.rating': '$uni.rating',
-      'doc.users_count': '$uni.users_count'
-    }
-  },
-  {
-    $replaceRoot: { newRoot: '$doc' }
-  }
-]
+
 
 export class Uni extends Model {
 
-  async fetch(projection : Object) {
-    projection = projection || {
-      alpha_two_code: 0,
-      state_province: 0,
-      domains: 0,
-      chat: 0
-    }
-    let pipeline = RANK_PIPELINE.concat([{
-      $match: { _id: this._id }
-    },{
-      $project: projection
-    }])
-    let doc = await DB.get('users').aggregate(pipeline)
-    if (doc.length === 0) {
-      doc = await DB.get('unis').findOne(this._id, projection)
-      return doc
-    } else {
-      return doc[0]
+  static SORT = {
+    USERS_RATING: {
+      avg_rating: -1,
+      num_users: -1
     }
   }
 
-  static async top({from, to}) {
-    // adding $skip and $limit stages after $sort
-    let pipeline = RANK_PIPELINE.concat([
+  static PIPELINES = {
+    RANK_BY_AVG_USERS_RATING: [
       {
-        $skip: from
-      },{
-        $limit: to-from
+        $group: {
+          _id: "$uni._id",
+          avg_rating: { $avg: "$perf.rating" },
+          num_users: { $sum: 1 }
+        }
+      },
+      {
+        $sort: {
+          avg_rating: -1,
+          num_users: -1
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          uni: { $push: "$$ROOT" }
+        }
+      },
+      {
+        $unwind: {
+          path: '$uni',
+          includeArrayIndex: "uni.rank"
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$uni" }
       }
-    ])
+    ]
+  }
+
+  static QUERY = {
+    FULL : {
+      collection: 'users',
+      prepend: Uni.PIPELINES.RANK_BY_AVG_USERS_RATING,
+      append: [
+        {
+          $lookup: {
+            from: 'unis',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'doc'
+          }
+        },
+        {
+          $addField: {
+            'doc.avg_rating': "$avg_rating",
+            'doc.rank': "$rank",
+            'doc.num_users': "$num_users"
+          }
+        },
+        {
+          $replaceRoot: { newRoot: "$doc" }
+        }
+      ],
+      project: {
+        web_pages: 1,
+        name: 1,
+        alpha_two_code: 1,
+        country: 1,
+        domains: 1,
+        avg_rating: 1,
+        num_users: 1
+      }
+    },
+    SMALL : {
+      project: {
+        name: 1,
+        alpha_two_code: 1,
+        country: 1,
+        avg_rating: 1,
+        num_users: 1
+      }
+    }
+  }
+
+
+
+  /**
+   * Only use this to match by _id, avg_rating or num_users because
+   * lookup is done after match.
+   */
+  async fetch(
+    match : Object,
+    projection: string
+    ) : Promise<Uni[]> {
+    return Model.fetch(...args, Uni)
+  }
+
+  static async top(
+    skip : number,
+    limit : number,
+    ) : Promise<Uni[]> {
+    const { project } = Uni.QUERY.SMALL
+    const { append } = Uni.QUERY.FULL
+    const pipeline = [
+      ...Uni.PIPELINES.RANK_BY_AVG_USERS_RATING,
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      },
+      ...append,
+      {
+        $project: project
+      }
+    ]
     return DB.get('users').aggregate(pipeline)
   }
 }

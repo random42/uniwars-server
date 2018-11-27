@@ -1,7 +1,7 @@
 // @flow
 
 const debug = require('debug')('models:user')
-import _ from 'lodash/core'
+import _ from 'lodash'
 import { crypto } from '../security'
 import { Model } from './model'
 import type { ID, UserNewsType, Category, GameType, Collection, UserType } from '../types'
@@ -14,8 +14,6 @@ const GAME_TYPES = require('../../assets/game_types.json')
 
 
 export class User extends Model {
-  rank: number
-  online: boolean
 
   static COLLECTION : Collection = "users"
 
@@ -28,10 +26,17 @@ export class User extends Model {
   /**
    * Main sets of fields to fetch from DB.
    */
-  static FETCH = {
+  static QUERY = {
     FULL : {
-      rank: true,
-      lookup: [
+      // Pipeline before $match stage
+      prepend: [
+        {
+          $sort: User.SORT.RATING
+        },
+        ...Pipeline.rank('rank')
+      ],
+      // after $match stage
+      append: [
         {
           $lookup: {
             from : "teams",
@@ -52,7 +57,6 @@ export class User extends Model {
           }
         }
       ],
-      sort: User.SORT.RATING,
       project: {
         'username' : 1,
         'online': 1,
@@ -70,7 +74,6 @@ export class User extends Model {
       }
     },
     SMALL : {
-      rank: false,
       project: {
         'online': 1,
         'username' : 1,
@@ -124,7 +127,7 @@ export class User extends Model {
       password? : string
     }
     ) : Promise<User> {
-    let form = {...data}
+    let form = _.cloneDeep(data)
     if (form.password) {
       form.password = await crypto.hash(form.password, User.PASSWORD_SALT)
     }
@@ -163,7 +166,7 @@ export class User extends Model {
         $limit: limit
       },
       {
-        $project: User.FETCH.SMALL.project
+        $project: User.QUERY.SMALL.project
       }
     ]
     const docs = await DB.get('users').aggregate(pipeline)
@@ -243,7 +246,7 @@ export class User extends Model {
             },
             {
               $project: {
-                ...User.FETCH.SMALL.project,
+                ...User.QUERY.SMALL.project,
                 friendship: {
                   start_date: "$$date",
                 }

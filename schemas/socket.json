@@ -1,66 +1,11 @@
 {
-	"MAIN": {
+	"/": {
 		"IN": [],
 		"OUT": [
-			{
-				"event": "challenge",
-				"object": {
-					"type": "solo/team",
-					"from": "user or team _id",
-					"to": "challenged team _id"
-				},
-				"description": "Only team admins will receive a team challenge."
-			},
-			{
-				"event": "friend_request",
-				"object": {
-					"from": "user _id"
-				},
-				"description": ""
-			}
 		]
 	},
-	"CHAT": {
+	"/game": {
 		"IN": [
-			{
-				"event": "message",
-				"object": {
-					"msg": "message object",
-					"chat": "_id",
-					"cb": "callback"
-				},
-				"description": "Incoming message. The callback returns the message with a server generated _id."
-			}
-		],
-		"OUT": [
-			{
-				"event": "message",
-				"object": {
-					"msg": "message object",
-					"chat": "_id"
-				},
-				"description": "Notifies a user of a message."
-			}
-		]
-	},
-	"GAME": {
-		"IN": [
-			{
-				"event": "search",
-				"object": {
-					"type": "solo"
-				},
-				"response": null,
-				"description": "The user will be pushed to the matchmaker of the specified game type."
-			},
-			{
-				"event": "stop_search",
-				"object": {
-					"type": "solo"
-				},
-				"response": null,
-				"description": "The user will be pulled from the matchmaker of the specified game type."
-			},
 			{
 				"event": "join",
 				"object": {

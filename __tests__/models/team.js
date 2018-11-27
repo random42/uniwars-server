@@ -19,7 +19,7 @@ describe('local', () => {
   })
 })
 
-describe.skip('crud', () => {
+describe('crud', () => {
   beforeEach(async () => {
     await DB.clearCollections('users', 'teams')
     await DB.putSomeUsers(15)
@@ -63,5 +63,15 @@ describe.skip('crud', () => {
     expect(sec).toBe(null)
     const news = await Model.pullNews(Y._id, challenge._id, Team)
     expect(news).toEqual(challenge)
+  })
+
+  test('fetch-top', async () => {
+    const teams = await pushTeams(3,5)
+    let t = await Team.fetch({_id: teams[0]._id}, 'FULL')
+    t = await Team.fetch({_id: teams[0]._id}, 'SMALL')
+    // console.log(JSON.stringify(t, null, '   '))
+    t = await Team.top(0, 10, 'RATING', 'SMALL')
+    // console.log(JSON.stringify(t, null, '   '))
+    expect(0).toBe(0)
   })
 })

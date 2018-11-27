@@ -17,7 +17,7 @@ describe('local', () => {
   })
 })
 
-describe('crud', () => {
+describe.skip('crud', () => {
 
   beforeEach(async () => {
     await DB.clearCollections('users')
@@ -31,7 +31,7 @@ describe('crud', () => {
   test('addOnlineTime', async () => {
     const time = 100
     await User.addOnlineTime(A._id, time)
-    const doc = await DB.get('users').findOne(A._id, {returnOriginal: false})
+    const doc = await DB.get('users').findOne(A._id)
     expect(doc.online_time).toBe(A.online_time + time)
   })
 

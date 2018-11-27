@@ -42,18 +42,18 @@ export class Model {
     projection: string,
     _class : any
     ) : Promise<Model[]> {
-    const { rank, lookup, project, sort } = _class.FETCH[projection]
+    let { prepend, append, project, collection } = _class.QUERY[projection]
+    prepend = prepend || []
+    append = append || []
+    collection = collection || _class.COLLECTION
     // pipeline
-    let append = []
-    append.push({$match: match})
-    if (lookup) {
-      append = append.concat(lookup)
-    }
-    append.push({
+    let pipeline = [...prepend]
+    pipeline.push({$match: match})
+    pipeline = pipeline.concat(append)
+    pipeline.push({
       $project: project
     })
-    const pipeline = rank ? Pipeline.rank(sort, [], append) : append
-    let docs = await DB.get('users').aggregate(pipeline)
+    let docs = await DB.get(collection).aggregate(pipeline)
     return docs.map(i => new _class(i))
   }
 
@@ -62,7 +62,7 @@ export class Model {
    * @param skip Index (ranking) of first user. Starts from 0
    * @param limit Number of documents to fetch
    * @param sort Type of sort, key of _class.SORT
-   * @param projection Fields to fetch, key of _class.FETCH
+   * @param projection Set of fields to fetch, key of _class.QUERY
    * @param _class Model class to fetch from
    * @return Documents with rank field.
    */
@@ -73,21 +73,26 @@ export class Model {
     projection : string,
     _class: any
     ) : Promise<Model[]> {
-    let { lookup, project } = _class.FETCH[projection]
-    lookup = lookup ? lookup : []
-    // adding $skip and $limit stages after $sort
-    let append = [
+    // prepend is not used as sorting and rank is obvius
+    let { append, project, collection } = _class.QUERY[projection]
+    append =  append || []
+    collection = collection || _class.COLLECTION
+    let pipeline = [
+      {
+        $sort: _class.SORT[sort]
+      },
+      ...Pipeline.rank('rank'),
       {
         $skip: skip
       },{
         $limit: limit
       },
-      ...lookup,
+      ...append,
       {
         $project: project
       }
     ]
-    const docs = await DB.get(_class.COLLECTION).aggregate(Pipeline.rank(_class.SORT[sort], [], append))
+    const docs = await DB.get(collection).aggregate(pipeline)
     return docs.map(i => new _class(i))
   }
 

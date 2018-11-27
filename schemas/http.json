@@ -337,39 +337,52 @@
 			"method": "get",
 			"url": "/uni",
 			"query": {
-				"_id": "5a3dac7dfaaa577114d0cfaf"
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"required": ["_id", "project"],
+				"properties": {
+					"_id": {
+						"$ref": "common.json#/_id"
+					},
+					"project": {
+						"enum": ["FULL","SMALL"]
+					}
+				}
 			},
 			"response": {
-				"200": [
-					"Team"
-				],
-				"400": [
-					"Bad Request"
-				],
-				"404": [
-					"Not Found"
-				]
+				"200": true
 			},
 			"title": "Get uni",
-			"description": "Get uni with rank."
-		},
-		{
-			"method": "get",
-			"url": "/uni/top",
-			"query": {
-				"from": 0,
-				"to": 10
-			},
-			"title": "Top",
 			"description": ""
 		},
 		{
 			"method": "get",
-			"url": "/uni/rank",
+			"url": "/user/top",
 			"query": {
-				"name": "University of Turin"
-			}
-		}
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"required": ["sort", "page"],
+				"properties": {
+					"sort": {
+						"enum": ["USERS_RATING"]
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 0
+					}
+				}
+			},
+			"response": {
+				"200": {
+					"type": "array",
+					"items": {
+						"$ref": "uni.json#"
+					}
+				}
+			},
+			"title": "Rankings",
+			"description": "Maximum distance is 30. There will probably be more params to specialize the search."
+		},
 	],
 	"team": [
 		{
@@ -503,5 +516,55 @@
 			"title": "Delete team",
 			"description": "Rules TODO"
 		}
+	],
+	"game": [
+		{
+			"method": "put",
+			"url": "/game/search",
+			"body": {
+				"required": ["type"],
+				"properties": {
+					"type": {
+						"$ref": "common.json#/game_type"
+					},
+					"extra": {
+						"properties": {
+							"team": {
+								"$ref": "common.json#/_id"
+							}
+						}
+					}
+				}
+			},
+			"response": {
+				"200": true
+			},
+			"title": "Enter the matchmaker",
+			"description": "If a team-type game is requested, the team _id must be passed."
+		},
+		{
+			"method": "put",
+			"url": "/game/stop-search",
+			"body": {
+				"required": ["type"],
+				"properties": {
+					"type": {
+						"$ref": "common.json#/game_type"
+					},
+					"extra": {
+						"properties": {
+							"team": {
+								"$ref": "common.json#/_id"
+							}
+						}
+					}
+				}
+			},
+			"response": {
+				"200": true
+			},
+			"title": "Exit the matchmaker",
+			"description": "If a team-type game is requested, the team _id must be passed."
+		},
 	]
 }
