@@ -4,7 +4,7 @@ import { Model } from './model'
 import { DB } from '../db'
 import type { ID } from '../types'
 import monk from 'monk'
-const { PROJECTIONS } = require('../../api/api');
+const { PROJECTIONS } = require('../../api/api')
 import { utils } from '../utils'
 
 

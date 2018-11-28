@@ -1,5 +1,4 @@
-// @flow
-
+import monk from 'monk'
 import jwt from 'jsonwebtoken'
 const JWT = require('../../secret/jwt.json')
 
@@ -9,7 +8,7 @@ const JWT = require('../../secret/jwt.json')
  *
  * @return Status 401 if not authorized.
  */
-export function checkAuth(req : Object, res : Object, next : () => any) {
+export function checkAuth(req, res, next) {
   const token = req.get("Authorization")
   const user = req.get("User")
   try {
@@ -17,7 +16,7 @@ export function checkAuth(req : Object, res : Object, next : () => any) {
     if (decode._id !== user) {
       return res.sendStatus(401)
     }
-    req.user = user
+    req.user = monk.id(user)
     next()
   } catch(err) {
     res.status(401).json({error: err})

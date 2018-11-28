@@ -29,6 +29,11 @@ export class Model {
     }
   }
 
+  static async findOne(_id: ID, _class : any) : Promise<Model> {
+    const obj = await DB.get(_class.COLLECTION).findOne(_id)
+    return new _class(obj)
+  }
+
   /**
    * Fetch documents with flexible options. Probably you call the function
    * from within a specific model class. In that case the last parameter must be omitted.

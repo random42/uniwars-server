@@ -11,6 +11,30 @@ import { User, Model } from '../models'
 
 export class UserCtrl {
 
+  static convertNewsToNotification(news) {
+
+  }
+
+  static async sendNews(news, users) {
+    const tokens = await DB.get('users').aggregate([
+      {
+        $match: {
+          _id: {
+            $in: users
+          },
+          'private.expo_push_token': {
+            $exists: true
+          }
+        }
+      },
+      {
+        $replaceRoot: { newRoot: '$private.expo_push_token'}
+      }
+    ])
+    let message = UserCtrl.convertNewsToNotification(news)
+
+  }
+
   /**
    * Sends a socket message with the news.
    *
@@ -45,7 +69,7 @@ export class UserCtrl {
 
   static async getUser(req, res, next) {
     const { _id, project } = req.query
-    const docs = User.fetch({ _id }, project)
+    const docs = await User.fetch({ _id }, project)
     if (docs.length === 0)
       res.sendStatus(404)
     let doc = docs[0]

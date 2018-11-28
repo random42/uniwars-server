@@ -3,6 +3,9 @@ const user = {
   "online": true,
   "type": "student", // see types folder
   "username": "random",
+  "settings": {
+
+  },
   "gender": "M",
   "email": "roberto.sero@edu.unito.it",
   "first_name": "Roberto",

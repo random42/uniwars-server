@@ -357,7 +357,7 @@
 		},
 		{
 			"method": "get",
-			"url": "/user/top",
+			"url": "/uni/top",
 			"query": {
 				"$schema": "http://json-schema.org/draft-07/schema#",
 				"type": "object",
@@ -382,25 +382,27 @@
 			},
 			"title": "Rankings",
 			"description": "Maximum distance is 30. There will probably be more params to specialize the search."
-		},
+		}
 	],
 	"team": [
 		{
 			"method": "get",
 			"url": "/team",
 			"query": {
-				"_id": "5ab1768bceec0418f52e198f"
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"required": ["_id", "project"],
+				"properties": {
+					"_id": {
+						"$ref": "common.json#/_id"
+					},
+					"project": {
+						"enum": ["FULL","SMALL"]
+					}
+				}
 			},
 			"response": {
-				"200": [
-					"Team"
-				],
-				"400": [
-					"Bad Request"
-				],
-				"404": [
-					"Not Found"
-				]
+				"200": true
 			},
 			"title": "Get team",
 			"description": ""
@@ -408,53 +410,39 @@
 		{
 			"method": "put",
 			"url": "/team/invite",
-			"query": {
-				"team": "_id",
-				"invited": "_id"
+			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"required": ["team","invited"],
+				"properties" : {
+					"team": {
+						"$ref": "common.json#/_id"
+					},
+					"invited": {
+						"type": "array",
+						"minItems": 1,
+						"items": {"$ref": "common.json#/_id"}
+					}
+				}
 			},
 			"response": {
-				"200": [
-					"OK"
-				],
-				"400": [
-					"Bad Request"
-				]
+				"200": true
 			},
-			"title": "Invite user to team",
+			"title": "Invite users to team",
 			"description": "Invite 'invited' user in 'team'. The user who invites must be a team admin."
 		},
 		{
 			"method": "put",
-			"url": "/team/respond-invite",
-			"query": {
-				"team": "_id",
-				"response": [
-					"y",
-					"n"
-				]
-			},
-			"response": {
-				"200": [
-					"OK"
-				]
-			},
-			"title": "Respond invite",
-			"description": ""
-		},
-		{
-			"method": "put",
 			"url": "/team/challenge",
-			"query": {
-				"team": "_id",
-				"enemy": "_id"
+			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"required": ["team","enemy"],
+				"properties" : {
+					"team": { "$ref": "common.json#/_id" },
+					"enemy": { "$ref": "common.json#/_id" }
+				}
 			},
 			"response": {
-				"200": [
-					"OK"
-				],
-				"400": [
-					"Bad Request"
-				]
+				"200": true
 			},
 			"title": "Challenge team",
 			"description": "In order to challenge the user must be a team admin."
@@ -462,51 +450,63 @@
 		{
 			"method": "put",
 			"url": "/team/respond-news",
-			"query": {
-				"team": "_id",
-				"enemy": "_id",
-				"response": [
-					"y",
-					"n"
-				]
+			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"required": ["team","news","response"],
+				"properties" : {
+					"team": {
+						"$ref": "common.json#/_id"
+					},
+					"news": {
+						"$ref": "common.json#/_id"
+					},
+					"response": {
+						"enum": ["y","n"]
+					}
+				}
 			},
 			"response": {
-				"200": [
-					"OK"
-				],
-				"400": [
-					"Bad Request"
-				]
+				"200" : true
 			},
-			"title": "Respond team challenge",
-			"description": "In order to respond the challenge the user must be team admin."
+			"title": "Respond team news",
+			"description": "In order to respond the user must be team admin."
 		},
 		{
 			"method": "post",
 			"url": "/team/create",
-			"data": {
-				"name": "bestTeamEver",
-				"invited": [
-					"_ids"
-				]
+			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"required": ["name","invited"],
+				"properties" : {
+					"name": {
+						"$ref": "common.json#/username"
+					},
+					"invited": {
+						"type": "array",
+						"items": {"$ref": "common.json#/_id"}
+					}
+				}
 			},
 			"response": {
-				"200": [
-					"OK"
-				],
-				"400": [
-					"Bad Request",
-					"Name already taken"
-				]
+				"200": true
 			},
-			"title": "Create team",
+			"title": "Create team and invites users.",
 			"description": "Team names follow the same rules of usernames."
 		},
 		{
 			"method": "delete",
 			"url": "/team",
-			"query": {
-				"_id": "5abbd738ca93b62b48ff2f3b"
+			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"required": ["team","name"],
+				"properties" : {
+					"team": {
+						"$ref": "common.json#/_id"
+					},
+					"name": {
+						"$ref": "common.json#/username"
+					}
+				}
 			},
 			"response": {
 				"200": [
@@ -514,7 +514,7 @@
 				]
 			},
 			"title": "Delete team",
-			"description": "Rules TODO"
+			"description": "Must send team name as captcha."
 		}
 	],
 	"game": [
@@ -522,6 +522,7 @@
 			"method": "put",
 			"url": "/game/search",
 			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
 				"required": ["type"],
 				"properties": {
 					"type": {
@@ -546,6 +547,7 @@
 			"method": "put",
 			"url": "/game/stop-search",
 			"body": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
 				"required": ["type"],
 				"properties": {
 					"type": {
@@ -565,6 +567,6 @@
 			},
 			"title": "Exit the matchmaker",
 			"description": "If a team-type game is requested, the team _id must be passed."
-		},
+		}
 	]
 }

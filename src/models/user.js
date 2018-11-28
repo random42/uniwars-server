@@ -419,4 +419,32 @@ export class User extends Model {
       }
     })
   }
+
+  hasFriends(users: ID[]) : boolean {
+    let b = true
+    const friends = this.friends
+    for (let u of users) {
+      if (!(_.find(friends, (f) => f._id.equals(u)))) {
+        b = false
+        break
+      }
+    }
+    return b
+  }
+
+  isOnline() : boolean {
+    return this.online
+  }
+
+  hasBlocked(users: ID[], scopes : Object) : boolean {
+    let b = true
+    const array = _.filter(this.blocked_users, scopes)
+    for (let u of users) {
+      if (!(_.find(array, (f) => f._id.equals(u)))) {
+        b = false
+        break
+      }
+    }
+    return b
+  }
 }

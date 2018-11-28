@@ -210,6 +210,10 @@ export class Team extends Model {
     return doc ? true : false
   }
 
+
+  /**
+   * True if all users are members
+   */
   static async areMembers(team: ID, users: ID[]) : Promise<boolean> {
     const doc = await DB.get('teams').findOne({
       _id: team,
@@ -218,6 +222,20 @@ export class Team extends Model {
       }
     }, { fields : { _id: 1 }})
     return doc ? true : false
+  }
+
+
+  /**
+   * True if all users are not members
+   */
+  static async areNotMembers(team: ID, users: ID[]) : Promise<boolean> {
+    const doc = await DB.get('teams').findOne({
+      _id: team,
+      'users._id': {
+        $in: users
+      }
+    }, { fields : { _id: 1 }})
+    return doc ? false : true
   }
 
   static async isFounder(team: ID, user: ID) : Promise<boolean> {
@@ -260,6 +278,56 @@ export class Team extends Model {
       }
     ])
     return docs
+  }
+
+  areAdmins(users: ID[]) : boolean {
+    let b = true
+    const array = _.filter(this.users, { admin: true})
+    for (let u of users) {
+      const admin = _.find(array, (a) => {
+        a._id.equals(u)
+      })
+      if (!admin) {
+        b = false
+        break
+      }
+    }
+    return b
+  }
+
+  areMembers(users: ID[]) : boolean {
+    let b = true
+    const array = this.users
+    for (let u of users) {
+      const member = _.find(array, (a) => {
+        a._id.equals(u)
+      })
+      if (!member) {
+        b = false
+        break
+      }
+    }
+    return b
+  }
+
+  areNotMembers(users: ID[]) : boolean {
+    let b = true
+    const array = this.users
+    for (let u of users) {
+      const member = _.find(array, (a) => {
+        a._id.equals(u)
+      })
+      if (member) {
+        b = false
+        break
+      }
+    }
+    return b
+  }
+
+  isFounder(user: ID) : boolean {
+    const founder = _.filter(this.users, { founder: true })[0]
+    return founder._id.equals(user)
   }
 
 }
