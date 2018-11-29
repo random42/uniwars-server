@@ -1,3 +1,5 @@
+// flow
+
 import { DB } from '../db';
 import monk from 'monk';
 import { Model, Question, User, Team } from '../models'
@@ -19,23 +21,23 @@ import {
 
 export class Game extends Model {
 
-  // _id: ID
-  // status: GameStatus
-  // created_at: number
-  // ended_at: number
-  // type: GameType
-  // players: Array<{
-  //   _id: ID,
-  //   side: 0 | 1,
-  //   index: number,
-  //   answers: Array<{
-  //     question: ID,
-  //     answer: string
-  //   }>,
-  //   perf: Perf
-  // }>
-  // questions: ID[] | Question[]
-  // result: GameResult
+  _id: ID
+  status: GameStatus
+  created_at: number
+  ended_at: number
+  type: GameType
+  players: Array<{
+    _id: ID,
+    side: 0 | 1,
+    index: number,
+    answers: Array<{
+      question: ID,
+      answer: string
+    }>,
+    perf: Perf
+  }>
+  questions: ID[] | Question[]
+  result: GameResult
 
   // return undefined if at least one player is not connected
   // else return this

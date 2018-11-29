@@ -8,7 +8,7 @@
 		"IN": [
 			{
 				"event": "join",
-				"object": {
+				"data": {
 					"game": "_id",
 					"response": "y"
 				},
@@ -17,7 +17,7 @@
 			},
 			{
 				"event": "answer",
-				"object": {
+				"data": {
 					"game": "_id",
 					"question": "_id",
 					"answer": "answer"
@@ -29,7 +29,7 @@
 		"OUT": [
 			{
 				"event": "new_game",
-				"object": {
+				"data": {
 					"_id": "game _id",
 					"type": "solo"
 				},
@@ -38,7 +38,7 @@
 			},
 			{
 				"event": "game_start",
-				"object": {
+				"data": {
 					"game": "object"
 				},
 				"response": null,
@@ -46,7 +46,7 @@
 			},
 			{
 				"event": "question",
-				"object": {
+				"data": {
 					"game": "_id",
 					"question": "object"
 				},
@@ -55,7 +55,7 @@
 			},
 			{
 				"event": "mate_answer",
-				"object": {
+				"data": {
 					"user": "_id",
 					"question": "_id",
 					"answer": ""
@@ -64,7 +64,11 @@
 				"description": "Notifies a user of a teammate answer.\n          It also notifies a user of his own answers."
 			},
 			{
-				"event": "game_end"
+				"event": "game_end",
+				"data": {
+					"game": "_id",
+					"result": 1
+				}
 			}
 		]
 	}

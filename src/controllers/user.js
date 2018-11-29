@@ -45,7 +45,6 @@ export class UserCtrl {
     socket.main.emitToUser(user, 'news', news)
   }
 
-
   /**
    * Handle consequence of response to the news
    *
