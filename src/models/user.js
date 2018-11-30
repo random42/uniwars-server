@@ -333,7 +333,7 @@ export class User extends Model {
    */
   static async removeFriendship(userA : ID, userB : ID) {
     let ops = []
-    let update = (id1 : ID, id2 : ID) => {
+    const update = (id1 : ID, id2 : ID) => {
       return DB.get('users').findOneAndUpdate(id1, {
         $pull: {
           'friends': {
@@ -353,7 +353,10 @@ export class User extends Model {
         'friends': { _id: userB, start_date: Date.now() }
       }
     })
-    return Promise.all([update(userA,userB), update(userB, userA)])
+    return Promise.all([
+      update(userA,userB),
+      update(userB, userA)
+    ])
   }
 
   static async addOnlineTime(user: ID, time : number) {
@@ -424,7 +427,7 @@ export class User extends Model {
     let b = true
     const friends = this.friends
     for (let u of users) {
-      if (!(_.find(friends, (f) => f._id.equals(u)))) {
+      if (!(_.find(friends, { _id: u }))) {
         b = false
         break
       }
@@ -440,7 +443,7 @@ export class User extends Model {
     let b = true
     const array = _.filter(this.blocked_users, scopes)
     for (let u of users) {
-      if (!(_.find(array, (f) => f._id.equals(u)))) {
+      if (!(_.find(array, { _id: u }))) {
         b = false
         break
       }

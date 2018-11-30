@@ -142,23 +142,25 @@ const game = {
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
+  "prize": 100,
   "created_at": Date.now(),
   "ended_at": Date.now(),
   "type": "solo", // solo, squad, team
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1
-    "question_index": 0, // index of current question
     // TODO
     "answers": [{
       "question": "_id",
       "answer": ""
     }],
     "perf": {} // user perf, useful to have an improvement function of users
+    // other users' fields during the game
   }],
   // if it is a team game
   "teams": ["_ids"],
-  "questions": ["_ids"],
+  "current_question": 0,
+  "questions": ["_ids"], // full objects during the game
   "result": 1, // 1 if side0 wins, 0.5 draw, 0 side1 wins
   "status": "play", // create, play, end
 }

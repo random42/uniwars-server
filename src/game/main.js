@@ -1,13 +1,14 @@
-// flow
+// @flow
 
+import type { ID, GameType } from '../types'
 import { DB } from '../db';
-import monk from 'monk';
+import { id } from 'monk';
 import { Model, Question, User, Team } from '../models'
 //import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
-import { game as namespace } from '../socket';
+import { game as nsp } from '../socket';
 import { mm } from '../utils';
-import { Rating } from '../utils'
-import { Maps } from './cache';
+import Utils, { Rating } from '../utils'
+import { Cache } from './cache';
 import _ from 'lodash/core'
 const debug = require('debug')('game:main')
 import {
@@ -21,79 +22,69 @@ import {
 
 export class Game extends Model {
 
-  _id: ID
-  status: GameStatus
-  created_at: number
-  ended_at: number
-  type: GameType
-  players: Array<{
-    _id: ID,
-    side: 0 | 1,
-    index: number,
-    answers: Array<{
-      question: ID,
-      answer: string
-    }>,
-    perf: Perf
-  }>
-  questions: ID[] | Question[]
-  result: GameResult
+  joined : ID[] // players who joined
+  joinTimeout: any
 
-  // return undefined if at least one player is not connected
-  // else return this
-  create() {
+
+  /**
+   * Start game by checking players' connection and sending 'new_game'
+   * event. Sets joinTimeout in case not all clients respond with 'join' event
+   * Object is saved in Cache.starting
+   */
+  start() : Game {
     // checks all players are connected, if not...
     // pushes all connected players back into the matchmaker
-    let conns = this.connected();
-    // if (conns.length < this.players.length) {
-    //   mm[this.type].push(conns);
-    //   //debug(this._id, 'Not all players are connected')
-    //   return
-    // }
+    let conns = this.connected()
+    if (conns.length < this.players.length) {
+      debug(this._id, 'Not all players are connected')
+      return
+    }
     // keep the game in memory
-    Maps.starting.set(this._id, this)
+    Cache.starting.set(this._id, this)
     this.status = 'create'
     // array of players who emitted 'join' message
     this.joined = []
     // creating game room
-    for (let p of this.players) {
-      // player connection has been checked before
-      // namespace.connections.has(p._id) &&
-      namespace.connections.get(p._id).join(this._id)
-    }
+    nsp.joinRoom(this.playersIds(), this._id.toString())
     // emitting new_game message
     this.emit('new_game', {_id: this._id, type: this.type});
     // game gets canceled if at least one player does not join
     this.joinTimeout = setTimeout(() => this.cancel(), GAME_JOIN_TIMEOUT);
-    return this;
+    return this
   }
 
-  // starts game if all players joined
-  join(user) {
+
+  /**
+   * Called when player sends 'join' message. Returns true if joins successfully.
+   */
+  join(user : ID) : boolean {
     if (this.status !== 'create' || // wrong status
       !this.isPlayer(user) || // wrong player
       // player has joined yet
-      this.joined.indexOf(user) >= 0) return
-    else {
-      let length = this.joined.push(user);
-      // if all players have joined
-      if (length === this.players.length) {
-        // start game
-        clearTimeout(this.joinTimeout);
-        delete this.joined;
-        delete this.joinTimeout;
-        // delete game from RAM,
-        // from now on all read and write is done in DB
-        Maps.starting.delete(this._id)
-        this.start();
-      }
+      this.joined.indexOf(user) >= 0) return false
+    let length = this.joined.push(user);
+    // if all players have joined
+    if (length === this.players.length) {
+      // start game
+      clearTimeout(this.joinTimeout);
+      delete this.joined;
+      delete this.joinTimeout;
+      // delete game from RAM,
+      // from now on all read and write is done in DB
+      Cache.starting.delete(this._id)
+      this.play()
     }
   }
 
+
+  /**
+   * Sets questions by choosing ones that none of the players
+   * have seen recently and updates game in db.
+   */
   async createQuestions() {
     // query last questions from users
-    let last_questions = await DB.get('users').aggregate([
-      {$match: {_id: {$in: Object.keys(this.players)}}},
+    const last_questions = await DB.get('users').aggregate([
+      {$match: {_id: {$in: this.playersIds()}}},
       {$unwind: "$private.last_questions"},
       {$group: {
         _id: "$private.last_questions",
@@ -103,171 +94,111 @@ export class Game extends Model {
       }}
     ])
     // query a sample of questions that don't match with users' last questions
-    let questions = await DB.get('questions').aggregate([
+    const questions = await DB.get('questions').aggregate([
       {$match: {
         _id: {$nin: last_questions.map(q => q._id)}
       }},
       {$sample: {size: GAME_QUESTIONS}},
     ])
+    await DB.get('games').findOneAndUpdate(this._id, {
+      $set: {
+        questions: questions
+      }
+    })
     this.questions = questions
     // couldn't quite do it with one aggregation pipeline
   }
 
-  async fetchUsers(...fields) {
-    return DB.get('users').find({
+
+  /**
+   * Should not be used because users' properties are saved in 'players'
+   * while the game is on.
+   */
+  async fetchUsers(projection : Object) : Promise<User[]> {
+    const docs = await DB.get('users').find({
       _id: {
-        $in: this.players.map(p => p._id)
+        $in: this.playersIds()
       }
-    }, fields, {multi: true})
+    },
+    {
+      multi: true,
+      fields: projection
+    })
+    return docs.map(User)
   }
 
-  // look up users and teams infos
-  async clientInfos(users) {
-  }
 
-  async insertInDb() {
-    let obj = JSON.parse(JSON.stringify(this))
-    obj._id = monk.id(obj._id)
-    for (let i in obj.players) {
-      let player = obj.players[i]
-      player._id = monk.id(player._id)
-    }
-    obj.questions = obj.questions.map((q) => monk.id(q._id))
-    return DB.get('games').insert(obj)
-  }
-
-  copyFields(users, ...fields) {
-    for (let i in users) {
-      let player = this.getPlayer(users[i]._id)
-      for (let f of fields) {
-        player[f] = users[i][f]
-      }
-    }
-  }
-
-  async start() {
+  /**
+   * Called after all players have joined. Emits 'game_start' event
+   * and send first question after GAME_START_TIMEOUT
+   */
+  async play() {
     this.status = 'play'
     debug('Start', this._id)
-    Maps.q_timeouts.set(this._id, new Map())
     this.created_at = Date.now()
-    let ops = await Promise.all([
-      this.createQuestions(),
-      this.fetchUsers('username','perf','picture')
-    ])
-    let users = ops[1]
-    this.copyFields(users, 'perf', 'username', 'picture')
-    // let's not inform the client about the questions' _ids
     // sending game_start event
     this.emit('game_start', {game: {
-      ...this,
-      questions: []
-    }});
-    // pushing into the DB
-    await this.insertInDb()
-    this.stringify()
+      ...this
+    }})
     // set timeout for emitting first question
     setTimeout(() => {
-      for (let p of this.players) {
-        this.sendQuestion(p._id)
-      }
+      this.sendQuestion()
     }, GAME_START_TIMEOUT)
   }
 
-  // if not all players have joined
+
+  /**
+   * Called on joinTimeout, when not all players have joined the game
+   */
   cancel() {
     if (this.status !== 'create') return
-    debug('cancel', this._id);
+    debug('cancel', this._id)
     // sending cancel_game event
     // this.emit('cancel_game',this._id)
     // deleting room
-    for (let p of this.players) {
-      namespace.connections.has(p._id) &&
-      namespace.connections.get(p._id).leave(this._id);
-    }
+    nsp.leaveRoom(this.playersIds(), this._id.toString())
     // putting joined users back in the matchmaker
     //mm[this.type].push(this.joined)
     // delete game
-    Maps.starting.delete(this._id)
+    Cache.starting.delete(this._id)
   }
 
-  emit(ev, ...message) {
-    namespace.in(this._id).emit(ev,...message);
-  }
-
-  emitToSide(side, ev, ...message) {
-    for (let player of this.players) {
-      player.side === side && namespace.connections.get(player._id).emit(ev,...message);
-    }
-  }
-
-  emitToPlayer(id, ev, ...message) {
-    namespace.connections.has(id) &&
-    namespace.connections.get(id).emit(ev, ...message)
-  }
-
-  async answer({user, question, answer}) {
-    let player = this.getPlayer(user)
-    if (!player) return Promise.reject("Wrong player")
-    let questions = this.questions
+  async answer(user: ID, question: ID, answer: string) {
+    const player = this.getPlayer(user)
+    if (!player) return
+    const questions = this.questions
     // if the user has no more questions
-    if (player.index === questions.length) return Promise.reject("No more questions");
-    let realQuestion = questions[player.index]
+    if (player.answers.length === questions.length) return
+    const realQuestion = questions[this.current_question]
     // wrong question
-    if (question !== realQuestion._id) {
-      return Promise.reject("Wrong question")
-    }
-    debug(JSON.stringify(arguments[0]))
-    // clears question timeout
-    clearTimeout(Maps.q_timeouts.get(this._id).get(user))
+    if (!realQuestion._id === question)
+      return
+    debug(JSON.stringify({user, question, answer}, null, '\t'))
     // modify the object
-    player.index++
     player.answers.push({question, answer})
     // update database
-    await models.game.setAnswer({game: this._id, user, question, answer})
+    await Game.pushAnswer(this._id, player._id, question, answer)
+    if (this.haveAllAnswered()) {
+      const timeout = Cache.timeouts.get(this._id.toString())
+      clearTimeout(timeout)
+    }
   }
 
-  sendQuestion(user) {
-    let player = this.getPlayer(user);
-    // don't send if player has answered all questions
-    if (player.index >= this.questions.length) return
-    // else
-    let _id = player._id;
-    let question = this.questions[player.index];
-    this.emitToPlayer(_id, 'question', {game: this._id, question});
+  /**
+   * sendQuestion - description
+   *
+   * @return {type}  description
+   */
+  sendQuestion() {
+    const question = this.questions[this.current_question];
+    this.emit('question', {game: this._id, question});
     // sets question timeout
-    Maps.q_timeouts.get(this._id).set(_id,
+    Cache.timeouts.set(
+      this._id.toString(),
       setTimeout(() => {
         this.answer({user: _id, question: question._id, answer: null})
-      }, GAME_ANSWER_TIMEOUT))
-  }
-
-  connected() {
-    let arr = [];
-    for (let p of this.players) {
-      if (namespace.connections.has(p._id)) {
-        arr.push(p._id)
-      }
-    }
-    return arr;
-  }
-
-  getPlayer(_id) {
-    return _.find(this.players, {_id})
-  }
-
-  isPlayer(_id) {
-    return _.find(this.players, {_id}) !== undefined
-  }
-
-  isOver() {
-    let questions = this.questions.length;
-    let players = this.players;
-    let sum = 0;
-    let max = questions * players.length;
-    for (let p of players) {
-      sum += p.index
-    }
-    return sum === max
+      }, GAME_ANSWER_TIMEOUT)
+    )
   }
 
   /*
@@ -363,10 +294,10 @@ export class Game extends Model {
     debug('Game end')
     console.time('end')
     // delete q_timeouts reference
-    Maps.q_timeouts.delete(this._id)
+    Cache.timeouts.delete(this._id)
     const stats = await this.getStats()
     debug('Stats')
-    debug(JSON.stringify(stats, null, 3));
+    debug(JSON.stringify(stats, null, 3))
     // all end updates methods have 'atEndUpdate' at the beginning
     let ops = []
     for (let i in this.prototype) {
@@ -406,7 +337,7 @@ export class Game extends Model {
           // pushing questions to last_questions
           // no need of $addToSet as questions cannot match
           'private.last_questions': {
-            $each: this.questions.map(q => monk.id(q._id)),
+            $each: this.questions.map(q => id(q._id)),
             // maintains a limited number of questions' records
             $slice: -MAX_QUESTIONS_RECORD
           },
@@ -449,6 +380,18 @@ export class Game extends Model {
     return Promise.all(ops)
   }
 
+  haveAllAnswered() : boolean {
+    let b = true
+    let i = 0
+    const index = this.current_question
+    while (i < this.players.length && b) {
+      const p = this.players[i]
+      if (p.answers.length !== index + 1)
+        b = false
+    }
+    return b
+  }
+
   // turns every ObjectID to String
   stringify() {
     let g = JSON.parse(JSON.stringify(this))
@@ -457,4 +400,79 @@ export class Game extends Model {
     }
   }
 
+  hasJoined(user : ID) : boolean {
+    return _.find(this.joined, user) ? true : false
+  }
+
+  emit(ev, ...message) {
+    nsp.in(this._id.toString()).emit(ev,...message);
+  }
+
+  emitToSide(side, ev, ...message) {
+    const users = _.filter(this.players, { side })
+    .map(p => p._id)
+    nsp.emitToUsers(users, ev, ...message)
+  }
+
+  emitToPlayer(id, ev, ...message) {
+    nsp.emitToUser(id, ev, ...message)
+  }
+
+  connected() {
+    return nsp.areConnected(this.playersIds())
+  }
+
+  playersIds() {
+    return this.players.map(p => p._id)
+  }
+
+  getPlayer(_id) {
+    return _.find(this.players, { _id })
+  }
+
+  isPlayer(_id) {
+    return this.getPlayer(_id) ? true : false
+  }
+
+  isOver() {
+    const questions = this.questions.length;
+    const players = this.players;
+    let sum = 0;
+    const max = questions * players.length;
+    for (let p of players) {
+      sum += p.answers.length
+    }
+    return sum === max
+  }
+
+  static async pushAnswer(game: ID, user: ID, question: ID, answer: string) {
+    return DB.get('games').findOneAndUpdate({
+      _id: game,
+      players: {
+        $elemMatch: {
+          _id: user
+        }
+      }
+      },
+      {
+        $push: {
+          'players.$.answers': {
+            question: id(question),
+            answer
+          }
+        }
+      }
+    )
+  }
+
+  /**
+   * Increment current_question by 1
+   */
+  static async incQuestion(game: ID) {
+    return DB.get('games').findOneAndUpdate(game, {
+      $inc: {
+        current_question: 1
+      }
+      })
+  }
 }

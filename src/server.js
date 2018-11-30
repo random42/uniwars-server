@@ -5,7 +5,9 @@
  */
 
 import "@babel/polyfill"
+require('./socket/init')
 
+// require('./test')
 import app from './app'
 import { DB } from './db'
 const debug = require('debug')('uniwars:server')

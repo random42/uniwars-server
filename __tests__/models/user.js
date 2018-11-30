@@ -1,6 +1,6 @@
 // @test-environment env
 
-import { User, Uni, Major, Model } from '../../build_flow/models'
+import { User, Uni, Model } from '../../build_flow/models'
 import { DB } from '../../build_flow/db'
 import _ from 'lodash'
 import monk from 'monk'

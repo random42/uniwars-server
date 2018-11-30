@@ -1,4 +1,4 @@
-export const Maps = {
+export const Cache = {
   /**
    *
    *  starting games indexed by _id
@@ -11,7 +11,7 @@ export const Maps = {
 
   /**
     key: game_id
-    value: Map => {key: user_id, value: question timeout}
+    value: timeout
   */
   timeouts: new Map(),
 }

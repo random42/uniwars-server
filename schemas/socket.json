@@ -1,16 +1,20 @@
 {
 	"/": {
 		"IN": [],
-		"OUT": [
-		]
+		"OUT": []
 	},
 	"/game": {
 		"IN": [
 			{
 				"event": "join",
 				"data": {
-					"game": "_id",
-					"response": "y"
+					"$schema": "http://json-schema.org/draft-07/schema#",
+					"properties": {
+						"game": { "$ref": "common.json#/_id"},
+						"response": {
+							"enum": ["y","n"]
+						}
+					}
 				},
 				"response": "game_start",
 				"description": "Response to 'new_game' event."
@@ -18,11 +22,17 @@
 			{
 				"event": "answer",
 				"data": {
-					"game": "_id",
-					"question": "_id",
-					"answer": "answer"
+					"$schema": "http://json-schema.org/draft-07/schema#",
+					"properties": {
+						"game": { "$ref": "common.json#/_id"},
+						"question": { "$ref": "common.json#/_id"},
+						"answer": {
+							"type": "string",
+							"maxLength": "100"
+						}
+					}
 				},
-				"response": "question",
+				"response": "question/game_end",
 				"description": "Guess what"
 			}
 		],
@@ -30,8 +40,11 @@
 			{
 				"event": "new_game",
 				"data": {
-					"_id": "game _id",
-					"type": "solo"
+					"$schema": "http://json-schema.org/draft-07/schema#",
+					"properties": {
+						"game": { "$ref": "common.json#/_id"},
+						"type": { "$ref": "common.json#/game_type"},
+					}
 				},
 				"response": "join",
 				"description": "A new game can start, user must respond with 'join' message."
@@ -39,7 +52,12 @@
 			{
 				"event": "game_start",
 				"data": {
-					"game": "object"
+					"$schema": "http://json-schema.org/draft-07/schema#",
+					"properties": {
+						"game": {
+							"type": "object"
+						}
+					}
 				},
 				"response": null,
 				"description": "All players joined the game, so it's officially started.\n        The game sent has all teams' and users' infos for the client to render."
@@ -47,27 +65,25 @@
 			{
 				"event": "question",
 				"data": {
-					"game": "_id",
-					"question": "object"
+					"$schema": "http://json-schema.org/draft-07/schema#",
+					"properties": {
+						"game": { "$ref": "common.json#/_id"},
+						"question": {
+							"type": "object"
+						}
+					}
 				},
 				"response": "answer",
 				"description": "Each question will be sent alone. After this message the question timer will start."
 			},
 			{
-				"event": "mate_answer",
-				"data": {
-					"user": "_id",
-					"question": "_id",
-					"answer": ""
-				},
-				"response": null,
-				"description": "Notifies a user of a teammate answer.\n          It also notifies a user of his own answers."
-			},
-			{
 				"event": "game_end",
 				"data": {
-					"game": "_id",
-					"result": 1
+					"$schema": "http://json-schema.org/draft-07/schema#",
+					"properties": {
+						"game": { "$ref": "common.json#/_id"},
+						"result": { "$ref": "common.json#/game_result"}
+					}
 				}
 			}
 		]

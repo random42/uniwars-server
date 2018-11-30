@@ -21,13 +21,6 @@ export default async function(socket: Socket, data: Object) {
     next();
     // packet is array [event,...message]
   })
-  //EVENTS
-  socket.on('search',({type}) => {
-    mm[type] && mm[type].push(user)
-  });
-  socket.on('stop_search',({type}) => {
-    mm[type] && mm[type].pull(user)
-  })
 
   // after new_game event emitted
   socket.on('join',({game}) => {

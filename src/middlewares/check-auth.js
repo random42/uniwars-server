@@ -16,7 +16,7 @@ export function checkAuth(req, res, next) {
     if (decode._id !== user) {
       return res.sendStatus(401)
     }
-    req.user = monk.id(user)
+    req.user = user
     next()
   } catch(err) {
     res.status(401).json({error: err})

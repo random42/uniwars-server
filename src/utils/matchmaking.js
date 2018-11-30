@@ -1,6 +1,6 @@
 import monk from 'monk';
 const debug = require('debug')('mm')
-import { Game } from '../game'
+import { createGame } from '../game'
 
 // 1v1
 class Solo {
@@ -32,7 +32,7 @@ class Solo {
     const side0 = [players[0]]
     const side1 = [players[1]]
     debug('Matching',players);
-    Game.create(side0, side1, 'solo');
+    createGame(side0, side1, 'solo');
   }
 }
 
@@ -64,8 +64,8 @@ class Squad {
     let players = this.queue.splice(0,10)
     const side0 = players.slice(0,5);
     const side1 = players.slice(5,10);
-    debug('Matching',side0,side1);
-    Game.create(side0, side1, 'squad')
+    debug('Matching',side0,side1)
+    createGame(side0, side1, 'squad')
   }
 }
 

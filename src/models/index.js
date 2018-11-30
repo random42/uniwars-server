@@ -1,5 +1,3 @@
-// @flow
-
 export {Model} from './model'
 export {Question} from './question'
 export {Team} from './team'

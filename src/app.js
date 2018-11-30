@@ -9,14 +9,12 @@ import  bodyParser  from 'body-parser'
 import routes from './routes'
 import { DB } from './db'
 import { checkAuth, checkSchema } from './middlewares'
-import passport from 'passport'
 import security from './security'
 import  cors  from 'cors'
-require('./socket/init')
 
 let app = express()
 const PROJECT_DIR = path.normalize(path.join(__dirname, '..'))
-//
+
 // app.set('views', path.join(PROJECT_DIR, 'views'))
 // app.set('view engine', 'jade')
 // cross origins middlewares
@@ -33,7 +31,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.raw({type: 'application/octet-stream'}));
 app.use(cookieParser())
-app.use(passport.initialize())
+//app.use(passport.initialize())
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(queryParser())
 app.use(checkSchema)
@@ -64,8 +62,8 @@ app.use((req, res, next) => {
 
 // routes
 app.use('/user', checkAuth, routes.user)
-app.use('/uni', checkAuth, routes.uni)
-app.use('/team', checkAuth, routes.team)
+//app.use('/uni', checkAuth, routes.uni)
+//app.use('/team', checkAuth, routes.team)
 app.use('/auth', routes.auth)
 
 // catch 404 and forward to error handler

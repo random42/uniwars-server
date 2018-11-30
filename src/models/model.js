@@ -3,25 +3,25 @@ import monk from 'monk'
 import { DB, Pipeline } from '../db'
 import type { ID, Collection } from '../types'
 import _ from 'lodash'
+import utils from '../utils'
 
 /**
  *
- * @param arg Most of the times is a document object to load. Otherwise
- * it can be an ObjectID or an _id string (that will be converted to ObjectID)
+ * @param arg Most times is a document, else it can be an _id string.
  */
 export class Model {
 
   _id: ID
 
-  constructor(arg : ID | string | Object) {
+  constructor(arg : ID | Object) {
     switch (typeof arg) {
       case 'string' : {
-        this._id = monk.id(arg)
+        this._id = arg
         break
       }
       case 'object': {
-        if (arg.constructor && arg.constructor.name === 'ObjectID')
-          this._id = arg
+        if (utils.isObjectId(arg))
+          this._id = arg.toString()
         else
           this.loadObject(arg)
         break
@@ -138,7 +138,7 @@ export class Model {
       projection: {news: 1},
       returnOriginal: true
     })
-    const newsObj = _.find(doc.news, (o) => o._id.equals(news))
+    const newsObj = _.find(doc.news, { _id: news })
     return newsObj
   }
 
@@ -150,7 +150,7 @@ export class Model {
     const doc = await DB.get(_class.COLLECTION).findOne(query, {
       fields: {news: 1}
     })
-    const newsObj = _.find(doc.news, (o) => o._id.equals(news))
+    const newsObj = _.find(doc.news, { _id, news })
     return newsObj
   }
 

@@ -134,7 +134,7 @@ export class Team extends Model {
   static async makeAdmins(team : ID, users : ID[]) {
     let obj = await DB.get('teams').findOne(team)
     users.forEach(u => {
-      let d = _.find(obj.users, (o) => o._id.equals(u))
+      let d = _.find(obj.users, { _id : u })
       if (d)
         d.admin = true
     })
@@ -144,7 +144,7 @@ export class Team extends Model {
   static async removeAdmins(team : ID, users : ID[]) {
     let obj = await DB.get('teams').findOne(team)
     users.forEach(u => {
-      let d = _.find(obj.users, (o) => o._id.equals(u))
+      let d = _.find(obj.users, { _id : u }
       if (d)
         delete d.admin
     })
@@ -284,9 +284,7 @@ export class Team extends Model {
     let b = true
     const array = _.filter(this.users, { admin: true})
     for (let u of users) {
-      const admin = _.find(array, (a) => {
-        a._id.equals(u)
-      })
+      const admin = _.find(array, { _id: u })
       if (!admin) {
         b = false
         break
@@ -299,9 +297,7 @@ export class Team extends Model {
     let b = true
     const array = this.users
     for (let u of users) {
-      const member = _.find(array, (a) => {
-        a._id.equals(u)
-      })
+      const member = _.find(array, { _id: u })
       if (!member) {
         b = false
         break
@@ -314,9 +310,7 @@ export class Team extends Model {
     let b = true
     const array = this.users
     for (let u of users) {
-      const member = _.find(array, (a) => {
-        a._id.equals(u)
-      })
+      const member = _.find(array, { _id: u })
       if (member) {
         b = false
         break
@@ -326,8 +320,7 @@ export class Team extends Model {
   }
 
   isFounder(user: ID) : boolean {
-    const founder = _.filter(this.users, { founder: true })[0]
-    return founder._id.equals(user)
+    return _.find(this.users, { _id: user, founder: true }) ? true : false
   }
 
 }

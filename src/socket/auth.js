@@ -2,7 +2,7 @@
 const debug = require('debug')('socket:auth')
 import { _ } from 'lodash/core';
 
-export default function (io: Object, {
+export default function (io, {
   authenticate,
   postAuth,
   manageNsps,
@@ -26,12 +26,12 @@ export default function (io: Object, {
     debug('new', socket.id)
     let tmout = setTimeout(() => {
       if (!socket.auth) {
-        debug('timeout', socket.id);
+        debug('timeout', socket.id)
         socket.disconnect(manageNsps)
       }
     }, timeout || 1000)
     socket.auth = false;
-    socket.on('auth', (data) => {
+    socket.once('auth', (data) => {
       authenticate(socket, data)
       .then((user) => {
         if (user) {
@@ -45,7 +45,8 @@ export default function (io: Object, {
           }
           onAuth(obj, data)
         }
-      }).catch(console.log)
+      })
+      .catch(console.log)
     })
     socket.on('disconnect', (reason) => {
       debug(reason)
