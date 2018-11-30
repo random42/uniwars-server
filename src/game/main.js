@@ -4,7 +4,7 @@ import type { ID, GameType } from '../types'
 import { DB } from '../db';
 import { id } from 'monk';
 import { Model, Question, User, Team } from '../models'
-//import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
+import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
 import { game as nsp } from '../socket';
 import { mm } from '../utils';
 import Utils, { Rating } from '../utils'
@@ -45,7 +45,7 @@ export class Game extends Model {
     // array of players who emitted 'join' message
     this.joined = []
     // creating game room
-    nsp.joinRoom(this.playersIds(), this._id.toString())
+    nsp.joinRoom(this.playersIds(), this._id)
     // emitting new_game message
     this.emit('new_game', {_id: this._id, type: this.type});
     // game gets canceled if at least one player does not join
@@ -83,7 +83,7 @@ export class Game extends Model {
    */
   async createQuestions() {
     // query last questions from users
-    const last_questions = await DB.get('users').aggregate([
+    const lastQuestions = await DB.get('users').aggregate([
       {$match: {_id: {$in: this.playersIds()}}},
       {$unwind: "$private.last_questions"},
       {$group: {
@@ -96,7 +96,7 @@ export class Game extends Model {
     // query a sample of questions that don't match with users' last questions
     const questions = await DB.get('questions').aggregate([
       {$match: {
-        _id: {$nin: last_questions.map(q => q._id)}
+        _id: {$nin: lastQuestions.map(q => q._id)}
       }},
       {$sample: {size: GAME_QUESTIONS}},
     ])
@@ -140,6 +140,7 @@ export class Game extends Model {
     this.emit('game_start', {game: {
       ...this
     }})
+    await this.createQuestions()
     // set timeout for emitting first question
     setTimeout(() => {
       this.sendQuestion()
@@ -156,7 +157,7 @@ export class Game extends Model {
     // sending cancel_game event
     // this.emit('cancel_game',this._id)
     // deleting room
-    nsp.leaveRoom(this.playersIds(), this._id.toString())
+    nsp.leaveRoom(this.playersIds(), this._id)
     // putting joined users back in the matchmaker
     //mm[this.type].push(this.joined)
     // delete game
@@ -179,7 +180,7 @@ export class Game extends Model {
     // update database
     await Game.pushAnswer(this._id, player._id, question, answer)
     if (this.haveAllAnswered()) {
-      const timeout = Cache.timeouts.get(this._id.toString())
+      const timeout = Cache.timeouts.get(this._id)
       clearTimeout(timeout)
     }
   }
@@ -194,7 +195,7 @@ export class Game extends Model {
     this.emit('question', {game: this._id, question});
     // sets question timeout
     Cache.timeouts.set(
-      this._id.toString(),
+      this._id,
       setTimeout(() => {
         this.answer({user: _id, question: question._id, answer: null})
       }, GAME_ANSWER_TIMEOUT)
@@ -405,7 +406,7 @@ export class Game extends Model {
   }
 
   emit(ev, ...message) {
-    nsp.in(this._id.toString()).emit(ev,...message);
+    nsp.in(this._id).emit(ev,...message);
   }
 
   emitToSide(side, ev, ...message) {
@@ -435,24 +436,30 @@ export class Game extends Model {
   }
 
   isOver() {
-    const questions = this.questions.length;
-    const players = this.players;
+    const questions = this.questions.length
+    const players = this.players
     let sum = 0;
-    const max = questions * players.length;
+    const max = questions * players.length
     for (let p of players) {
       sum += p.answers.length
     }
     return sum === max
   }
 
+  static questionTimeout(game: ID) {
+
+  }
+
+  static sendQuestion()
+
   static async pushAnswer(game: ID, user: ID, question: ID, answer: string) {
     return DB.get('games').findOneAndUpdate({
-      _id: game,
-      players: {
-        $elemMatch: {
-          _id: user
+        _id: game,
+        players: {
+          $elemMatch: {
+            _id: user
+          }
         }
-      }
       },
       {
         $push: {
@@ -473,6 +480,6 @@ export class Game extends Model {
       $inc: {
         current_question: 1
       }
-      })
+    })
   }
 }

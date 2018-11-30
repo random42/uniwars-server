@@ -160,6 +160,7 @@ const game = {
   // if it is a team game
   "teams": ["_ids"],
   "current_question": 0,
+  "question_timeout": Date.now(),
   "questions": ["_ids"], // full objects during the game
   "result": 1, // 1 if side0 wins, 0.5 draw, 0 side1 wins
   "status": "play", // create, play, end
