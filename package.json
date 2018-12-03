@@ -29,7 +29,7 @@
     "express": "~4.15.5",
     "express-query-int": "^3.0.0",
     "express-validator": "^5.3.0",
-    "glicko2": "^0.8.4",
+    "glicko2-lite": "^1.0.1",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.10",
     "mongodb": "^3.1.9",

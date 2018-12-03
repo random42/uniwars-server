@@ -1,8 +1,5 @@
-// @flow
-
 export { Game } from './main'
 export { Solo } from './solo'
-export { Squad } from './squad'
-export { Team } from './team'
+export * as Rating from './rating'
 export default module.exports
 export { createGame, fetchGame } from './utils'

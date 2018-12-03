@@ -4,12 +4,7 @@ import Ajv from 'ajv'
 const USER = require('../../schemas/user.json')
 const COMMON = require('../../schemas/common.json')
 const HTTP = require('../../schemas/http.json')
-let ROUTES = new Map()
-for (let i in HTTP) {
-  for (let route of HTTP[i]) {
-    ROUTES.set(route.url, route)
-  }
-}
+const ROUTES = _.concat(HTTP.user, HTTP.game, HTTP.auth)
 
 const ajv = new Ajv({schemas: {
   'user.json': USER,
@@ -19,9 +14,9 @@ const ajv = new Ajv({schemas: {
 
 export function checkSchema(req, res, next) {
   const { path } = req
-  if (!ROUTES.has(path))
+  const route = _.find(ROUTES, { url: path })
+  if (!route)
     return res.sendStatus(404)
-  const route = ROUTES.get(path)
   let pass = true
   if (route.query && pass) {
     pass = ajv.validate(route.query, req.query)

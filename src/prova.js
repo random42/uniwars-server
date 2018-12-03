@@ -4,6 +4,7 @@ import utils from './utils'
 
 const games = DB.get('games')
 
+
 let obj = {
   "_id": "5abbd98270534c2bf947416c",
   "prize": 100,
@@ -14,7 +15,6 @@ let obj = {
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1
-    "username": "random",
     "joined": true, // tells if player has joined the game
     // TODO
     "answers": [{
@@ -22,7 +22,7 @@ let obj = {
       "answer": "",
       "time": 3494 // milliseconds of answer
     }],
-    "perf": {} // user perf, useful to have an improvement function of users
+    "perf": {} // user performance, useful to have an improvement function of users
     // other users' fields during the game
   }],
   "current_question": 0,

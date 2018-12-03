@@ -12,3 +12,8 @@ export type GameResult = 0 | 0.5 | 1
 export type GameStatus = 'create' | 'play' | 'end'
 export type UserNewsType = 'friend_request' | 'solo_challenge'
 export type Socket = Object
+export type Perf = {
+  rating: number,
+  rd: number,
+  vol: number
+}

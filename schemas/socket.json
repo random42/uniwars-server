@@ -24,8 +24,8 @@
 				"data": {
 					"$schema": "http://json-schema.org/draft-07/schema#",
 					"properties": {
-						"game": { "$ref": "common.json#/_id"},
-						"question": { "$ref": "common.json#/_id"},
+						"game": { "$ref": "common.json#/_id" },
+						"question": { "$ref": "common.json#/_id" },
 						"answer": {
 							"type": "string",
 							"maxLength": "100"
@@ -82,7 +82,22 @@
 					"$schema": "http://json-schema.org/draft-07/schema#",
 					"properties": {
 						"game": { "$ref": "common.json#/_id"},
-						"result": { "$ref": "common.json#/game_result"}
+						"result": { "$ref": "common.json#/game_result"},
+						"stats": {
+							"type": "array",
+							"items": {
+								"properties": {
+									"_id": { "$ref": "common.json#/_id"},
+									"side": { "enum": [0,1] },
+									"points": {
+										"type": "number"
+									},
+									"avg_answer_time": {
+										"type": "number"
+									}
+								}
+							}
+						}
 					}
 				}
 			}

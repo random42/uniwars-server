@@ -27,7 +27,7 @@ export class Game extends Model {
    * Start game by checking players' connection and sending 'new_game'
    * event.
    */
-  start() : Game {
+  async start() : Game {
     // checks all players are connected, if not...
     debug('start', this._id)
     let conns = this.connected()
@@ -38,19 +38,26 @@ export class Game extends Model {
     // creating game room
     nsp.joinRoom(this.playersIds(), this._id)
     // emitting new_game message
-    this.emit('new_game', {_id: this._id, type: this.type});
+    this.emit('new_game', {_id: this._id, type: this.type})
+    setTimeout(() => {
+      Game.joinTimeout(this._id)
+      .catch(console.log)
+    })
     return this
   }
 
   /**
    * Called when player sends 'join' message. Returns true on success
    */
-  async join(user : ID) : boolean {
+  async join(user : ID, response: 'y' | 'n') : boolean {
     let player = this.getPlayer(user)
     const check =
       this.status === 'create' &&
       player
     if (!check) return false
+    if (response === 'n') {
+      return this.delete()
+    }
     player.joined = true
     await DB.get('games').findOneAndUpdate({
       _id: this._id,
@@ -65,7 +72,7 @@ export class Game extends Model {
       }
     })
     if (this.allPlayersHaveJoined())
-      this.play()
+      await this.play()
     return true
   }
 
@@ -151,12 +158,12 @@ export class Game extends Model {
     const now = Date.now()
     const time = now - (this.question_timeout - GAME_ANSWER_TIMEOUT)
     const player = this.getPlayer(user)
-    const realQuestion = this.questions[this.current_question]
+    const realQuestion : Question = this.questions[this.current_question]
     const check = player && // is player
       realQuestion._id === question && // is right question
       now < this.question_timeout // answered on time
     if (!check) return
-    debug(JSON.stringify({user: player.username, question: realQuestion.question, answer, time}, null, '\t'))
+    debug(JSON.stringify({user: player.username, question: realQuestion.question, answer, time}, null, 2))
     // modify the object
     player.answers.push({ question, answer, time })
     // update database
@@ -189,11 +196,8 @@ export class Game extends Model {
      * if question index does not match it means
      * that all players have answered
      */
-    if (this.current_question !== question)
-      return
-    else {
+    if (this.current_question === question)
       return this.endQuestionFlow()
-    }
   }
 
   /**
@@ -208,32 +212,120 @@ export class Game extends Model {
   }
 
 
-  async end() {
-    debug('Game end')
-    console.time('end')
-    const stats = await this.getStats()
-    debug('Stats')
-    debug(JSON.stringify(stats, null, 3))
-    // all end updates methods have 'atEndUpdate' at the beginning
-    let ops = []
-    for (let i in this.prototype) {
-      if (i.indexOf('atEnd') >= 0) {
-        ops.push(this.prototype[i](stats))
+  /**
+   * Gives some statistics on players.
+   */
+  stats() : Array<{
+      _id: ID,
+      side: number,
+      points: number,
+      avg_answer_time: number
+    }> {
+    return this.players.map(p => {
+      let s = _.pick(p, ['_id','side'])
+      s.points = 0
+      let timeSum = 0
+      for (let a of p.answers) {
+        timeSum += a.time
+        const q = _.find(this.questions, {_id: a.question})
+        if (q.isRight(a.answer)) s.points++
       }
+      s.avg_answer_time = timeSum / p.answers.length
+    })
+  }
+
+
+  /**
+   * 1 if side 0 wins,
+   * 0 if side 1 wins,
+   * 0.5 draw
+   */
+  result(stats : Object[]) : number {
+    let p0 = 0, p1 = 0
+    for (let s of stats) {
+      if (s.side)
+        p1 += s.points
+      else
+        p0 += s.points
     }
-    debug('Ops',ops.length)
-    await Promise.all(ops)
-    this.emitToSide(0, 'game_end', stats)
-    debug(stats.result)
-    let other = {...stats}
-    if (stats.result !== 0.5) {
-      if (stats.result === 1)
-        other.result = 0
-      else other.result = 1
+    if (p0 > p1)
+      return 1
+    else if (p1 > p0)
+      return 0
+    else return 0.5
+  }
+
+  /**
+   * Set game result, stats, propagate result in user.games.
+   *
+   * Send result to the clients
+   */
+  async end() {
+    debug('End', this._id)
+    console.time('end')
+    // saving on this to reuse stats in other functions
+    const stats = this.stats()
+    const result = this.result(stats)
+    this.stats = stats
+    this.result = result
+    debug(JSON.stringify(stats, null, 2))
+    await Promise.all(this.updatesAtEnd())
+    const clientData = {
+      game: this._id,
+      result,
+      stats
     }
-    debug(other.result)
-    this.emitToSide(1, 'game_end', other)
-    console.timeEnd('end');
+    this.emitToSide(0, 'game_end', clientData)
+    this.emitToSide(1, 'game_end', {
+      ...clientData,
+      result: Game.convertResult(this.result, 1)
+    })
+    nsp.leaveRoom(this.playersIds(), this._id)
+    console.timeEnd('end')
+  }
+
+
+  /**
+   * Called at end after calculating stats and result. Returns a Promise of all
+   * DB updates to do after game end. Rewrite this function and call
+   * super to add new updates to after end.
+   *
+   * Set result and clean game document,
+   *
+   * Add win/loss/draw to users' 'games' field.
+   */
+  updatesAtEnd() : Promise {
+    return Promise.all([
+      Game.setResultAndClean(this._id, this.result),
+      this.addResultToUsers()
+    ])
+  }
+
+  async addResultToUsers() {
+    const updateSide = (side) => {
+      const players = this.side(side)
+      const ids = players.map(p => p._id)
+      const result = Game.convertResult(this.result, side)
+      let field
+      if (result === 1)
+        field = 'wins'
+      else if (result === 0)
+        field = 'losses'
+      else field = 'draws'
+      return DB.get('users').update({
+        _id: {
+          $in: ids
+        }
+      }, {
+        $inc: {
+          ['games.' + this.type + '.' + field]: 1
+        }
+      }, { multi: true })
+    }
+    return Promise.all([
+      updateSide(0),
+      updateSide(1)
+    ])
   }
 
   /**
@@ -243,6 +335,16 @@ export class Game extends Model {
     const g = await DB.get('games').findOne(this._id)
     Object.assign(this, g)
   }
+
+  async delete() {
+    nsp.leaveRoom(this.playersIds(), this._id)
+    await Game.delete(this._id)
+  }
+
+  static async delete(game: ID) {
+    return DB.get('games').findOneAndDelete(game)
+  }
+
 
   static async pushAnswer(
     game: ID,
@@ -289,10 +391,7 @@ export class Game extends Model {
     const g = await DB.get('games').findOne(game)
     if (g.status === 'play') return
     debug('Cancel', this._id)
-    // deleting room
-    nsp.leaveRoom(this.playersIds(), this._id)
-    // deleting game
-    await DB.get('games').findOneAndDelete(game)
+    await this.delete()
     // TODO put users in matchmaker again
   }
 
@@ -300,7 +399,7 @@ export class Game extends Model {
   /**
    *
    */
-  static async cleanDocument(game: ID) {
+  static async setResultAndClean(game: ID, result: number) {
     return DB.get('games').aggregate([
       {
         $match: { _id: game }
@@ -315,7 +414,8 @@ export class Game extends Model {
       },
       {
         $addFields: {
-          'questions': '$questions._id'
+          'questions': '$questions._id',
+          result
         }
       },
       {
@@ -325,6 +425,15 @@ export class Game extends Model {
   }
 
   // UTILS
+
+  static convertResult(result: number, side: number) {
+    if (result === 0.5 || side === 0)
+      return result
+    else {
+      return Math.abs(result - 1)
+    }
+  }
+
 
   haveAllAnswered(question: ID) : boolean {
     let b = true
@@ -344,17 +453,17 @@ export class Game extends Model {
     return true
   }
 
-  emit(ev, ...message) {
+  emit(ev: string, ...message: Array) {
     nsp.in(this._id).emit(ev,...message);
   }
 
-  emitToSide(side, ev, ...message) {
-    const users = _.filter(this.players, { side })
+  emitToSide(side: number, ev: string, ...message: Array) {
+    const users = this.side(side)
     .map(p => p._id)
     nsp.emitToUsers(users, ev, ...message)
   }
 
-  emitToPlayer(id, ev, ...message) {
+  emitToPlayer(id: number, ev: string, ...message: Array) {
     nsp.emitToUser(id, ev, ...message)
   }
 
@@ -366,16 +475,24 @@ export class Game extends Model {
     return this.players.map(p => p._id)
   }
 
-  getPlayer(_id) {
+  getPlayer(_id: ID) {
     return _.find(this.players, { _id })
   }
 
-  isPlayer(_id) {
+  isPlayer(_id: ID) {
     return this.getPlayer(_id) ? true : false
   }
 
   isOver() {
-    return false
+    return this.current_question === this.questions.length
+  }
+
+
+  /**
+   * Filters players by side
+   */
+  side(side: number) {
+    return _.filter(this.players, { side })
   }
 
 }
