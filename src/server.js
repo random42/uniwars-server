@@ -6,6 +6,7 @@
 
 import "@babel/polyfill"
 require('./socket/init')
+require('./prova')
 
 // require('./test')
 import app from './app'

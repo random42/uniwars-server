@@ -1,9 +1,7 @@
 // @flow
 
-import _ from 'lodash'
-import * as utils from './utils'
-import * as OPTIONS from './options'
 export { Pipeline } from './pipeline'
+
 
 /**
  * Takes some predefined options' strings and returns an options object
@@ -13,8 +11,8 @@ export { Pipeline } from './pipeline'
  * @param mergeWith Object with additional options to merge.
  * @return MongoDB options object.
  */
-export function dbOptions(options : string[], mergeWith: Object = {}) : Object {
-  const objects : Object[] = options.map(o => OPTIONS[o])
-  return _.merge({}, ...objects, mergeWith)
-}
+// export function dbOptions(options : string[], mergeWith: Object = {}) : Object {
+//   const objects : Object[] = options.map(o => OPTIONS[o])
+//   return _.merge({}, ...objects, mergeWith)
+// }
 export { DB } from './db'

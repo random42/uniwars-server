@@ -40,22 +40,22 @@ export function mergeArraysById(
 /**
  * Modify object/array by converting objectIDs to strings.
  */
-export function stringifyIds(obj : Object) : Object {
+export function stringifyIds(obj : Object) {
   // primitive types
   if (typeof obj !== 'object') return
-  // objectID
-  else if (isObjectId(obj)) return
   // object/array
   for (let i in obj) {
     if (isObjectId(obj[i]))
       obj[i] = obj[i].toString()
     else stringifyIds(obj[i])
   }
-  return obj
 }
 
 export function isObjectId(obj : Object) : boolean {
-  return obj.constructor && obj.constructor.name === 'ObjectID'
+  return typeof obj === 'object' &&
+    obj !== null &&
+    obj.constructor &&
+    obj.constructor.name === 'ObjectID'
 }
 
 export default module.exports

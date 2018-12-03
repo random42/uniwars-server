@@ -2,41 +2,46 @@ import { DB } from './db'
 import { id } from 'monk'
 import utils from './utils'
 
-const users = DB.get('users')
+const games = DB.get('games')
 
 let obj = {
-  _id: id(),
-  arr: [
-    id(),
-    id(),
-    {
-      _id: id(),
-      prova: {
-        asd: {
-          user_id: id()
-        }
-      }
-    }
-  ],
-  asd: 'asd',
-  mamma : 123
-}
-let arr = []
-for (let i = 0; i < 5;i++) {
-  arr.push(obj)
-}
-
-let big = {
-  _id: id(),
-  arr
+  "_id": "5abbd98270534c2bf947416c",
+  "prize": 100,
+  "created_at": Date.now(),
+  "started_at": Date.now(),
+  "ended_at": Date.now(),
+  "type": "solo", // solo, squad, team
+  "players": [{
+    "_id" : "",
+    "side": 0, // 0, 1
+    "username": "random",
+    "joined": true, // tells if player has joined the game
+    // TODO
+    "answers": [{
+      "question": "_id",
+      "answer": "",
+      "time": 3494 // milliseconds of answer
+    }],
+    "perf": {} // user perf, useful to have an improvement function of users
+    // other users' fields during the game
+  }],
+  "current_question": 0,
+  "question_timeout": Date.now(),
+  "questions": [{
+    "id": "a",
+    "source": "https://opentdb.com/"
+  },{
+    "id": "b",
+    "source": "https://opentdb.com/"
+  },{
+    "id": "c",
+    "source": "https://opentdb.com/"
+  }], // full objects during the game
+  "result": 1, // 1 if side0 wins, 0.5 draw, 0 side1 wins
+  "status": "play", // create, play
 }
 
 run().catch(console.log)
 
 async function run() {
-  //console.dir(big, {depth: null})
-  let asd = await users.insert(obj)
-  console.dir(asd, {depth: null})
-  //console.dir(asd, {depth: null})
-  await users.findOneAndDelete(obj._id)
 }

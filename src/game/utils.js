@@ -3,6 +3,7 @@
 import type { ID, GameType } from '../types'
 import _ from 'lodash'
 import index from './index'
+import { Question } from '../models'
 import monk from 'monk'
 import { DB } from '../db'
 
@@ -14,6 +15,7 @@ import { DB } from '../db'
 export function getInstance(game: Object) {
   // makes first letter uppercase
   const typeToClass = _.upperFirst
+  game.questions = game.questions.map(Question)
   return new index[typeToClass(doc.type)](doc)
 }
 
@@ -71,5 +73,5 @@ export async function createGame(
  */
 export async function fetchGame(game: ID) {
   const doc = await DB.get('games').findOne(game)
-  return getInstance(doc)
+  return doc ? getInstance(doc) : undefined
 }

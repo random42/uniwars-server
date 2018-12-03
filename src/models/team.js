@@ -6,7 +6,7 @@ import { Model } from './model'
 import type { ID, Collection } from '../types'
 import { User } from './user'
 import monk from 'monk'
-import { _ } from 'lodash/core'
+import _ from 'lodash/core'
 
 
 export class Team extends Model {
@@ -144,7 +144,7 @@ export class Team extends Model {
   static async removeAdmins(team : ID, users : ID[]) {
     let obj = await DB.get('teams').findOne(team)
     users.forEach(u => {
-      let d = _.find(obj.users, { _id : u }
+      let d = _.find(obj.users, { _id : u })
       if (d)
         delete d.admin
     })

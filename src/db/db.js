@@ -5,4 +5,4 @@ const env = process.env.NODE_ENV
 const uri = process.env.MONGO_URI || secret[env].uri
 export const DB = monk(uri)
 
-DB.addMiddleware(stringifyIds)
+//DB.addMiddleware(stringifyIds)

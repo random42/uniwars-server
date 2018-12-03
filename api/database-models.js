@@ -144,21 +144,22 @@ const game = {
   },
   "prize": 100,
   "created_at": Date.now(),
+  "started_at": Date.now(),
   "ended_at": Date.now(),
   "type": "solo", // solo, squad, team
   "players": [{
     "_id" : "",
     "side": 0, // 0, 1
+    "joined": true, // tells if player has joined the game
     // TODO
     "answers": [{
       "question": "_id",
-      "answer": ""
+      "answer": "",
+      "time": 3494 // milliseconds of answer
     }],
     "perf": {} // user perf, useful to have an improvement function of users
     // other users' fields during the game
   }],
-  // if it is a team game
-  "teams": ["_ids"],
   "current_question": 0,
   "question_timeout": Date.now(),
   "questions": ["_ids"], // full objects during the game
