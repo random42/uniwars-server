@@ -167,6 +167,31 @@ const game = {
   "status": "play", // create, play, end
 }
 
+const live_game = {
+  "_id": "",
+  "prize": 100,
+  "created_at": Date.now(),
+  "started_at": Date.now(),
+  "ended_at": Date.now(),
+  "players": [
+    {
+      "_id": "",
+      "answers": [
+        {
+          "question": "_id",
+          "answer": "asd",
+          "time": Date.now()
+        }
+      ],
+      "perf": {},
+      // other users' fields during the game
+    }
+  ],
+  "questions": ["_ids"], // full objects during the game
+  "current_question": 0,
+  "question_timeout": Date.now(),
+}
+
 const question = {
   "_id": {
       "$oid": "5ad10d842d97600cc0f3639c"

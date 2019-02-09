@@ -18,46 +18,6 @@ auth(server, {
 })
 
 const initNsp = (n) => {
-  n.auth = new Map()
-  n.getSocket = n.auth.get
-  n.isConnected = n.auth.has
-  n.areConnected = (users) => {
-    let b = true
-    let i = 0
-    while (i < users.length && b) {
-      b = n.isConnected(users[i++])
-    }
-    return b
-  }
-  n.emitToUser = (user, event, ...message) => {
-    if (n.auth.has(user)) {
-      const socket = n.auth.get(user)
-      socket.emit(event, ...message)
-      return true
-    } else
-      return false
-  }
-  n.emitToUsers = (users, event, ...message) => {
-    for (let u of users) {
-      n.emitToUser(u, event, ...message)
-    }
-  }
-  n.joinRoom = (users, room) => {
-    for (let u of users) {
-      n.getSocket(u).join(room)
-    }
-  }
-  n.leaveRoom = (users, room) => {
-    for (let u of users) {
-      n.getSocket(u).leave(room)
-    }
-  }
-  n.on('disconnect', (socket) => {
-    if (socket.auth) {
-      const id = socket.user._id
-      n.auth.delete(id)
-    }
-  })
 }
 
 for (let name in server.nsps) {

@@ -1,13 +1,15 @@
-
+// @flow
 const debug = require('debug')('socket:auth')
-import { _ } from 'lodash/core';
+import { Namespace, Socket } from 'socket.io'
+import { _ } from 'lodash/core'
+import { isAsync } from '../utils'
 
 export default function (io, {
-  authenticate,
-  postAuth,
-  manageNsps,
-  onDisconnect,
-  timeout,
+  auth: (socket: Socket, data: Object) => Promise<Boolean>,
+  postAuth: (socket: Socket) => any,
+  manageNsps: Boolean,
+  onDisconnect: (socket: Socket, reason) => any,
+  timeout: number
   }) {
   const getSockets = (socket) => {
     const id = socket.id
@@ -31,28 +33,26 @@ export default function (io, {
       }
     }, timeout || 1000)
     socket.auth = false;
-    socket.once('auth', (data) => {
-      authenticate(socket, data)
-      .then((user) => {
-        if (user) {
-          debug('auth', user)
-          const time = Date.now()
-          let obj = getSockets(socket)
-          for (let i in obj) {
-            obj[i].auth = true
-            obj[i].authTime = time
-            obj[i].user = user
-          }
-          onAuth(obj, data)
-        }
-      })
-      .catch(console.log)
+    socket.once('auth', async (data) => {
+      const user = await auth(socket, data)
+      if (user) {
+        debug('auth', user)
+        const time = Date.now()
+        let obj = getSockets(socket)
+        // run postAuth for each nsp
+        _.forEach(obj, (socket, nsp) => {
+          postAuth(socket)
+          socket.on('disconnect', (reason) => {
+            debug(reason)
+            if (socket.auth) {
+              debug('out', socket.user)
+              onDisconnect && onDisconnect(socket, reason)
+            }
+          })
+        })
+        onAuth(obj, data)
+      }
     })
-    socket.on('disconnect', (reason) => {
-      debug(reason)
-      if (socket.auth)
-        debug('out', socket.user)
-      onDisconnect && onDisconnect(socket, reason)
-    })
+
   })
 }

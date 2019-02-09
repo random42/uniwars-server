@@ -1,3 +1,3 @@
-export {mm} from './matchmaking'
 import utils from './utils'
-export default utils
+module.exports = utils
+export {mm} from './matchmaking'

@@ -1,7 +1,5 @@
 // @flow
 
-import monk from 'monk'
-
 export type ID = string
 export type UserType = 'teen' | 'student' | 'worker' | 'generic'
 export type Category = string

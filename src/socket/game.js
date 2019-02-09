@@ -1,3 +1,5 @@
+// @flow
+
 import { server, game as nsp } from './index'
 import { fetchGame } from '../game'
 const debug = require('debug')('socket:game')

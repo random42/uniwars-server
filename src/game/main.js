@@ -1,6 +1,5 @@
 // @flow
 
-import type { ID, GameType } from '../types'
 import { DB } from '../db';
 import { id } from 'monk';
 import { Model, Question, User, Team } from '../models'
