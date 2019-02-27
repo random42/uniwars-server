@@ -28,6 +28,20 @@ const COLLECTIONS = [
   {
     name: "games",
     creationOptions: {},
+    indexes: [
+      {
+        fields: {
+          "players._id": 1,
+        },
+        options: {
+          name: "game_players"
+        }
+      }
+    ]
+  },
+  {
+    name: "ended_games",
+    creationOptions: {},
     indexes: []
   },
   {
@@ -42,11 +56,6 @@ const COLLECTIONS = [
   },
   {
     name: "questions",
-    creationOptions: {},
-    indexes: []
-  },
-  {
-    name: "majors",
     creationOptions: {},
     indexes: []
   },

@@ -142,6 +142,7 @@ const game = {
   "_id": {
       "$oid": "5abbd98270534c2bf947416c"
   },
+  "subjects": [],
   "prize": 100,
   "created_at": Date.now(),
   "started_at": Date.now(),
@@ -200,13 +201,14 @@ const question = {
   "source_category": "Science: Computers",
   "subject": "Computers & Mathematics",
   "question": "The Harvard architecture for micro-controllers added which additional bus?",
-  "correct_answer": "Instruction",
-  "incorrect_answers": [
+  "correct_answer": 3, // index
+  "answers": [
     "Address",
     "Data",
-    "Control"
+    "Control",
+    "Instruction"
   ],
   "language": "en",
   "hit": 123,
-  "miss": 333
+  "answered": 2913
 }

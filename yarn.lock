@@ -2846,11 +2846,6 @@ glicko2-lite@^1.0.1:
     lodash.map "^4.2.0"
     lodash.reduce "^4.2.0"
 
-glicko2@^0.8.4:
-  version "0.8.4"
-  resolved "https://registry.yarnpkg.com/glicko2/-/glicko2-0.8.4.tgz#cc126e4ebcd577e2a8ff1d6d819f5d08ee985aaf"
-  integrity sha1-zBJuTrzVd+Ko/x1tgZ9dCO6YWq8=
-
 glob-base@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/glob-base/-/glob-base-0.3.0.tgz#dbb164f6221b1c0b1ccf82aea328b497df0ea3c4"

@@ -22,6 +22,6 @@ export class LiveGame {
 
   }
 
-  static async leave(user: ID, game: ID)
+  static async leave(user: ID, game: ID) {}
 
 }

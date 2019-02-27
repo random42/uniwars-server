@@ -1,14 +1,15 @@
 // @flow
+
 const debug = require('debug')('socket:auth')
-import { Namespace, Socket } from 'socket.io'
+import type { Server, Namespace, Socket } from 'socket.io'
 import { _ } from 'lodash/core'
 import { isAsync } from '../utils'
 
-export default function (io, {
-  auth: (socket: Socket, data: Object) => Promise<Boolean>,
-  postAuth: (socket: Socket) => any,
+export default function (io: Server, options: {
+  auth: (Socket, data: Object) => Promise<Boolean>,
+  postAuth: (Socket) => any,
   manageNsps: Boolean,
-  onDisconnect: (socket: Socket, reason) => any,
+  onDisconnect: (Socket, reason: any) => any,
   timeout: number
   }) {
   const getSockets = (socket) => {

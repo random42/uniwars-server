@@ -1,8 +1,7 @@
 // @flow
 
-import { DB } from '../db';
 import { id } from 'monk';
-import { Model, Question, User, Team } from '../models'
+import { Model, Question, User, Team, Game as DB } from '../models'
 import type { ID, GameType, Perf, GameResult, GameStatus } from '../types'
 import { game as nsp } from '../socket';
 import { mm } from '../utils';
@@ -18,9 +17,7 @@ import {
 } from '../constants'
 
 
-export class Game extends Model {
-
-  static COLLECTION = 'games'
+export class Game {
 
   /**
    * Start game by checking players' connection and sending 'new_game'
@@ -338,89 +335,6 @@ export class Game extends Model {
   async delete() {
     nsp.leaveRoom(this.playersIds(), this._id)
     await Game.delete(this._id)
-  }
-
-  static async delete(game: ID) {
-    return DB.get('games').findOneAndDelete(game)
-  }
-
-
-  static async pushAnswer(
-    game: ID,
-    user: ID,
-    question: ID,
-    answer: string,
-    time: number
-    ) {
-    return DB.get('games').findOneAndUpdate({
-        _id: game,
-        players: {
-          $elemMatch: {
-            _id: user
-          }
-        }
-      },
-      {
-        $push: {
-          'players.$.answers': {
-            question: id(question),
-            answer,
-            time
-          }
-        }
-      }
-    )
-  }
-
-  /**
-   * Increment current_question by 1
-   */
-  static async incQuestion(game: ID) {
-    return DB.get('games').findOneAndUpdate(game, {
-      $inc: {
-        current_question: 1
-      }
-    })
-  }
-
-  /**
-   * Cancel the game if it is not started
-   */
-  static async joinTimeout(game: ID) {
-    const g = await DB.get('games').findOne(game)
-    if (g.status === 'play') return
-    debug('Cancel', this._id)
-    await this.delete()
-    // TODO put users in matchmaker again
-  }
-
-
-  /**
-   *
-   */
-  static async setResultAndClean(game: ID, result: number) {
-    return DB.get('games').aggregate([
-      {
-        $match: { _id: game }
-      },
-      {
-        $project: {
-          'players.username': 0,
-          'players.joined': 0,
-          'current_question': 0,
-          'status': 0
-        }
-      },
-      {
-        $addFields: {
-          'questions': '$questions._id',
-          result
-        }
-      },
-      {
-        $out: "games"
-      }
-    ])
   }
 
   // UTILS
